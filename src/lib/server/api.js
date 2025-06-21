@@ -4,6 +4,7 @@ import { APP_PATH, DEV_API_BASE_URL, PROD_API_BASE_URL } from '$env/static/priva
 const BASE_API_PATH = (() => {
     const path = APP_PATH;
     const endpoint = dev ? DEV_API_BASE_URL : PROD_API_BASE_URL;
+    // const endpoint = PROD_API_BASE_URL;
     return `${endpoint}${path}`;
 })();
 

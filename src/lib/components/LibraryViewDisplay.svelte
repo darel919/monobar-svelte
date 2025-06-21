@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { browser } from '$app/environment';
+    import HoverModalView from './HoverModalView.svelte';
 
     interface LibraryItem {
         Id?: string;
@@ -23,13 +24,13 @@
 
     export let data: LibraryItem[] = [];
     export let viewMode: string = 'default_thumb_library';
-    export let disableClick: boolean = false;
-    
-    let responsiveViewMode: string = viewMode;
+    export let disableClick: boolean = false;    let responsiveViewMode: string = viewMode;
     let modalOpen: boolean = false;
     let modalItem: LibraryItem | null = null;
     let imgLoaded: Record<string, boolean> = {};
     let imgError: Record<string, boolean> = {};
+    let hoverTimeout: number | null = null;
+    let mousePosition = { x: 0, y: 0 };
 
     onMount(() => {
         const checkWidth = () => {
@@ -92,17 +93,57 @@
             return item.thumbPath || null;
         }
         return item.thumbPath || null;
-    }
-
-    function handleItemClick(item: LibraryItem): void {
+    }    function handleItemClick(item: LibraryItem): void {
         if (disableClick) return;
         
         if (responsiveViewMode === "default_search_genre") {
             window.location.href = `/library?genreId=${item.id}`;
             return;
         }
+        
+        if (responsiveViewMode === "default_thumb_home") {
+            window.location.href = `/info?id=${item.Id}&type=${item.Type}`;
+            return;
+        }
+        
         modalItem = item;
         modalOpen = true;
+    }      
+    function handleItemHover(item: LibraryItem, event: MouseEvent): void {
+        if (disableClick) return;
+        
+        if (responsiveViewMode === "default_thumb_home") {
+            if (hoverTimeout) {
+                clearTimeout(hoverTimeout);
+                hoverTimeout = null;
+            }
+            mousePosition = { x: event.clientX, y: event.clientY };
+            modalItem = item;
+            modalOpen = true;
+        }
+    }
+
+    function handleItemLeave(): void {
+        if (responsiveViewMode === "default_thumb_home") {
+            hoverTimeout = setTimeout(() => {
+                modalOpen = false;
+                modalItem = null;
+            }, 150);
+        }
+    }
+
+    function handleModalEnter(): void {
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+            hoverTimeout = null;
+        }
+    }
+
+    function handleModalLeave(): void {
+        if (responsiveViewMode === "default_thumb_home") {
+            modalOpen = false;
+            modalItem = null;
+        }
     }
 
     function handleImgLoad(id: string): void {
@@ -206,15 +247,16 @@
         {/each}
     </section>
 {:else if responsiveViewMode === "default_thumb_home"}
-    <section class="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
+    <section class="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">        
         {#each data as item}
             {@const itemId = item.Id || item.id || item.Name || ''}
-            
-            <a
+              <a
                 href={disableClick ? undefined : `/info?id=${item.Id}&type=${item.Type}`}
                 class={`flex flex-col items-center min-w-[280px] max-w-[280px] ${itemHoverClass} flex-shrink-0`}
                 title={item.Overview}
-                style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
+                style={disableClick ? 'cursor: default; pointer-events: none;' : ''}                
+                on:mouseenter={(e) => handleItemHover(item, e)}
+                on:mouseleave={handleItemLeave}
             >
                 <div class="relative w-full aspect-[16/9]">
                     {#if !imgLoaded[itemId]}
@@ -239,8 +281,8 @@
                             {/if}
                             {#if item.ProductionYear}
                                 <div>{item.ProductionYear}</div>
-                            {/if}
-                        </div>
+                            {/if}                        
+                        </div>                    
                     {/if}
                 </div>
             </a>
@@ -284,9 +326,20 @@
                     {/if}
                     {#if item.ProductionYear}
                         <p class="text-xs opacity-50">{item.ProductionYear}</p>
-                    {/if}
-                </section>
+                    {/if}                </section>
             </a>
         {/each}
     </section>
+{/if}
+
+{#if modalOpen && modalItem}
+    <HoverModalView 
+        isOpen={modalOpen} 
+        on:close={() => modalOpen = false}
+        item={modalItem}
+        mouseX={mousePosition.x}
+        mouseY={mousePosition.y}
+        on:mouseenter={handleModalEnter}
+        on:mouseleave={handleModalLeave}
+    />
 {/if}

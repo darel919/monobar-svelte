@@ -24,7 +24,10 @@
     {#each libraryCategories as category}
         {#if category.latest && category.latest.length > 0}
             <section class="mb-8">
-                <h2 class="text-2xl mb-4">{category.Name}</h2>
+                
+                <a href={`/library?id=${category.Id}`} class="text-blue-500 hover:underline mb-2 block">
+                    <h2 class="text-2xl mb-4">{category.Name}</h2>
+                </a>
                 <LibraryViewDisplay data={category.latest} viewMode="default_thumb_home" />
             </section>
         {/if}
@@ -37,7 +40,7 @@
         </section>
     {/if}
 
-<!-- 
+
     {#if serverData}
         <section class="mb-8">
             <h2 class="text-2xl mb-4">Server Data</h2>
@@ -45,7 +48,7 @@
                 <pre class="text-sm overflow-auto">{JSON.stringify(serverData, null, 2)}</pre>
             </div>
         </section>
-    {/if} -->
+    {/if}
 </main>
 
 <style>
