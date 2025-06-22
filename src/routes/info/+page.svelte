@@ -1,0 +1,84 @@
+<script>
+  import LibraryViewDisplay from '$lib/components/LibraryViewDisplay.svelte';
+
+    export let data;
+    
+    $: serverData = data.serverData.data || null;
+    $: id = data.id;
+    $: type = data.type;
+</script>
+
+<main class="flex flex-col min-h-screen px-8">
+
+    {#if serverData}
+
+        <section class="max-w-2xl">
+        <!-- Genre Display -->
+        {#if serverData.GenreItems && serverData.GenreItems.length > 0}
+            <section class="">
+                <div class="flex flex-wrap gap-2">
+                    {#each serverData.GenreItems as item}
+                        {#if item.Id !== ""}
+                        <a href={`/library?id=${item.Id}&type=genre`} title={`Show more ${item.Name}`}>
+                            <span class="badge badge-neutral rounded-sm px-3 text-sm">{item.Name}</span>
+                        </a>
+                        {/if}
+                    {/each}
+                </div>
+            </section>
+        {/if}
+
+        <!-- Item Logo/Title -->
+        {#if serverData.ImageTags && serverData.ImageTags.Logo}
+        <section class="py-0 sm:py-4">
+            <img loading="eager" src={serverData.ImageTags.Logo} alt={serverData.OriginalTitle ? serverData.OriginalTitle : serverData.Name} class="h-32 w-fit max-w-58 sm:max-w-64 md:max-w-80 object-contain pointer-events-none" />
+        </section>
+        {:else}
+        <section>
+            <h1 class="text-3xl font-bold mb-4">{serverData.OriginalTitle ? serverData.OriginalTitle : serverData.Name}</h1>
+        </section>
+        {/if}
+        
+        <!-- Item Description -->
+        {#if serverData.Overview && serverData.Overview !== ""}
+            <section class="mb-8">
+                <p class="text-lg opacity-75">{serverData.Overview}</p>
+            </section>
+        {/if}
+
+        <!-- Item Tags -->
+        {#if serverData.Tags && serverData.Tags.length > 0}
+            <section class="mb-8">
+                <div class="mb-4 text-md"><b>{serverData.Name.toLowerCase()}</b> is about:</div>
+                <div class="flex flex-wrap gap-2">
+                    {#each serverData.Tags as tag}
+                        {#if tag !== ""}
+                        <span class="badge badge-ghost rounded-none px-3 text-xs">{tag}</span>
+                        {/if}
+                    {/each}
+                </div>
+            </section>
+        {/if}
+        </section>
+
+        <!-- Recommendation/Similar Items -->
+        {#if serverData.recommendation && serverData.recommendation.length > 0}
+            <section class="mb-8">
+                <div class="mb-4 text-md">just like <b>{serverData.Name.toLowerCase()}</b>:</div>
+                <div class="flex flex-wrap gap-2">
+                    <LibraryViewDisplay data={serverData.recommendation} viewMode="default_thumb_recommendation" />
+                </div>
+            </section>
+        {/if}
+
+        <section>
+
+        </section>
+        <!-- <section class="mb-8">
+            <h2 class="text-2xl mb-4">Server Data</h2>
+            <div class="bg-base-800 p-4 rounded-lg">
+                <pre class="text-sm overflow-auto">{JSON.stringify(serverData, null, 2)}</pre>
+            </div>
+        </section> -->
+    {/if}
+</main>

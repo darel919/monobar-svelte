@@ -1,10 +1,14 @@
 <script lang="ts">
 	import '../app.css';
+	import NavbarComponent from '$lib/components/Navbar.svelte';
+	import FooterComponent from '$lib/components/Footer.svelte';
 	
 	let { children } = $props();
 </script>
 
+<NavbarComponent/>
 {@render children()}
+<FooterComponent/>
 
 <style>
 	/* :global(.skeleton) {

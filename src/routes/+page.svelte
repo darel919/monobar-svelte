@@ -10,7 +10,7 @@
 
 <main class="flex flex-col min-h-screen p-8">
     <section class="mb-8">
-        <h1 class="text-4xl mb-4">Home</h1>
+        <h1 class="text-4xl">Home</h1>
         <!-- <p class="text-lg opacity-75">Media Library Display</p> -->
     </section>
 
@@ -25,9 +25,13 @@
         {#if category.latest && category.latest.length > 0}
             <section class="mb-8">
                 
-                <a href={`/library?id=${category.Id}`} class="text-blue-500 hover:underline mb-2 block">
-                    <h2 class="text-2xl mb-4">{category.Name}</h2>
-                </a>
+                <div class="flex items-center mb-4">
+                    <span class="mr-2">Newest</span>
+                    <a href={`/library?id=${category.Id}`} class="hover:underline">
+                        <h2 class="text-2xl">{category.Name}</h2>
+                    </a>
+                </div>
+                
                 <LibraryViewDisplay data={category.latest} viewMode="default_thumb_home" />
             </section>
         {/if}
@@ -51,10 +55,4 @@
     {/if}
 </main>
 
-<style>
-    main {
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-</style>
 

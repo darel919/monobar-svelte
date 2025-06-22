@@ -17,6 +17,7 @@
         thumbPath?: string;
         posterPath?: string;
         ImageTags?: {
+            Thumb: string | null | undefined;
             Primary?: string;
             Logo?: string;
         };
@@ -24,15 +25,17 @@
 
     export let data: LibraryItem[] = [];
     export let viewMode: string = 'default_thumb_library';
-    export let disableClick: boolean = false;    let responsiveViewMode: string = viewMode;
+    export let disableClick: boolean = false;    
+    let responsiveViewMode: string = viewMode;
     let modalOpen: boolean = false;
     let modalItem: LibraryItem | null = null;
+    let hoveredItemId: string | null = null;
     let imgLoaded: Record<string, boolean> = {};
     let imgError: Record<string, boolean> = {};
     let hoverTimeout: number | null = null;
     let mousePosition = { x: 0, y: 0 };
-
-    onMount(() => {
+    let isScrolling: boolean = false;
+    let scrollTimeout: number | null = null;    onMount(() => {
         const checkWidth = () => {
             if (window.innerWidth < 540) {
                 responsiveViewMode = "poster grid";
@@ -41,10 +44,24 @@
             }
         };
         
+        const handleScroll = () => {
+            isScrolling = true;
+            if (scrollTimeout) {
+                clearTimeout(scrollTimeout);
+            }
+            scrollTimeout = setTimeout(() => {
+                isScrolling = false;
+            }, 150);
+        };
+        
         checkWidth();
         window.addEventListener('resize', checkWidth);
+        window.addEventListener('scroll', handleScroll, { passive: true });
         
-        return () => window.removeEventListener('resize', checkWidth);
+        return () => {
+            window.removeEventListener('resize', checkWidth);
+            window.removeEventListener('scroll', handleScroll);
+        };
     });
 
     $: {
@@ -80,37 +97,42 @@
                 imgError = { ...imgError, [itemId]: true };
             }
         });
-    }
-
-    function getImageSource(item: LibraryItem): string | null {
+    }   
+     function getImageSource(item: LibraryItem): string | null {
         if (!item) return null;
         
-        if (responsiveViewMode === "poster grid" || responsiveViewMode === "posterView" || responsiveViewMode === "default_poster_home") {
+        if (responsiveViewMode === "poster grid") {
+            if (viewMode === "default_thumb_recommendation") {
+                return item.ImageTags?.Primary || null;
+            }
+            return item.posterPath || null;
+        } else if (responsiveViewMode === "posterView" || responsiveViewMode === "default_poster_home") {
             return item.posterPath || null;
         } else if (responsiveViewMode === "default_thumb_home" || responsiveViewMode === "default_thumb_library") {
             return item.thumbPath || item.ImageTags?.Primary || null;
         } else if (responsiveViewMode === "default_search" || responsiveViewMode === "default_search_genre") {
             return item.thumbPath || null;
+        } else if (responsiveViewMode === "default_thumb_recommendation") {
+            return item.ImageTags?.Thumb || null;
         }
         return item.thumbPath || null;
-    }    function handleItemClick(item: LibraryItem): void {
+    }    
+    function handleItemClick(item: LibraryItem): void {
         if (disableClick) return;
         
         if (responsiveViewMode === "default_search_genre") {
             window.location.href = `/library?genreId=${item.id}`;
             return;
         }
-        
-        if (responsiveViewMode === "default_thumb_home") {
+          if (responsiveViewMode === "default_thumb_home" || responsiveViewMode === "default_thumb_library" || responsiveViewMode === "default_thumb_recommendation") {
             window.location.href = `/info?id=${item.Id}&type=${item.Type}`;
             return;
         }
         
         modalItem = item;
         modalOpen = true;
-    }      
-    function handleItemHover(item: LibraryItem, event: MouseEvent): void {
-        if (disableClick) return;
+    }    function handleItemHover(item: LibraryItem, event: MouseEvent): void {
+        if (disableClick || isScrolling) return;
         
         if (responsiveViewMode === "default_thumb_home") {
             if (hoverTimeout) {
@@ -120,29 +142,61 @@
             mousePosition = { x: event.clientX, y: event.clientY };
             modalItem = item;
             modalOpen = true;
+        } else if (responsiveViewMode === "default_thumb_library") {
+            if (hoverTimeout) {
+                clearTimeout(hoverTimeout);
+                hoverTimeout = null;
+            }
+            mousePosition = { x: event.clientX, y: event.clientY };
+            modalItem = item;
+            modalOpen = true;
+        } else if (responsiveViewMode === "default_thumb_recommendation") {
+            if (hoverTimeout) {
+                clearTimeout(hoverTimeout);
+                hoverTimeout = null;
+            }
+            const itemId = item.Id || item.id || item.Name || '';
+            hoverTimeout = setTimeout(() => {
+                if (!isScrolling) {
+                    hoveredItemId = itemId;
+                    modalItem = item;
+                    modalOpen = true;
+                }
+            }, 600);
         }
-    }
-
-    function handleItemLeave(): void {
-        if (responsiveViewMode === "default_thumb_home") {
+    }    function handleItemLeave(): void {
+        if (responsiveViewMode === "default_thumb_home" || responsiveViewMode === "default_thumb_library") {
             hoverTimeout = setTimeout(() => {
                 modalOpen = false;
                 modalItem = null;
-            }, 150);
+            }, 100);
+        } else if (responsiveViewMode === "default_thumb_recommendation") {
+            if (hoverTimeout) {
+                clearTimeout(hoverTimeout);
+                hoverTimeout = null;
+            }
+            hoverTimeout = setTimeout(() => {
+                hoveredItemId = null;
+                modalOpen = false;
+                modalItem = null;
+            }, 100);
         }
     }
-
     function handleModalEnter(): void {
         if (hoverTimeout) {
             clearTimeout(hoverTimeout);
             hoverTimeout = null;
         }
-    }
-
-    function handleModalLeave(): void {
-        if (responsiveViewMode === "default_thumb_home") {
+    }    function handleModalLeave(): void {
+        if (responsiveViewMode === "default_thumb_home" || responsiveViewMode === "default_thumb_library") {
             modalOpen = false;
             modalItem = null;
+        } else if (responsiveViewMode === "default_thumb_recommendation") {
+            hoverTimeout = setTimeout(() => {
+                hoveredItemId = null;
+                modalOpen = false;
+                modalItem = null;
+            }, 100);
         }
     }
 
@@ -156,7 +210,7 @@
         imgError = { ...imgError, [id]: true };
     }
 
-    const itemHoverClass = "transition-transform duration-200 ease-in-out hover:-translate-y-2 p-2";
+    const itemHoverClass = "transition-transform duration-200 ease-in-out hover:-translate-y-1 p-1";
 </script>
 
 {#if !data?.length}
@@ -206,8 +260,7 @@
         {/each}
     </section>
 {:else if responsiveViewMode === "default_thumb_library"}
-    <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
-        {#each data as item}
+    <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">        {#each data as item}
             {@const itemId = item.Id || item.id || item.Name || ''}
             
             <a
@@ -215,6 +268,8 @@
                 class={`flex flex-col items-center ${itemHoverClass}`}
                 title={item.Overview}
                 style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
+                on:mouseenter={(e) => handleItemHover(item, e)}
+                on:mouseleave={handleItemLeave}
             >
                 <div class="relative w-full aspect-[16/9]">
                     {#if !imgLoaded[itemId]}
@@ -247,7 +302,7 @@
         {/each}
     </section>
 {:else if responsiveViewMode === "default_thumb_home"}
-    <section class="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">        
+    <section class="flex overflow-x-auto gap-0 pb-4 scrollbar-hide">        
         {#each data as item}
             {@const itemId = item.Id || item.id || item.Name || ''}
               <a
@@ -260,14 +315,14 @@
             >
                 <div class="relative w-full aspect-[16/9]">
                     {#if !imgLoaded[itemId]}
-                        <div class="skeleton absolute top-0 left-0 w-full h-full rounded-lg opacity-100 transition-opacity"></div>
+                        <div class="skeleton absolute top-0 left-0 w-full h-full rounded-none opacity-100 transition-opacity"></div>
                     {/if}
                     {#if imgLoaded[itemId] && !imgError[itemId] && (item.thumbPath || item.ImageTags?.Primary)}
                         <img
                             loading="lazy"
                             src={item.thumbPath || item.ImageTags?.Primary}
                             alt={item.Name || 'Image'}
-                            class={`h-full w-full object-cover rounded-lg transition-opacity duration-200 ${imgLoaded[itemId] && !imgError[itemId] ? 'opacity-100' : 'opacity-0'}`}
+                            class={`h-full w-full object-cover rounded-none transition-opacity duration-200 ${imgLoaded[itemId] && !imgError[itemId] ? 'opacity-100' : 'opacity-0'}`}
                             on:load={() => handleImgLoad(itemId)}
                             on:error={() => handleImgError(itemId)}
                         />
@@ -286,6 +341,66 @@
                     {/if}
                 </div>
             </a>
+        {/each}
+    </section>
+{:else if responsiveViewMode === "default_thumb_recommendation"}
+    <section 
+        class="flex overflow-x-auto gap-0 pb-4 scrollbar-hide relative"
+        on:scroll={() => {
+            isScrolling = true;
+            if (scrollTimeout) {
+                clearTimeout(scrollTimeout);
+            }
+            scrollTimeout = setTimeout(() => {
+                isScrolling = false;
+            }, 150);
+        }}
+    >        
+        {#each data as item}
+            {@const itemId = item.Id || item.id || item.Name || ''}
+            {@const isHovered = hoveredItemId === itemId}              <div
+                class={`flex flex-col items-center min-w-[280px] max-w-[280px] ${itemHoverClass} flex-shrink-0 transition-all duration-300 ease-in-out relative`}
+                data-item-id={itemId}
+                role="button"
+                tabindex="0"
+                on:mouseenter={(e) => handleItemHover(item, e)}
+                on:mouseleave={handleItemLeave}
+            >
+                <a
+                    href={disableClick ? undefined : `/info?id=${item.Id}&type=${item.Type}`}
+                    class={`flex flex-col items-center w-full ${isHovered ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+                    title={item.Overview}
+                    style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
+                >
+                    <div class="relative w-full aspect-[16/9]">
+                        {#if !imgLoaded[itemId]}
+                            <div class="skeleton absolute top-0 left-0 w-full h-full rounded-none opacity-100 transition-opacity"></div>
+                        {/if}
+                        {#if imgLoaded[itemId] && !imgError[itemId] && (item.ImageTags?.Thumb)}
+                            <img
+                                loading="lazy"
+                                src={item.ImageTags?.Thumb}
+                                alt={item.Name || 'Image'}
+                                class={`h-full w-full object-cover rounded-none transition-opacity duration-200 ${imgLoaded[itemId] && !imgError[itemId] ? 'opacity-100' : 'opacity-0'}`}
+                                on:load={() => handleImgLoad(itemId)}
+                                on:error={() => handleImgError(itemId)}
+                            />
+                        {/if}
+                        {#if imgLoaded[itemId] && (imgError[itemId] || (!item.ImageTags?.Thumb))}
+                            <div class="flex flex-col items-center justify-center w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center">
+                                {#if item.ImageTags?.Logo}
+                                    <img src={item.ImageTags.Logo} alt={item.Name} class="w-fit max-h-16 object-contain mb-2" />
+                                {:else}
+                                    <div class="font-bold text-2xl my-2">{item.OriginalTitle || item.Name}</div>
+                                {/if}
+                                {#if item.ProductionYear}
+                                    <div>{item.ProductionYear}</div>
+                                {/if}                        
+                            </div>                    
+                        {/if}
+                    </div>
+                </a>
+            </div>
         {/each}
     </section>
 {:else}
@@ -326,7 +441,8 @@
                     {/if}
                     {#if item.ProductionYear}
                         <p class="text-xs opacity-50">{item.ProductionYear}</p>
-                    {/if}                </section>
+                    {/if}                
+                </section>
             </a>
         {/each}
     </section>
@@ -337,8 +453,10 @@
         isOpen={modalOpen} 
         on:close={() => modalOpen = false}
         item={modalItem}
-        mouseX={mousePosition.x}
-        mouseY={mousePosition.y}
+        mouseX={responsiveViewMode === "default_thumb_recommendation" ? 0 : mousePosition.x}
+        mouseY={responsiveViewMode === "default_thumb_recommendation" ? 0 : mousePosition.y}
+        isInPlace={responsiveViewMode === "default_thumb_recommendation"}
+        hoveredItemId={hoveredItemId}
         on:mouseenter={handleModalEnter}
         on:mouseleave={handleModalLeave}
     />
