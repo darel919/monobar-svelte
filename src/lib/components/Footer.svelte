@@ -1,6 +1,6 @@
 <footer class="footer sm:footer-horizontal bg-black text-white p-8 flex flex-col border-base-200 border-t relative z-20">
     <section>
-        <img src="/assets/TRANSPARENT.png" alt="Logo" class="h-12 min-w-fit">
+        <img src="/assets/TRANSPARENT.png" alt="Logo" class="h-12 w-40">
         <p>by DWS</p>
     </section>
 

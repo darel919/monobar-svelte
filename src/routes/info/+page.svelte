@@ -20,7 +20,7 @@
                     {#each serverData.GenreItems as item}
                         {#if item.Id !== ""}
                         <a href={`/library?id=${item.Id}&type=genre`} title={`Show more ${item.Name}`}>
-                            <span class="badge badge-neutral rounded-sm px-3 text-sm">{item.Name}</span>
+                            <span class="badge badge-neutral rounded-sm px-3 text-sm hover:underline">{item.Name}</span>
                         </a>
                         {/if}
                     {/each}
@@ -30,12 +30,12 @@
 
         <!-- Item Logo/Title -->
         {#if serverData.ImageTags && serverData.ImageTags.Logo}
-        <section class="py-0 sm:py-4">
+        <section class="py-4 sm:py-8">
             <img loading="eager" src={serverData.ImageTags.Logo} alt={serverData.OriginalTitle ? serverData.OriginalTitle : serverData.Name} class="h-32 w-fit max-w-58 sm:max-w-64 md:max-w-80 object-contain pointer-events-none" />
         </section>
         {:else}
         <section>
-            <h1 class="text-3xl font-bold mb-4">{serverData.OriginalTitle ? serverData.OriginalTitle : serverData.Name}</h1>
+            <h1 class="text-5xl font-bold my-8">{serverData.OriginalTitle ? serverData.OriginalTitle : serverData.Name}</h1>
         </section>
         {/if}
         
@@ -53,7 +53,9 @@
                 <div class="flex flex-wrap gap-2">
                     {#each serverData.Tags as tag}
                         {#if tag !== ""}
-                        <span class="badge badge-ghost rounded-none px-3 text-xs">{tag}</span>
+                        <a href="/search?q={tag}&type=tag" class="" title={`Search for ${tag}`}>
+                            <span class="badge badge-ghost rounded-none px-3 text-xs hover:underline">{tag}</span>
+                        </a>
                         {/if}
                     {/each}
                 </div>
