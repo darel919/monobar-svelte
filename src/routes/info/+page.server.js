@@ -14,8 +14,7 @@ export async function load({ url, fetch }) {
             }
         };
     }
-    
-    const serverData = await getItemInfoData(id, fetch);
+      const serverData = await getItemInfoData(id, fetch, url);
     
     return {
         serverData,

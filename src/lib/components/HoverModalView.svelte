@@ -29,6 +29,9 @@
   export let hoveredItemId: string | null = null;
   const dispatch = createEventDispatcher();
 
+  const MODAL_WIDTH = 300;
+  const MODAL_HEIGHT = 100;
+
   function closeModal() {
     dispatch('close');
   }
@@ -54,17 +57,31 @@
 </script>
 
 {#if isOpen}  
-{#if isInPlace}
-  <div 
-    class="absolute bg-white dark:bg-gray-800 rounded-lg shadow-xl w-[360px] overflow-hidden z-50"
-    style={`${hoveredItemId
+{#if isInPlace}  
+<div 
+    class="absolute bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden z-[9999]"
+    style={`width: ${MODAL_WIDTH}px; ${hoveredItemId
       ? (() => {
           const hoveredElement = document.querySelector(`[data-item-id="${hoveredItemId}"]`);
           if (hoveredElement) {
             const rect = hoveredElement.getBoundingClientRect();
             const centerX = rect.left + (rect.width / 2);
-            const centerY = rect.top + (rect.height / 2);
-            return `position: fixed; left: ${Math.max(10, centerX - 180)}px; top: ${Math.max(10, centerY - 150)}px;`;
+            const centerY = rect.top + (rect.height / 2);              
+            const modalWidth = MODAL_WIDTH;
+            const modalHeight = MODAL_HEIGHT;
+            const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
+            const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 1080;
+              let left = Math.max(20, centerX - (modalWidth / 2));
+            let top = Math.max(20, centerY - (modalHeight / 2));
+            
+            if (left + modalWidth > viewportWidth - 20) {
+              left = viewportWidth - modalWidth - 20;
+            }
+            if (top + modalHeight > viewportHeight - 20) {
+              top = viewportHeight - modalHeight - 20;
+            }
+            
+            return `position: fixed; left: ${left}px; top: ${top}px;`;
           }
           return `position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);`;
         })()
@@ -112,16 +129,32 @@
   </div>
 {:else}
 <div 
-    class="fixed inset-0 z-50 pointer-events-none"
+    class="fixed inset-0 z-[9999] pointer-events-none"
     transition:fade
     on:keydown={handleKeydown}
     on:mouseenter
     on:mouseleave
     role="presentation"
-  >    
-    <div 
-      class="absolute bg-white dark:bg-gray-800 rounded-lg shadow-xl w-[360px] overflow-hidden"
-      style={`left: ${Math.max(10, Math.min(mouseX + 20, (typeof window !== 'undefined' ? window.innerWidth : 1920) - 500))}px; top: ${Math.max(10, Math.min(mouseY + 20, (typeof window !== 'undefined' ? window.innerHeight : 1080) - 300))}px; pointer-events: auto;`}
+  >      
+  <div 
+      class="absolute bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden"
+      style={`width: ${MODAL_WIDTH}px; left: ${(() => {
+        const modalWidth = MODAL_WIDTH;
+        const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
+        let left = mouseX + 20;        
+        if (left + modalWidth > viewportWidth - 20) {
+          left = mouseX - modalWidth - 20;
+        }        
+        return Math.max(20, left);
+      })()}px; top: ${(() => {        
+        const modalHeight = MODAL_HEIGHT;
+        const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 1080;
+        let top = mouseY + 20;        
+        if (top + modalHeight > viewportHeight - 20) {
+          top = mouseY - modalHeight - 20;
+        }
+        return Math.max(20, top);
+      })()}px; pointer-events: auto;`}
       role="document"
     >
       {#if item}

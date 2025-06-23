@@ -8,7 +8,7 @@
     $: type = data.type;
 </script>
 
-<main class="flex flex-col min-h-screen px-8">
+<main class="flex flex-col min-h-screen px-8 pt-20">
 
     {#if serverData}
 

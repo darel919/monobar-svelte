@@ -32,4 +32,9 @@
 	:global(.text-base-content) {
 		color: hsl(var(--bc, 220 9% 46%));
 	}
+
+	/* Ensure smooth scrolling and backdrop blur support */
+	:global(html) {
+		scroll-behavior: smooth;
+	}
 </style>

@@ -1,5 +1,6 @@
 <script>
     import LibraryViewDisplay from '$lib/components/LibraryViewDisplay.svelte';
+  import StopState from '$lib/components/StopState.svelte';
     
     export let data;
     
@@ -8,17 +9,19 @@
     $: libraryComingSoon = serverData?.data?.comingSoon || [];
 </script>
 
-<main class="flex flex-col min-h-screen p-8">
+<main class="flex flex-col min-h-screen p-8 pt-20">
     <section class="mb-8">
         <h1 class="text-4xl">Home</h1>
         <!-- <p class="text-lg opacity-75">Media Library Display</p> -->
     </section>
 
     {#if libraryCategories.length === 0}
-        <section class="mb-8">
-            <h2 class="text-2xl mb-4">No Data Available</h2>
-            <p class="text-lg opacity-75">Please check your server connection or data source.</p>
-        </section>
+    <StopState
+        action="reload"
+        message="moNobar is not available."
+        actionDesc="Backend returns no data. Please try again in a little while."
+        actionText="Reload">
+        </StopState>
     {/if}
     
     {#each libraryCategories as category}

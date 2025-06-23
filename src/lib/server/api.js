@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { dev } from '$app/environment';
 import { APP_PATH, DEV_API_BASE_URL, PROD_API_BASE_URL } from '$env/static/private';
+import { getBaseEnvironment } from '$lib/utils/environment.js';
 
 const BASE_API_PATH = (() => {
     const path = APP_PATH;
@@ -8,7 +9,7 @@ const BASE_API_PATH = (() => {
     return `${endpoint}${path}`;
 })();
 
-export async function getHomeData(fetch) {
+export async function getHomeData(fetch, url) {
     console.log('Fetching data from:', BASE_API_PATH);
     try {
         const response = await fetch(`${BASE_API_PATH}`, {
@@ -16,6 +17,7 @@ export async function getHomeData(fetch) {
             headers: {
                 'Content-Type': 'application/json',
                 'User-Agent': 'dp-Monobar',
+                'X-Environment': getBaseEnvironment(url)
             }
         });
         
@@ -36,7 +38,7 @@ export async function getHomeData(fetch) {
         };
     }
 }
-export async function getItemInfoData(id, fetch) {
+export async function getItemInfoData(id, fetch, url) {
     console.log('Fetching item data from:', BASE_API_PATH);
     if(!id) {
         return {
@@ -50,6 +52,7 @@ export async function getItemInfoData(id, fetch) {
             headers: {
                 'Content-Type': 'application/json',
                 'User-Agent': 'dp-Monobar',
+                'X-Environment': getBaseEnvironment(url)
             }
         });
         
@@ -69,7 +72,7 @@ export async function getItemInfoData(id, fetch) {
         };
     }
 }
-export async function getItemWatchData(id, fetch) {
+export async function getItemWatchData(id, fetch, url) {
     console.log('Fetching item watch data from:', BASE_API_PATH);
     if(!id) {
         return {
@@ -83,6 +86,7 @@ export async function getItemWatchData(id, fetch) {
             headers: {
                 'Content-Type': 'application/json',
                 'User-Agent': 'dp-Monobar',
+                'X-Environment': getBaseEnvironment(url)
             }
         });
         
@@ -102,7 +106,7 @@ export async function getItemWatchData(id, fetch) {
         };
     }
 }
-export async function getLibraryData(id, fetch) {
+export async function getLibraryData(id, fetch, url) {
     console.log('Fetching library data from:', BASE_API_PATH);
     if(!id) {
         return {
@@ -116,6 +120,76 @@ export async function getLibraryData(id, fetch) {
             headers: {
                 'Content-Type': 'application/json',
                 'User-Agent': 'dp-Monobar',
+                'X-Environment': getBaseEnvironment(url)
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return {
+            data
+        };
+    } catch (error) {
+        console.error('Failed to fetch data:', error);
+        return {
+            data: null,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+export async function getLibraryTypeData(options = {}, fetch, url) {
+    console.log('Fetching library type data from:', BASE_API_PATH);
+    const params = new URLSearchParams();
+    if (options.id) params.append('id', options.id);
+    if (options.sortBy) params.append('sortBy', options.sortBy);
+    if (options.sortOrder) params.append('sortOrder', options.sortOrder);
+    const query = params.toString();
+    
+    try {
+        const response = await fetch(`${BASE_API_PATH}/library/type?${query}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'dp-Monobar',
+                'X-Environment': getBaseEnvironment(url)
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return {
+            data
+        };
+    } catch (error) {
+        console.error('Failed to fetch data:', error);
+        return {
+            data: null,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+export async function getGenreData(options = {}, fetch, url) {
+    console.log('Fetching genre data from:', BASE_API_PATH);
+    const params = new URLSearchParams();
+    if (options.genreId) params.append('id', options.genreId);
+    if (options.sortBy) params.append('sortBy', options.sortBy);
+    if (options.sortOrder) params.append('sortOrder', options.sortOrder);
+    const query = params.toString();
+    console.log(query)
+    
+    try {
+        const response = await fetch(`${BASE_API_PATH}/library/genre?${query}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'dp-Monobar',
+                'X-Environment': getBaseEnvironment(url)
             }
         });
         

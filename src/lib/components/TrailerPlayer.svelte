@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
+    import ImageComponent from './ImageComponent.svelte';
     
     export let ytId: string = '';
     export let mute: boolean = true;
@@ -125,12 +126,14 @@
     <div 
         bind:this={containerRef}
         class="w-full h-full relative"
-    >
-        <img
+    >        <ImageComponent
             src={backdrop}
-            loading="eager"
             alt="Backdrop"
-            class={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${!videoLoaded || videoEnded || !isInViewport || !enabled ? 'opacity-100' : 'opacity-0'}`}
+            loading="eager"
+            containerClass="absolute inset-0"
+            imageClass={`transition-opacity duration-700 ${!videoLoaded || videoEnded || !isInViewport || !enabled ? 'opacity-100' : 'opacity-0'}`}
+            borderRadius="rounded-none"
+            showSkeleton={false}
         />
           {#if ytId && enabled && !videoEnded && isInViewport}
             <div 

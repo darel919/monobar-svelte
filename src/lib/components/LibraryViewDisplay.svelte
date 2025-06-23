@@ -1,7 +1,8 @@
-<script lang="ts">
+<script lang="ts">    
     import { onMount } from 'svelte';
     import { browser } from '$app/environment';
     import HoverModalView from './HoverModalView.svelte';
+    import ImageComponent from './ImageComponent.svelte';
 
     interface LibraryItem {
         Id?: string;
@@ -35,7 +36,8 @@
     let hoverTimeout: number | null = null;
     let mousePosition = { x: 0, y: 0 };
     let isScrolling: boolean = false;
-    let scrollTimeout: number | null = null;    onMount(() => {
+    let scrollTimeout: number | null = null;    
+    onMount(() => {
         const checkWidth = () => {
             if (window.innerWidth < 540) {
                 responsiveViewMode = "poster grid";
@@ -62,42 +64,12 @@
             window.removeEventListener('resize', checkWidth);
             window.removeEventListener('scroll', handleScroll);
         };
-    });
-
-    $: {
+    });    $: {
         if (browser && data?.length) {
             imgLoaded = {};
             imgError = {};
-            preloadImages();
         }
     }
-
-    function preloadImages(): void {
-        if (!browser || !data?.length) return;
-        
-        const preloadedImages: Record<string, HTMLImageElement> = {};
-        data.forEach((item) => {
-            const itemId = item.Id || item.id || item.Name || '';
-            const imgSrc = getImageSource(item);
-            
-            if (imgSrc) {
-                const img = new window.Image();
-                img.src = imgSrc;
-                img.onload = () => {
-                    imgLoaded = { ...imgLoaded, [itemId]: true };
-                    imgError = { ...imgError, [itemId]: false };
-                };
-                img.onerror = () => {
-                    imgLoaded = { ...imgLoaded, [itemId]: true };
-                    imgError = { ...imgError, [itemId]: true };
-                };
-                preloadedImages[itemId] = img;
-            } else {
-                imgLoaded = { ...imgLoaded, [itemId]: true };
-                imgError = { ...imgError, [itemId]: true };
-            }
-        });
-    }   
      function getImageSource(item: LibraryItem): string | null {
         if (!item) return null;
         
@@ -222,29 +194,22 @@
         {#each data as item, index}
             {@const itemId = item.Id || item.id || item.Name || index.toString()}
             {@const posterImgSrc = getImageSource(item)}
-            {@const uniqueKey = `${itemId}-${item.Type || ''}-${index}`}
-            
-            <a
+            {@const uniqueKey = `${itemId}-${item.Type || ''}-${index}`}            <a
                 href={disableClick ? undefined : `/info?id=${itemId}&type=${item.Type}`}
                 class={`flex flex-col items-center ${itemHoverClass}`}
                 title={item.Overview || item.overview}
                 style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
             >
                 <div class="relative w-full mb-4 aspect-[2/3]">
-                    {#if !imgLoaded[itemId]}
-                        <div class="skeleton absolute top-0 left-0 w-full h-full rounded-lg opacity-100 transition-opacity"></div>
-                    {/if}
-                    {#if imgLoaded[itemId] && !imgError[itemId] && posterImgSrc}
-                        <img
-                            loading="lazy"
+                    {#if posterImgSrc && !imgError[itemId]}                        <ImageComponent 
                             src={posterImgSrc}
                             alt={item.Name || item.title || 'Image'}
-                            class={`h-full w-full object-cover rounded-lg aspect-[2/3] transition-opacity duration-200 ${imgLoaded[itemId] && !imgError[itemId] ? 'opacity-100' : 'opacity-0'}`}
-                            on:load={() => handleImgLoad(itemId)}
-                            on:error={() => handleImgError(itemId)}
+                            aspectRatio="2/3"
+                            borderRadius="rounded-lg"
+                            onload={() => handleImgLoad(itemId)}
+                            onerror={() => handleImgError(itemId)}
                         />
-                    {/if}
-                    {#if imgLoaded[itemId] && (imgError[itemId] || !posterImgSrc)}
+                    {:else}
                         <div class="flex items-center justify-center w-full h-full bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
                     {/if}
                 </div>
@@ -261,9 +226,7 @@
     </section>
 {:else if responsiveViewMode === "default_thumb_library"}
     <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">        {#each data as item}
-            {@const itemId = item.Id || item.id || item.Name || ''}
-            
-            <a
+            {@const itemId = item.Id || item.id || item.Name || ''}            <a
                 href={disableClick ? undefined : `/info?id=${item.Id}&type=${item.Type}`}
                 class={`flex flex-col items-center ${itemHoverClass}`}
                 title={item.Overview}
@@ -271,21 +234,15 @@
                 on:mouseenter={(e) => handleItemHover(item, e)}
                 on:mouseleave={handleItemLeave}
             >
-                <div class="relative w-full aspect-[16/9]">
-                    {#if !imgLoaded[itemId]}
-                        <div class="skeleton absolute top-0 left-0 w-full h-full rounded-lg opacity-100 transition-opacity"></div>
-                    {/if}
-                    {#if imgLoaded[itemId] && !imgError[itemId] && (item.thumbPath || item.ImageTags?.Primary)}
-                        <img
-                            loading="lazy"
-                            src={item.thumbPath || item.ImageTags?.Primary}
+                <div class="relative w-full aspect-[16/9]">                    {#if (item.thumbPath || item.ImageTags?.Primary)}                        <ImageComponent 
+                            src={item.thumbPath || item.ImageTags?.Primary || ''}
                             alt={item.Name || 'Image'}
-                            class={`h-full w-full object-cover rounded-sm transition-opacity duration-200 ${imgLoaded[itemId] && !imgError[itemId] ? 'opacity-100' : 'opacity-0'}`}
-                            on:load={() => handleImgLoad(itemId)}
-                            on:error={() => handleImgError(itemId)}
+                            aspectRatio="16/9"
+                            borderRadius="rounded-sm"
+                            onload={() => handleImgLoad(itemId)}
+                            onerror={() => handleImgError(itemId)}
                         />
-                    {/if}
-                    {#if imgLoaded[itemId] && (imgError[itemId] || (!item.thumbPath && !item.ImageTags?.Primary))}
+                    {:else}
                         <div class="flex flex-col items-center justify-center w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center">
                             {#if item.ImageTags?.Logo}
                                 <img src={item.ImageTags.Logo} alt={item.Name} class="w-fit max-h-16 object-contain mb-2" />
@@ -296,16 +253,14 @@
                                 <div>{item.ProductionYear}</div>
                             {/if}
                         </div>
-                    {/if}
-                </div>
+                    {/if}                </div>
             </a>
         {/each}
     </section>
 {:else if responsiveViewMode === "default_thumb_home"}
     <section class="flex overflow-x-auto gap-0 pb-4 scrollbar-hide">        
         {#each data as item}
-            {@const itemId = item.Id || item.id || item.Name || ''}
-              <a
+            {@const itemId = item.Id || item.id || item.Name || ''}            <a
                 href={disableClick ? undefined : `/info?id=${item.Id}&type=${item.Type}`}
                 class={`flex flex-col items-center min-w-[280px] max-w-[280px] ${itemHoverClass} flex-shrink-0`}
                 title={item.Overview}
@@ -313,21 +268,15 @@
                 on:mouseenter={(e) => handleItemHover(item, e)}
                 on:mouseleave={handleItemLeave}
             >
-                <div class="relative w-full aspect-[16/9]">
-                    {#if !imgLoaded[itemId]}
-                        <div class="skeleton absolute top-0 left-0 w-full h-full rounded-none opacity-100 transition-opacity"></div>
-                    {/if}
-                    {#if imgLoaded[itemId] && !imgError[itemId] && (item.thumbPath || item.ImageTags?.Primary)}
-                        <img
-                            loading="lazy"
-                            src={item.thumbPath || item.ImageTags?.Primary}
+                <div class="relative w-full aspect-[16/9]">                    {#if (item.thumbPath || item.ImageTags?.Primary)}                        <ImageComponent 
+                            src={item.thumbPath || item.ImageTags?.Primary || ''}
                             alt={item.Name || 'Image'}
-                            class={`h-full w-full object-cover rounded-none transition-opacity duration-200 ${imgLoaded[itemId] && !imgError[itemId] ? 'opacity-100' : 'opacity-0'}`}
-                            on:load={() => handleImgLoad(itemId)}
-                            on:error={() => handleImgError(itemId)}
+                            aspectRatio="16/9"
+                            borderRadius="rounded-none"
+                            onload={() => handleImgLoad(itemId)}
+                            onerror={() => handleImgError(itemId)}
                         />
-                    {/if}
-                    {#if imgLoaded[itemId] && (imgError[itemId] || (!item.thumbPath && !item.ImageTags?.Primary))}
+                    {:else}
                         <div class="flex flex-col items-center justify-center w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center">
                             {#if item.ImageTags?.Logo}
                                 <img src={item.ImageTags.Logo} alt={item.Name} class="w-fit max-h-16 object-contain mb-2" />
@@ -336,8 +285,8 @@
                             {/if}
                             {#if item.ProductionYear}
                                 <div>{item.ProductionYear}</div>
-                            {/if}                        
-                        </div>                    
+                            {/if}
+                        </div>
                     {/if}
                 </div>
             </a>
@@ -371,22 +320,15 @@
                     class={`flex flex-col items-center w-full ${isHovered ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
                     title={item.Overview}
                     style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
-                >
-                    <div class="relative w-full aspect-[16/9]">
-                        {#if !imgLoaded[itemId]}
-                            <div class="skeleton absolute top-0 left-0 w-full h-full rounded-none opacity-100 transition-opacity"></div>
-                        {/if}
-                        {#if imgLoaded[itemId] && !imgError[itemId] && (item.ImageTags?.Thumb)}
-                            <img
-                                loading="lazy"
-                                src={item.ImageTags?.Thumb}
+                >                    <div class="relative w-full aspect-[16/9]">                        {#if item.ImageTags?.Thumb}                            <ImageComponent 
+                                src={item.ImageTags.Thumb}
                                 alt={item.Name || 'Image'}
-                                class={`h-full w-full object-cover rounded-none transition-opacity duration-200 ${imgLoaded[itemId] && !imgError[itemId] ? 'opacity-100' : 'opacity-0'}`}
-                                on:load={() => handleImgLoad(itemId)}
-                                on:error={() => handleImgError(itemId)}
+                                aspectRatio="16/9"
+                                borderRadius="rounded-none"
+                                onload={() => handleImgLoad(itemId)}
+                                onerror={() => handleImgError(itemId)}
                             />
-                        {/if}
-                        {#if imgLoaded[itemId] && (imgError[itemId] || (!item.ImageTags?.Thumb))}
+                        {:else}
                             <div class="flex flex-col items-center justify-center w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center">
                                 {#if item.ImageTags?.Logo}
                                     <img src={item.ImageTags.Logo} alt={item.Name} class="w-fit max-h-16 object-contain mb-2" />
@@ -395,8 +337,8 @@
                                 {/if}
                                 {#if item.ProductionYear}
                                     <div>{item.ProductionYear}</div>
-                                {/if}                        
-                            </div>                    
+                                {/if}
+                            </div>
                         {/if}
                     </div>
                 </a>
@@ -408,28 +350,20 @@
     <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
         {#each data as item}
             {@const itemId = item.Id || item.id || item.Name || ''}
-            
-            <a
+              <a
                 href={disableClick ? undefined : `/info?id=${item.Id}&type=${item.Type}`}
                 class={`flex flex-col items-center ${itemHoverClass}`}
                 title={item.Overview}
                 style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
             >
-                <div class="relative w-full mb-2 aspect-[2/1]">
-                    {#if !imgLoaded[itemId]}
-                        <div class="skeleton absolute top-0 left-0 w-full h-full rounded-lg opacity-100 transition-opacity"></div>
-                    {/if}
-                    {#if imgLoaded[itemId] && !imgError[itemId] && item.thumbPath}
-                        <img
-                            loading="lazy"
+                <div class="relative w-full mb-2 aspect-[2/1]">                    {#if item.thumbPath}                        <ImageComponent 
                             src={item.thumbPath}
                             alt={item.Name || 'Image'}
-                            class={`w-full aspect-[2/1] object-cover rounded-lg transition-opacity duration-200 ${imgLoaded[itemId] && !imgError[itemId] ? 'opacity-100' : 'opacity-0'}`}
-                            on:load={() => handleImgLoad(itemId)}
-                            on:error={() => handleImgError(itemId)}
+                            aspectRatio="2/1"
+                            onload={() => handleImgLoad(itemId)}
+                            onerror={() => handleImgError(itemId)}
                         />
-                    {/if}
-                    {#if imgLoaded[itemId] && (imgError[itemId] || !item.thumbPath)}
+                    {:else}
                         <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
                     {/if}
                 </div>
