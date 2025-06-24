@@ -209,3 +209,47 @@ export async function getGenreData(options = {}, fetch, url) {
         };
     }
 }
+
+export async function searchData(query, type, includeExternal, fetch, url) {
+    console.log('Searching data from:', BASE_API_PATH);
+    if (!query || !query.trim()) {
+        return {
+            data: [],
+            error: null
+        };
+    }
+
+    try {
+        let searchUrl = `${BASE_API_PATH}/search?q=${encodeURIComponent(query.trim())}`;
+        if (includeExternal) {
+            searchUrl += `&includeExternal=true`;
+        }
+        if (type) {
+            searchUrl += `&type=${encodeURIComponent(type)}`;
+        }
+
+        const response = await fetch(searchUrl, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'dp-Monobar',
+                'X-Environment': getBaseEnvironment(url)
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return {
+            data
+        };
+    } catch (error) {
+        console.error('Failed to search data:', error);
+        return {
+            data: [],
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}

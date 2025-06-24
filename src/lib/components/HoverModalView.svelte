@@ -1,7 +1,8 @@
-<script lang="ts">
-  import { onMount, createEventDispatcher } from 'svelte';
+<script lang="ts">  import { onMount, createEventDispatcher } from 'svelte';
   import { fade } from 'svelte/transition';
   import YtPlayer from './TrailerPlayer.svelte';
+  import { useSettingsStore } from '$lib/stores/settings';
+  import { browser } from '$app/environment';
   interface LibraryItem {
     Id?: string;
     id?: string;
@@ -14,21 +15,26 @@
     overview?: string;
     title?: string;
     thumbPath?: string;
-    posterPath?: string;
-    ImageTags?: {
+    posterPath?: string;    ImageTags?: {
       Primary?: string;
       Logo?: string;
+      Backdrop?: string;
+      Thumb?: string;
     };
     RemoteTrailers?: {
       Name: string;
       Url: string;
     }[];
-  }
-  export let isOpen: boolean = false;
+  }  export let isOpen: boolean = false;
   export let item: LibraryItem | null = null;
   export let modalMode: 'mini' | 'full' = 'mini';
   export let hoveredItemId: string | null = null;
   const dispatch = createEventDispatcher();
+  let settingsStore: ReturnType<typeof useSettingsStore> | null = null;
+  
+  onMount(() => {
+    settingsStore = useSettingsStore();
+  });
 
   const MODAL_WIDTH = 300;
   const MODAL_HEIGHT = 320;  
@@ -116,17 +122,16 @@
       transition:fade  
   >
     {#if item}
-      {#if modalMode === 'mini'}        
-      <div class="relative w-full h-full">
+      {#if modalMode === 'mini'}
+        <div class="relative w-full h-full">
           <div class="absolute inset-0">
             <YtPlayer 
               ytId=""
               trailerData={item.RemoteTrailers || []}
               mute={false}
-              enabled={false}
+              enabled={browser && settingsStore ? settingsStore.get().playTrailersAutomatically : false}
               loop={false}
-              backdrop={item.posterPath || item.thumbPath || item.ImageTags?.Primary}
-              on:close={closeModal}
+              backdrop={item.ImageTags?.Backdrop || item.ImageTags?.Thumb}
             />
           </div>
           <div class="absolute bottom-0 left-0 right-0 bg-gray-900 bg-opacity-90 text-white p-2">
@@ -135,17 +140,16 @@
             </h2>
           </div>
         </div>
-      {:else}        
-      <div class="relative w-full h-full">          
-        <div class="absolute inset-0">
-            <YtPlayer 
+      {:else}
+        <div class="relative w-full h-full">
+          <div class="absolute inset-0">
+            <YtPlayer
               ytId=""
               trailerData={item.RemoteTrailers || []}
               mute={false}
-              enabled={true}
+              enabled={browser && settingsStore ? settingsStore.get().playTrailersAutomatically : false}
               loop={false}
-              backdrop={item.posterPath || item.thumbPath || item.ImageTags?.Primary}
-              on:close={closeModal}
+              backdrop={item.ImageTags?.Backdrop || item.ImageTags?.Thumb}
             />
           </div>
           <a href={`/info?id=${item.Id}&type=${item.Type}`} class="absolute bottom-0 left-0 right-0 backdrop-blur-3xl text-white px-4 py-2">
@@ -159,5 +163,5 @@
         </div>
       {/if}      
     {/if}
-</div>
+  </div>
 {/if}

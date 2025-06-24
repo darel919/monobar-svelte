@@ -14,6 +14,8 @@ Props:
     import HoverModalView from './HoverModalView.svelte';
     import ImageComponent from './ImageComponent.svelte';
 
+
+
     interface LibraryItem {
         Id?: string;
         id?: string;
@@ -74,13 +76,14 @@ Props:
             window.removeEventListener('resize', checkWidth);
             window.removeEventListener('scroll', handleScroll);
         };
-    });    $: {
+    });    
+    $: {
         if (browser && data?.length) {
             imgLoaded = {};
             imgError = {};
         }
     }
-     function getImageSource(item: LibraryItem): string | null {
+    function getImageSource(item: LibraryItem): string | null {
         if (!item) return null;
         
         if (responsiveViewMode === "poster grid") {
@@ -113,7 +116,8 @@ Props:
         
         modalItem = item;
         modalOpen = true;
-    }    function handleItemHover(item: LibraryItem, event: MouseEvent): void {
+    }    
+    function handleItemHover(item: LibraryItem, event: MouseEvent): void {
         if (disableClick || isScrolling) return;
         
         if (hoverTimeout) {
@@ -125,7 +129,8 @@ Props:
         hoveredItemId = itemId;
         modalItem = item;
         modalOpen = true;
-    }    function handleItemLeave(): void {
+    }    
+    function handleItemLeave(): void {
         if (hoverTimeout) {
             clearTimeout(hoverTimeout);
             hoverTimeout = null;
@@ -141,7 +146,8 @@ Props:
             clearTimeout(hoverTimeout);
             hoverTimeout = null;
         }
-    }    function handleModalLeave(): void {
+    }    
+    function handleModalLeave(): void {
         hoverTimeout = setTimeout(() => {
             hoveredItemId = null;
             modalOpen = false;
@@ -160,6 +166,7 @@ Props:
     }
 
     const itemHoverClass = "transition-transform duration-200 ease-in-out hover:-translate-y-1 p-1";
+    // console.log(item)
 </script>
 
 {#if !data?.length}
@@ -171,7 +178,8 @@ Props:
         {#each data as item, index}
             {@const itemId = item.Id || item.id || item.Name || index.toString()}
             {@const posterImgSrc = getImageSource(item)}
-            {@const uniqueKey = `${itemId}-${item.Type || ''}-${index}`}            <a
+            {@const uniqueKey = `${itemId}-${item.Type || ''}-${index}`}            
+            <a
                 href={disableClick ? undefined : `/info?id=${itemId}&type=${item.Type}`}
                 class={`flex flex-col items-center ${itemHoverClass}`}
                 title={item.Overview || item.overview}
@@ -334,13 +342,86 @@ Props:
             </div>
         {/each}
     </section>
+{:else if responsiveViewMode === 'default_search_genre'}
+    <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
+        {#each data as item}
+            {@const itemId = item.Id || item.id || item.Name || ''}
+              <a
+                href={disableClick ? undefined : `/library?id=${item.id}&type=${item.type}`}
+                class={`flex flex-col items-center ${itemHoverClass}`}
+                title={item.Overview}
+                style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
+            >
+                <!-- <div class="relative w-full mb-2 aspect-[2/1]">                    
+                    {#if item.thumbPath}                        
+                        <ImageComponent 
+                            src={item.ImageTags?.Backdrop}
+                            alt={item.Name || 'Image'}
+                            aspectRatio="2/1"
+                            onload={() => handleImgLoad(itemId)}
+                            onerror={() => handleImgError(itemId)}
+                        />
+                    {:else}
+                        <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
+                    {/if}
+                </div> -->
+                <section class="flex flex-col text-center items-center w-full">
+                    {#if item.OriginalTitle}
+                        <h2 class="w-full text-lg font-bold truncate">{item.OriginalTitle}</h2>
+                    {:else}
+                        <h2 class="w-full text-lg font-bold truncate">{item.Name}</h2>
+                    {/if}
+                    {#if item.ProductionYear}
+                        <p class="text-xs opacity-50">{item.ProductionYear}</p>
+                    {/if}                
+                </section>
+            </a>
+        {/each}
+    </section>
+{:else if responsiveViewMode === 'default_search'}
+    <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
+        {#each data as item}
+        {console.log(item)}
+            {@const itemId = item.Id || item.id || item.Name || ''}
+              <a
+                href={disableClick ? undefined : `/info?id=${item.id}&type=${item.type}`}
+                class={`flex flex-col items-center ${itemHoverClass}`}
+                title={item.Overview}
+                style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
+            >
+                <div class="relative w-full mb-2 aspect-[2/1]">                    
+                    {#if item.thumbPath}                        
+                        <ImageComponent 
+                            src={item.thumbPath}
+                            alt={item.Name || 'Image'}
+                            aspectRatio="2/1"
+                            onload={() => handleImgLoad(itemId)}
+                            onerror={() => handleImgError(itemId)}
+                        />
+                    {:else}
+                        <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
+                    {/if}
+                </div>
+                <section class="flex flex-col text-center items-center w-full">
+                    {#if item.OriginalTitle}
+                        <h2 class="w-full text-lg font-bold truncate">{item.OriginalTitle}</h2>
+                    {:else}
+                        <h2 class="w-full text-lg font-bold truncate">{item.Name}</h2>
+                    {/if}
+                    {#if item.ProductionYear}
+                        <p class="text-xs opacity-50">{item.ProductionYear}</p>
+                    {/if}                
+                </section>
+            </a>
+        {/each}
+    </section>
 {:else}
     <!-- Default fallback view -->
     <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
         {#each data as item}
             {@const itemId = item.Id || item.id || item.Name || ''}
               <a
-                href={disableClick ? undefined : `/info?id=${item.Id}&type=${item.Type}`}
+                href={disableClick ? undefined : `/info?id=${item.id}&type=${item.type}`}
                 class={`flex flex-col items-center ${itemHoverClass}`}
                 title={item.Overview}
                 style={disableClick ? 'cursor: default; pointer-events: none;' : ''}

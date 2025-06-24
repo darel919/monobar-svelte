@@ -11,21 +11,29 @@ Props:
 - loop: Whether to loop the video (defaults to true)
 -->
 
-<script lang="ts">
-    import { onMount, onDestroy } from 'svelte';
+<script lang="ts">    import { onMount, onDestroy } from 'svelte';
     import ImageComponent from './ImageComponent.svelte';
+    import { useSettingsStore } from '$lib/stores/settings';
+    import { browser } from '$app/environment';
     
     interface TrailerData {
         Name: string;
         Url: string;
     }
     
-    export let ytId: string = '';
-    export let trailerData: TrailerData[] = [];
+    export let ytId: string = '';    export let trailerData: TrailerData[] = [];
     export let mute: boolean = true;
     export let enabled: boolean = true;
     export let backdrop: string = '';
-    export let loop: boolean = true;        let videoLoaded = false;
+    export let loop: boolean = true;
+    
+    let settingsStore: ReturnType<typeof useSettingsStore> | null = null;
+    
+    onMount(() => {
+        settingsStore = useSettingsStore();
+    });
+    
+    let videoLoaded = false;
     let videoEnded = false;
     let isInViewport = false;
     let iframeRef: HTMLIFrameElement;
@@ -33,14 +41,14 @@ Props:
     let observer: IntersectionObserver;
     let currentYtId = '';
     let selectedYtId = '';
-    let playerRef: any = null;
+    let playerRef: any = null;    $: isTrailerEnabled = enabled && (browser && settingsStore ? settingsStore.get().playTrailersAutomatically : false);
 
     function extractYouTubeId(url: string): string {
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
         const match = url.match(regExp);
         return (match && match[2].length === 11) ? match[2] : '';
     }    function selectRandomTrailer(): string {
-        if (enabled && trailerData && trailerData.length > 0) {
+        if (trailerData && trailerData.length > 0) {
             const randomIndex = Math.floor(Math.random() * trailerData.length);
             const selectedTrailer = trailerData[randomIndex];
             return extractYouTubeId(selectedTrailer.Url);
@@ -49,12 +57,10 @@ Props:
     }
 
     $: {
-        if (enabled && trailerData && trailerData.length > 0) {
+        if (trailerData && trailerData.length > 0) {
             selectedYtId = selectRandomTrailer();
         } else if (ytId) {
             selectedYtId = ytId;
-        } else {
-            selectedYtId = 'dQw4w9WgXcQ';
         }
     }
 
@@ -70,10 +76,8 @@ Props:
         currentYtId = selectedYtId;
     }
 
-    $: if (!backdrop) {
-        console.warn('No backdrop provided, component will not render');
-    }    onMount(() => {
-        if (!enabled || !backdrop) return;
+    onMount(() => {
+        if (!backdrop) return;
 
         if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
             const tag = document.createElement('script');
@@ -133,17 +137,16 @@ Props:
     <div 
         bind:this={containerRef}
         class="w-full h-full relative"
-    >        
-    <ImageComponent
+    >        <ImageComponent
             src={backdrop}
             alt="Backdrop"
             loading="eager"
             containerClass="absolute inset-0"
-            imageClass={`transition-opacity duration-700 ${!videoLoaded || videoEnded || !isInViewport || !enabled ? 'opacity-100' : 'opacity-0'}`}
+            imageClass={`transition-opacity duration-700 ${!videoLoaded || videoEnded || !isInViewport || !isTrailerEnabled ? 'opacity-100' : 'opacity-0'}`}
             borderRadius="rounded-none"
             showSkeleton={false}
         />          
-        {#if selectedYtId && enabled && !videoEnded && isInViewport}
+        {#if selectedYtId && isTrailerEnabled && !videoEnded && isInViewport}
             <div 
                 class={`absolute inset-0 w-full h-full transition-opacity duration-700 ${videoLoaded ? 'opacity-100' : 'opacity-0'}`}
             >

@@ -19,14 +19,13 @@ Props:
     import { onDestroy } from 'svelte';
     import { page } from '$app/state';
     import { getBaseEnvironment } from '$lib/utils/environment.js';
-    
-    export let src: string | null = null;
+      export let src: string | null = null;
     export let alt: string;
     export let loading: 'lazy' | 'eager' = 'lazy';    
     export let aspectRatio: string = '16/9';
     export let borderRadius: string = 'rounded-lg';
-    export let containerClass: string = '';
-    export let imageClass: string = '';    
+    export const containerClass: string = '';
+    export const imageClass: string = '';    
     export let withCredentials: boolean = false;
     export let headers: { [key: string]: string } = {};
     export let showSkeleton: boolean = true;

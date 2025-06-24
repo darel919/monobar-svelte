@@ -62,7 +62,7 @@ import { LibraryViewDisplay } from '$lib';
 
 </main>
 {:else}
-<main class="flex flex-col min-h-screen p-8 pt-4">
+<main class="flex flex-col min-h-screen relative p-8 mt-16">
 
 
     {#if serverData && serverData.content}
