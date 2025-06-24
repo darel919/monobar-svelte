@@ -1,132 +1,101 @@
+<!--
+@component
+YouTube Trailer Player Component with intersection observer and backdrop fallback
+
+Props:
+- ytId: YouTube video ID to play (defaults to '')
+- trailerData: Array of trailer objects with Name and Url properties (defaults to [])
+- mute: Whether to mute the video (defaults to true)
+- enabled: Enable/disable the player functionality (defaults to true)
+- backdrop: Backdrop image URL for fallback display (defaults to '')
+- loop: Whether to loop the video (defaults to true)
+-->
+
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import ImageComponent from './ImageComponent.svelte';
     
+    interface TrailerData {
+        Name: string;
+        Url: string;
+    }
+    
     export let ytId: string = '';
+    export let trailerData: TrailerData[] = [];
     export let mute: boolean = true;
     export let enabled: boolean = true;
     export let backdrop: string = '';
-    export let loop: boolean = true;
+    export let loop: boolean = true;      
     let videoLoaded = false;
     let videoEnded = false;
     let isInViewport = false;
     let iframeRef: HTMLIFrameElement;
-    let playerRef: any = null;
     let containerRef: HTMLDivElement;
     let observer: IntersectionObserver;
     let currentYtId = '';
+    let selectedYtId = '';
+
+    function extractYouTubeId(url: string): string {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : '';
+    }    function selectRandomTrailer(): string {
+        if (enabled && trailerData && trailerData.length > 0) {
+            const randomIndex = Math.floor(Math.random() * trailerData.length);
+            const selectedTrailer = trailerData[randomIndex];
+            return extractYouTubeId(selectedTrailer.Url);
+        }
+        return '';
+    }
+
+    $: {
+        if (enabled && trailerData && trailerData.length > 0) {
+            selectedYtId = selectRandomTrailer();
+        } else if (ytId) {
+            selectedYtId = ytId;
+        } else {
+            selectedYtId = 'dQw4w9WgXcQ';
+        }
+    }
 
     $: if (!backdrop) {
         console.warn('No backdrop provided, component will not render');
-    }
-
-    $: if (ytId !== currentYtId) {
-        resetPlayer();
-        currentYtId = ytId;
-    }
-
-    function resetPlayer() {
-        if (playerRef && playerRef.destroy) {
-            playerRef.destroy();
-            playerRef = null;
-        }
+    }    $: if (selectedYtId !== currentYtId) {
         videoLoaded = false;
         videoEnded = false;
-        
-        if (ytId && enabled && isInViewport && iframeRef) {
-            setTimeout(() => createPlayer(), 100);
-        }
+        currentYtId = selectedYtId;
     }
 
     $: if (!backdrop) {
         console.warn('No backdrop provided, component will not render');
-    }
-
-    onMount(() => {
+    }    onMount(() => {
         if (!enabled || !backdrop) return;
-        
-        if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
-            const tag = document.createElement('script');
-            tag.src = 'https://www.youtube.com/iframe_api';
-            const firstScriptTag = document.getElementsByTagName('script')[0];
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-        }
-
-        window.onYouTubeIframeAPIReady = () => {};
 
         if (containerRef) {
             observer = new IntersectionObserver(
                 (entries) => {
                     const [entry] = entries;
                     isInViewport = entry.isIntersecting;
-                    
-                    if (playerRef && playerRef.getPlayerState) {
-                        if (entry.isIntersecting && !videoEnded) {
-                            playerRef.playVideo();
-                        } else {
-                            playerRef.pauseVideo();
-                        }
-                    }
                 },
                 { threshold: 0.1 }
             );
             
             observer.observe(containerRef);
-        }
-    });    
+        }    });
+
     onDestroy(() => {
         if (observer && containerRef) {
             observer.unobserve(containerRef);
         }
-        if (playerRef && playerRef.destroy) {
-            playerRef.destroy();
-            playerRef = null;
-        }
-        window.onYouTubeIframeAPIReady = null;
     });
-
-    $: if (ytId && enabled && isInViewport && iframeRef && !playerRef && !videoEnded && ytId === currentYtId) {
-        createPlayer();
-    }
-
-    function createPlayer() {
-        if (!ytId || playerRef || !iframeRef) return;
-        
-        const checkYTApiAndCreatePlayer = () => {
-            if (window.YT && window.YT.Player) {
-                playerRef = new window.YT.Player(iframeRef, {
-                    events: {
-                        onReady: () => {
-                            setTimeout(() => {
-                                videoLoaded = true;
-                            }, 500);
-                        },
-                        onStateChange: (event: any) => {
-                            if (event.data === 0) {
-                                if (loop) {
-                                    playerRef.playVideo();
-                                } else {
-                                    videoEnded = true;
-                                    videoLoaded = false;
-                                }
-                            }
-                        }
-                    }
-                });
-            } else {
-                setTimeout(checkYTApiAndCreatePlayer, 100);
-            }
-        };
-        
-        checkYTApiAndCreatePlayer();
-    }
 </script>
 
 {#if backdrop}
     <div 
         bind:this={containerRef}
         class="w-full h-full relative"
-    >        <ImageComponent
+    >        
+    <ImageComponent
             src={backdrop}
             alt="Backdrop"
             loading="eager"
@@ -134,20 +103,27 @@
             imageClass={`transition-opacity duration-700 ${!videoLoaded || videoEnded || !isInViewport || !enabled ? 'opacity-100' : 'opacity-0'}`}
             borderRadius="rounded-none"
             showSkeleton={false}
-        />
-          {#if ytId && enabled && !videoEnded && isInViewport}
+        />          
+        {#if selectedYtId && enabled && !videoEnded && isInViewport}
             <div 
                 class={`absolute inset-0 w-full h-full transition-opacity duration-700 ${videoLoaded ? 'opacity-100' : 'opacity-0'}`}
             >
-                {#key ytId}
-                    <iframe
+                {#key selectedYtId}                      
+                <iframe
                         bind:this={iframeRef}
-                        class="w-full h-full border-0"
-                        src={`https://www.youtube.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=${mute ? 1 : 0}&controls=0&modestbranding=1&playsinline=1&rel=0&showinfo=0&fs=0&iv_load_policy=3${loop ? `&loop=1&playlist=${ytId}` : ''}`}
+                        class="w-full border-0"
+                        style="height: calc(100% + 60px); margin-top: -64px;"
+                        src={`https://www.youtube.com/embed/${selectedYtId}?autoplay=1&mute=${mute ? 1 : 0}&controls=0&modestbranding=1&playsinline=1&rel=0&showinfo=0&fs=0&iv_load_policy=3&disablekb=1${loop ? `&loop=1&playlist=${selectedYtId}` : ''}`}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowfullscreen
                         title="YouTube video player"
-                    ></iframe>
+                        on:load={() => {
+                            setTimeout(() => {
+                                videoLoaded = true;
+                            }, 1000);
+                        }}
+                    >
+                </iframe>
                 {/key}
             </div>
         {/if}

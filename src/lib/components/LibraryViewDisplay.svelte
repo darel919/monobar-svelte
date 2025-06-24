@@ -1,3 +1,13 @@
+<!--
+@component
+Library View Display Component for rendering collections of media items in various view modes
+
+Props:
+- data: Array of LibraryItem objects to display (defaults to [])
+- viewMode: Display mode string - 'default_thumb_library', 'poster grid', 'default_thumb_home', 'default_thumb_recommendation', 'default_search', 'default_search_genre', 'posterView', 'default_poster_home' (defaults to 'default_thumb_library')
+- disableClick: Disable click interactions on items (defaults to false)
+-->
+
 <script lang="ts">    
     import { onMount } from 'svelte';
     import { browser } from '$app/environment';
@@ -106,53 +116,25 @@
     }    function handleItemHover(item: LibraryItem, event: MouseEvent): void {
         if (disableClick || isScrolling) return;
         
-        if (responsiveViewMode === "default_thumb_home") {
-            if (hoverTimeout) {
-                clearTimeout(hoverTimeout);
-                hoverTimeout = null;
-            }
-            mousePosition = { x: event.clientX, y: event.clientY };
-            modalItem = item;
-            modalOpen = true;
-        } else if (responsiveViewMode === "default_thumb_library") {
-            if (hoverTimeout) {
-                clearTimeout(hoverTimeout);
-                hoverTimeout = null;
-            }
-            mousePosition = { x: event.clientX, y: event.clientY };
-            modalItem = item;
-            modalOpen = true;
-        } else if (responsiveViewMode === "default_thumb_recommendation") {
-            if (hoverTimeout) {
-                clearTimeout(hoverTimeout);
-                hoverTimeout = null;
-            }
-            const itemId = item.Id || item.id || item.Name || '';
-            hoverTimeout = setTimeout(() => {
-                if (!isScrolling) {
-                    hoveredItemId = itemId;
-                    modalItem = item;
-                    modalOpen = true;
-                }
-            }, 600);
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+            hoverTimeout = null;
         }
+        
+        const itemId = item.Id || item.id || item.Name || '';
+        hoveredItemId = itemId;
+        modalItem = item;
+        modalOpen = true;
     }    function handleItemLeave(): void {
-        if (responsiveViewMode === "default_thumb_home" || responsiveViewMode === "default_thumb_library") {
-            hoverTimeout = setTimeout(() => {
-                modalOpen = false;
-                modalItem = null;
-            }, 100);
-        } else if (responsiveViewMode === "default_thumb_recommendation") {
-            if (hoverTimeout) {
-                clearTimeout(hoverTimeout);
-                hoverTimeout = null;
-            }
-            hoverTimeout = setTimeout(() => {
-                hoveredItemId = null;
-                modalOpen = false;
-                modalItem = null;
-            }, 100);
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+            hoverTimeout = null;
         }
+        hoverTimeout = setTimeout(() => {
+            hoveredItemId = null;
+            modalOpen = false;
+            modalItem = null;
+        }, 100);
     }
     function handleModalEnter(): void {
         if (hoverTimeout) {
@@ -160,16 +142,11 @@
             hoverTimeout = null;
         }
     }    function handleModalLeave(): void {
-        if (responsiveViewMode === "default_thumb_home" || responsiveViewMode === "default_thumb_library") {
+        hoverTimeout = setTimeout(() => {
+            hoveredItemId = null;
             modalOpen = false;
             modalItem = null;
-        } else if (responsiveViewMode === "default_thumb_recommendation") {
-            hoverTimeout = setTimeout(() => {
-                hoveredItemId = null;
-                modalOpen = false;
-                modalItem = null;
-            }, 100);
-        }
+        }, 100);
     }
 
     function handleImgLoad(id: string): void {
@@ -225,16 +202,20 @@
         {/each}
     </section>
 {:else if responsiveViewMode === "default_thumb_library"}
-    <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">        {#each data as item}
+    <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">        
+        {#each data as item}
             {@const itemId = item.Id || item.id || item.Name || ''}            <a
                 href={disableClick ? undefined : `/info?id=${item.Id}&type=${item.Type}`}
                 class={`flex flex-col items-center ${itemHoverClass}`}
                 title={item.Overview}
                 style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
+                data-item-id={itemId}
                 on:mouseenter={(e) => handleItemHover(item, e)}
                 on:mouseleave={handleItemLeave}
             >
-                <div class="relative w-full aspect-[16/9]">                    {#if (item.thumbPath || item.ImageTags?.Primary)}                        <ImageComponent 
+                <div class="relative w-full aspect-[16/9]">                    
+                    {#if (item.thumbPath || item.ImageTags?.Primary)}                        
+                        <ImageComponent 
                             src={item.thumbPath || item.ImageTags?.Primary || ''}
                             alt={item.Name || 'Image'}
                             aspectRatio="16/9"
@@ -253,22 +234,26 @@
                                 <div>{item.ProductionYear}</div>
                             {/if}
                         </div>
-                    {/if}                </div>
+                    {/if}                
+                </div>
             </a>
         {/each}
     </section>
 {:else if responsiveViewMode === "default_thumb_home"}
     <section class="flex overflow-x-auto gap-0 pb-4 scrollbar-hide">        
         {#each data as item}
-            {@const itemId = item.Id || item.id || item.Name || ''}            <a
+            {@const itemId = item.Id || item.id || item.Name || ''}              <a
                 href={disableClick ? undefined : `/info?id=${item.Id}&type=${item.Type}`}
                 class={`flex flex-col items-center min-w-[280px] max-w-[280px] ${itemHoverClass} flex-shrink-0`}
                 title={item.Overview}
-                style={disableClick ? 'cursor: default; pointer-events: none;' : ''}                
+                style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
+                data-item-id={itemId}
                 on:mouseenter={(e) => handleItemHover(item, e)}
                 on:mouseleave={handleItemLeave}
             >
-                <div class="relative w-full aspect-[16/9]">                    {#if (item.thumbPath || item.ImageTags?.Primary)}                        <ImageComponent 
+                <div class="relative w-full aspect-[16/9]">                    
+                    {#if (item.thumbPath || item.ImageTags?.Primary)}                        
+                        <ImageComponent 
                             src={item.thumbPath || item.ImageTags?.Primary || ''}
                             alt={item.Name || 'Image'}
                             aspectRatio="16/9"
@@ -294,7 +279,7 @@
     </section>
 {:else if responsiveViewMode === "default_thumb_recommendation"}
     <section 
-        class="flex overflow-x-auto gap-0 pb-4 scrollbar-hide relative"
+        class="flex overflow-x-auto gap-0 pb-4 relative"
         on:scroll={() => {
             isScrolling = true;
             if (scrollTimeout) {
@@ -304,10 +289,11 @@
                 isScrolling = false;
             }, 150);
         }}
-    >        
-        {#each data as item}
+    >          
+    {#each data as item}
             {@const itemId = item.Id || item.id || item.Name || ''}
-            {@const isHovered = hoveredItemId === itemId}              <div
+            {@const isHovered = hoveredItemId === itemId}              
+            <div
                 class={`flex flex-col items-center min-w-[280px] max-w-[280px] ${itemHoverClass} flex-shrink-0 transition-all duration-300 ease-in-out relative`}
                 data-item-id={itemId}
                 role="button"
@@ -317,10 +303,13 @@
             >
                 <a
                     href={disableClick ? undefined : `/info?id=${item.Id}&type=${item.Type}`}
-                    class={`flex flex-col items-center w-full ${isHovered ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+                    class="flex flex-col items-center w-full"
                     title={item.Overview}
                     style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
-                >                    <div class="relative w-full aspect-[16/9]">                        {#if item.ImageTags?.Thumb}                            <ImageComponent 
+                >
+                <div class="relative w-full aspect-[16/9]">                        
+                    {#if item.ImageTags?.Thumb}                            
+                        <ImageComponent 
                                 src={item.ImageTags.Thumb}
                                 alt={item.Name || 'Image'}
                                 aspectRatio="16/9"
@@ -356,7 +345,9 @@
                 title={item.Overview}
                 style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
             >
-                <div class="relative w-full mb-2 aspect-[2/1]">                    {#if item.thumbPath}                        <ImageComponent 
+                <div class="relative w-full mb-2 aspect-[2/1]">                    
+                    {#if item.thumbPath}                        
+                        <ImageComponent 
                             src={item.thumbPath}
                             alt={item.Name || 'Image'}
                             aspectRatio="2/1"
@@ -387,9 +378,7 @@
         isOpen={modalOpen} 
         on:close={() => modalOpen = false}
         item={modalItem}
-        mouseX={responsiveViewMode === "default_thumb_recommendation" ? 0 : mousePosition.x}
-        mouseY={responsiveViewMode === "default_thumb_recommendation" ? 0 : mousePosition.y}
-        isInPlace={responsiveViewMode === "default_thumb_recommendation"}
+        modalMode="full"
         hoveredItemId={hoveredItemId}
         on:mouseenter={handleModalEnter}
         on:mouseleave={handleModalLeave}

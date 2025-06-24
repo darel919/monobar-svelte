@@ -1,6 +1,6 @@
 <!--
 @component
-Simple Image Component for handling image loading with error states, cookies, and custom headers
+Custom Image Component for handling image loading with error states, cookies, and custom headers
 
 Props:
 - src: Image source URL (can be null)

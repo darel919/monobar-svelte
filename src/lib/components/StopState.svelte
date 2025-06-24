@@ -1,3 +1,16 @@
+<!--
+@component
+Stop State Component for displaying error messages and action buttons
+
+Props:
+- message: Main error or information message to display (required)
+- actionText: Text for the action button (defaults to "Return to Home")
+- actionDesc: Optional description text below the action button (defaults to undefined)
+- action: Action to perform - 'reload', 'home', 'back', or custom route path (defaults to "home")
+- errorCode: Optional error code to display (defaults to null)
+
+-->
+
 <script>
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';

@@ -2,7 +2,6 @@
   import { onMount, createEventDispatcher } from 'svelte';
   import { fade } from 'svelte/transition';
   import YtPlayer from './TrailerPlayer.svelte';
-
   interface LibraryItem {
     Id?: string;
     id?: string;
@@ -20,17 +19,52 @@
       Primary?: string;
       Logo?: string;
     };
-  }    
+    RemoteTrailers?: {
+      Name: string;
+      Url: string;
+    }[];
+  }
   export let isOpen: boolean = false;
   export let item: LibraryItem | null = null;
-  export let mouseX: number = 0;
-  export let mouseY: number = 0;
-  export let isInPlace: boolean = false;
+  export let modalMode: 'mini' | 'full' = 'mini';
   export let hoveredItemId: string | null = null;
   const dispatch = createEventDispatcher();
 
   const MODAL_WIDTH = 300;
-  const MODAL_HEIGHT = 100;
+  const MODAL_HEIGHT = 320;  
+  let modalPosition = { left: 0, top: 0, width: 280, height: 157 };
+  function updateModalPosition() {
+    console.log(item)
+    if (hoveredItemId && typeof window !== 'undefined') {
+      const hoveredElement = document.querySelector(`[data-item-id="${hoveredItemId}"]`);
+      if (hoveredElement) {
+        const rect = hoveredElement.getBoundingClientRect();
+        
+        if (modalMode === 'mini') {
+          modalPosition = { 
+            left: rect.left, 
+            top: rect.top, 
+            width: rect.width, 
+            height: rect.height 
+          };
+        } else {
+          // NETFLIX STYLE W=32,H199
+          const extraWidth = 32;
+          const extraHeight = 100;
+          modalPosition = { 
+            left: rect.left - (extraWidth / 2), 
+            top: rect.top - (extraHeight / 2), 
+            width: rect.width + extraWidth, 
+            height: rect.height + extraHeight 
+          };
+        }
+      }
+    }
+  }
+
+  $: if (hoveredItemId && typeof window !== 'undefined') {
+    updateModalPosition();
+  }
 
   function closeModal() {
     dispatch('close');
@@ -40,10 +74,26 @@
     if (event.key === 'Escape') {
       closeModal();
     }
-  }
-  onMount(() => {
+  }  onMount(() => {
+    const handleScroll = () => {
+      if (isOpen) {
+        updateModalPosition();
+      }
+    };
+
+    const handleResize = () => {
+      if (isOpen) {
+        updateModalPosition();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize);
+
     return () => {
       document.removeEventListener('keydown', handleKeydown);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
     };
   });
 
@@ -57,141 +107,57 @@
 </script>
 
 {#if isOpen}  
-{#if isInPlace}  
-<div 
-    class="absolute bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden z-[9999]"
-    style={`width: ${MODAL_WIDTH}px; ${hoveredItemId
-      ? (() => {
-          const hoveredElement = document.querySelector(`[data-item-id="${hoveredItemId}"]`);
-          if (hoveredElement) {
-            const rect = hoveredElement.getBoundingClientRect();
-            const centerX = rect.left + (rect.width / 2);
-            const centerY = rect.top + (rect.height / 2);              
-            const modalWidth = MODAL_WIDTH;
-            const modalHeight = MODAL_HEIGHT;
-            const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
-            const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 1080;
-              let left = Math.max(20, centerX - (modalWidth / 2));
-            let top = Math.max(20, centerY - (modalHeight / 2));
-            
-            if (left + modalWidth > viewportWidth - 20) {
-              left = viewportWidth - modalWidth - 20;
-            }
-            if (top + modalHeight > viewportHeight - 20) {
-              top = viewportHeight - modalHeight - 20;
-            }
-            
-            return `position: fixed; left: ${left}px; top: ${top}px;`;
-          }
-          return `position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);`;
-        })()
-      : `position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);`
-    } pointer-events: auto;`}
-    role="document"
-    on:mouseenter
-    on:mouseleave
-    transition:fade
-  >
-      {#if item}
-        <div class="relative w-full h-48 bg-gray-200 dark:bg-gray-700">
-          {#if item.posterPath || item.thumbPath || item.ImageTags?.Primary}
-            <YtPlayer 
-                ytId="dQw4w9WgXcQ"
-                mute={false}
-                enabled={false}
-                loop={false}
-                backdrop={item.posterPath || item.thumbPath || item.ImageTags?.Primary}
-                on:close={closeModal}
-            ></YtPlayer>
-          {:else}
-            <div class="w-full h-full flex items-center justify-center">
-              <span class="text-gray-500 dark:text-gray-400">No Image</span>
-            </div>
-          {/if}
-        </div>
-        
-        <div class="p-4">
-          <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-1 truncate">
-            {item.OriginalTitle || item.Name || 'Unknown'}
-          </h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            {item.ProductionYear || item.year || 'Unknown Year'} • {item.Type || 'Unknown Type'}
-          </p>
-          
-          <button 
-            on:click={() => window.location.href = `/info?id=${item.Id}&type=${item.Type}`}
-            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
-          >
-            View Details
-          </button>
-        </div>
-      {/if}
-  </div>
-{:else}
-<div 
-    class="fixed inset-0 z-[9999] pointer-events-none"
-    transition:fade
-    on:keydown={handleKeydown}
-    on:mouseenter
-    on:mouseleave
-    role="presentation"
-  >      
-  <div 
-      class="absolute bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden"
-      style={`width: ${MODAL_WIDTH}px; left: ${(() => {
-        const modalWidth = MODAL_WIDTH;
-        const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
-        let left = mouseX + 20;        
-        if (left + modalWidth > viewportWidth - 20) {
-          left = mouseX - modalWidth - 20;
-        }        
-        return Math.max(20, left);
-      })()}px; top: ${(() => {        
-        const modalHeight = MODAL_HEIGHT;
-        const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 1080;
-        let top = mouseY + 20;        
-        if (top + modalHeight > viewportHeight - 20) {
-          top = mouseY - modalHeight - 20;
-        }
-        return Math.max(20, top);
-      })()}px; pointer-events: auto;`}
+  <div    
+      class="fixed bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden z-[9999]"
+      style={`width: ${modalPosition.width}px; height: ${modalPosition.height}px; left: ${modalPosition.left}px; top: ${modalPosition.top}px; pointer-events: auto;`}
       role="document"
-    >
-      {#if item}
-        <div class="relative w-full h-48 bg-gray-200 dark:bg-gray-700">
-          {#if item.posterPath || item.thumbPath || item.ImageTags?.Primary}
+      on:mouseenter
+      on:mouseleave    
+      transition:fade  
+  >
+    {#if item}
+      {#if modalMode === 'mini'}        
+      <div class="relative w-full h-full">
+          <div class="absolute inset-0">
             <YtPlayer 
-                ytId="dQw4w9WgXcQ"
-                mute={false}
-                enabled={false}
-                loop={false}
-                backdrop={item.posterPath || item.thumbPath || item.ImageTags?.Primary}
-                on:close={closeModal}
-            ></YtPlayer>
-          {:else}
-            <div class="w-full h-full flex items-center justify-center">
-              <span class="text-gray-500 dark:text-gray-400">No Image</span>
-            </div>
-          {/if}
+              ytId=""
+              trailerData={item.RemoteTrailers || []}
+              mute={false}
+              enabled={false}
+              loop={false}
+              backdrop={item.posterPath || item.thumbPath || item.ImageTags?.Primary}
+              on:close={closeModal}
+            />
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 bg-gray-900 bg-opacity-90 text-white p-2">
+            <h2 class="text-xs font-bold mb-1 truncate text-center">
+              {item.OriginalTitle || item.Name || 'Unknown'}
+            </h2>
+          </div>
         </div>
-        
-        <div class="p-4">
-          <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-1 truncate">
-            {item.OriginalTitle || item.Name || 'Unknown'}
-          </h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            {item.ProductionYear || item.year || 'Unknown Year'} • {item.Type || 'Unknown Type'}
-          </p>
-          
-          <button 
-            on:click={() => window.location.href = `/info?id=${item.Id}&type=${item.Type}`}
-            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
-          >
-            View Details
-          </button>
+      {:else}        
+      <div class="relative w-full h-full">          
+        <div class="absolute inset-0">
+            <YtPlayer 
+              ytId=""
+              trailerData={item.RemoteTrailers || []}
+              mute={false}
+              enabled={true}
+              loop={false}
+              backdrop={item.posterPath || item.thumbPath || item.ImageTags?.Primary}
+              on:close={closeModal}
+            />
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 backdrop-blur-3xl text-white px-4 py-2">
+            <h2 class="text-md font-bold mb-1 truncate text-left">
+              {item.OriginalTitle || item.Name || 'Unknown'}
+            </h2>
+            <p class="text-sm opacity-90 mb-2 text-left">
+              {item.ProductionYear || item.year || 'Unknown Year'} • {item.Type || 'Unknown Type'}
+            </p>
+          </div>
         </div>
-      {/if}
-    </div>
-  </div>
-{/if}
+      {/if}      
+    {/if}
+</div>
 {/if}

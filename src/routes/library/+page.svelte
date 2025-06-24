@@ -35,8 +35,10 @@ import { LibraryViewDisplay } from '$lib';
         <div class="relative z-10 p-8 pt-4 transition-fade-in duration-200">
             <!-- Genre Title -->
             <section class="mb-8 py-8">
-                <h1 class="text-5xl font-bold mb-4 text-white drop-shadow-lg">{serverData.Name}</h1>
-            </section>{#if serverData.content.length > 0}
+                <h1 class="text-5xl font-bold mb-4 text-white drop-shadow-lg">{serverData.SortName}</h1>
+                <p>{serverData.content.length} items.</p>
+            </section>
+            {#if serverData.content.length > 0}
             <section>
                 <LibraryViewDisplay data={serverData.content} viewMode="default_thumb_library" />
             </section>
