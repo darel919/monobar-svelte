@@ -148,14 +148,14 @@
               on:close={closeModal}
             />
           </div>
-          <div class="absolute bottom-0 left-0 right-0 backdrop-blur-3xl text-white px-4 py-2">
+          <a href={`/info?id=${item.Id}&type=${item.Type}`} class="absolute bottom-0 left-0 right-0 backdrop-blur-3xl text-white px-4 py-2">
             <h2 class="text-md font-bold mb-1 truncate text-left">
               {item.OriginalTitle || item.Name || 'Unknown'}
             </h2>
             <p class="text-sm opacity-90 mb-2 text-left">
               {item.ProductionYear || item.year || 'Unknown Year'} • {item.Type || 'Unknown Type'}
             </p>
-          </div>
+          </a>
         </div>
       {/if}      
     {/if}

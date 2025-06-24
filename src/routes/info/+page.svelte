@@ -1,6 +1,6 @@
 <script>
   import LibraryViewDisplay from '$lib/components/LibraryViewDisplay.svelte';
-
+    import YtPlayer from '$lib/components/TrailerPlayer.svelte';
     export let data;
     
     $: serverData = data.serverData.data || null;
@@ -10,9 +10,20 @@
 
 <main class="flex flex-col min-h-screen px-8 pt-20">
 
-    {#if serverData}
+    {#if serverData}        
+    <section class="fixed inset-0 -z-1">
+            <YtPlayer 
+                ytId=""
+                trailerData={serverData.RemoteTrailers || []}
+                mute={true}
+                enabled={true}
+                loop={false}
+                backdrop={serverData.posterPath || serverData.thumbPath || serverData.ImageTags?.Primary}
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/20"></div>
+        </section>
 
-        <section class="max-w-2xl">
+        <section class="max-w-2xl relative z-10">
         <!-- Genre Display -->
         {#if serverData.GenreItems && serverData.GenreItems.length > 0}
             <section class="">
