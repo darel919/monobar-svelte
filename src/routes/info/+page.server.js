@@ -4,7 +4,7 @@ export async function load({ url, fetch }) {
     const id = url.searchParams.get('id');
     const type = url.searchParams.get('type');
     
-    console.log('Loading info data for ID:', id, 'Type:', type);
+    // console.log('Loading info data for ID:', id, 'Type:', type);
     
     if (!id) {
         return {

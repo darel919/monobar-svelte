@@ -17,9 +17,10 @@ Props:
 
 <script lang="ts">
     import { onDestroy } from 'svelte';
+    import { browser } from '$app/environment';
     import { page } from '$app/state';
     import { getBaseEnvironment } from '$lib/utils/environment.js';
-      export let src: string | null = null;
+    export let src: string | null = null;
     export let alt: string;
     export let loading: 'lazy' | 'eager' = 'lazy';    
     export let aspectRatio: string = '16/9';
@@ -35,9 +36,8 @@ Props:
     let isLoaded = false;
     let hasError = false;
     let imageUrl: string | null = null;
-    
-    $: {
-        if (src) {
+      $: {
+        if (browser && src) {
             loadImageWithCredentials();
         } else {
             imageUrl = null;

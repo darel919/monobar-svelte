@@ -28,7 +28,7 @@
             <div class="drawer">
                 <input id="navbar-menu" type="checkbox" class="drawer-toggle" />
                 <div class="drawer-content">
-                    <label for="navbar-menu" class="btn btn-ghost p-2">
+                    <label for="navbar-menu" class="btn btn-color-secondary p-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
@@ -38,13 +38,17 @@
                 <div class="drawer-side z-[100] left-0">
                     <label for="navbar-menu" aria-label="close sidebar" class="drawer-overlay"></label>              
                     <ul class="menu p-4 w-80 min-h-full bg-base-200">
-                        <li>                            <a 
+                        <li>
+                            <a href="/" class="hidden sm:flex items-center {$page.url.pathname === '/' ? 'bg-base-300 font-bold' : ''}">
+                                <img src="/assets/TRANSPARENT_FAVICON.png" alt="Logo" class="sm:h-10 h-20 sm:w-10 w-20">
+                            </a>                            
+                            <!-- <a 
                                 href="/" 
                                 class="text-lg {$page.url.pathname === '/' ? 'bg-base-300 font-bold' : ''}" 
                                 onclick={closeDrawer}
                             >
                                 Home
-                            </a>
+                            </a> -->
                         </li>
                         {#each homeData as item}
                             <li>                                <a 
@@ -72,9 +76,7 @@
                     </ul>
                 </div>
             </div>            
-            <a href="/" class="hidden sm:flex items-center">
-                <img src="/assets/TRANSPARENT_FAVICON.png" alt="Logo" class="sm:h-12 h-20 sm:w-21 w-20">
-            </a>
+
         </div>
 
         <!-- Center section - Search -->

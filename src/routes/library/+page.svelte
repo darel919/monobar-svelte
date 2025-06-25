@@ -11,7 +11,7 @@ import { LibraryViewDisplay } from '$lib';
     const type = page.url.searchParams.get('type') || null;
     
     $: serverData = data.serverData.data || null;
-    console.log('Server Data:', data.serverData);
+    // console.log('Server Data:', data.serverData);
 </script>
 
 {#if type === 'genre'}

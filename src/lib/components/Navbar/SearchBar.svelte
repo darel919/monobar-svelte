@@ -54,33 +54,33 @@
             document.addEventListener('mousedown', handleClickOutside);
             return () => document.removeEventListener('mousedown', handleClickOutside);
         }
-    });
-
-    $: {
-        if (searchQuery.trim() === '') {
-            results = [];
-            hasSearched = false;
-            if (debounceTimer) {
-                clearTimeout(debounceTimer);
-            }
-        } else {
-            if (debounceTimer) {
-                clearTimeout(debounceTimer);
-            }
-              debounceTimer = setTimeout(async () => {
-                isLoading = true;
-                try {
-                    const searchResults = await clientSearch(searchQuery, activePrefix);
-                    results = searchResults.slice(0, 5);
-                    hasSearched = true;
-                } catch (error) {
-                    console.error('Search error:', error);
-                    results = [];
-                    hasSearched = true;
-                } finally {
-                    isLoading = false;
+    });    $: {
+        if (browser) {
+            if (searchQuery.trim() === '') {
+                results = [];
+                hasSearched = false;
+                if (debounceTimer) {
+                    clearTimeout(debounceTimer);
                 }
-            }, 300);
+            } else {
+                if (debounceTimer) {
+                    clearTimeout(debounceTimer);
+                }
+                  debounceTimer = setTimeout(async () => {
+                    isLoading = true;
+                    try {
+                        const searchResults = await clientSearch(searchQuery, activePrefix);
+                        results = searchResults.slice(0, 5);
+                        hasSearched = true;
+                    } catch (error) {
+                        console.error('Search error:', error);
+                        results = [];
+                        hasSearched = true;
+                    } finally {
+                        isLoading = false;
+                    }
+                }, 300);
+            }
         }    }
 
     /**

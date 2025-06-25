@@ -1,6 +1,6 @@
 <script>
     import LibraryViewDisplay from '$lib/components/LibraryViewDisplay.svelte';
-  import StopState from '$lib/components/StopState.svelte';
+    import StopState from '$lib/components/StopState.svelte';
     
     export let data;
     

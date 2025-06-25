@@ -10,7 +10,7 @@ const BASE_API_PATH = (() => {
 })();
 
 export async function getHomeData(fetch, url) {
-    console.log('Fetching data from:', BASE_API_PATH);
+    // console.log('Fetching data from:', BASE_API_PATH);
     try {
         const response = await fetch(`${BASE_API_PATH}`, {
             method: 'GET',
@@ -39,7 +39,7 @@ export async function getHomeData(fetch, url) {
     }
 }
 export async function getItemInfoData(id, fetch, url) {
-    console.log('Fetching item data from:', BASE_API_PATH);
+    // console.log('Fetching item data from:', BASE_API_PATH);
     if(!id) {
         return {
             data: null,
@@ -73,7 +73,7 @@ export async function getItemInfoData(id, fetch, url) {
     }
 }
 export async function getItemWatchData(id, fetch, url) {
-    console.log('Fetching item watch data from:', BASE_API_PATH);
+    // console.log('Fetching item watch data from:', BASE_API_PATH);
     if(!id) {
         return {
             data: null,
@@ -107,7 +107,7 @@ export async function getItemWatchData(id, fetch, url) {
     }
 }
 export async function getLibraryData(id, fetch, url) {
-    console.log('Fetching library data from:', BASE_API_PATH);
+    // console.log('Fetching library data from:', BASE_API_PATH);
     if(!id) {
         return {
             data: null,
@@ -141,7 +141,7 @@ export async function getLibraryData(id, fetch, url) {
     }
 }
 export async function getLibraryTypeData(options = {}, fetch, url) {
-    console.log('Fetching library type data from:', BASE_API_PATH);
+    // console.log('Fetching library type data from:', BASE_API_PATH);
     const params = new URLSearchParams();
     if (options.id) params.append('id', options.id);
     if (options.sortBy) params.append('sortBy', options.sortBy);
@@ -175,13 +175,13 @@ export async function getLibraryTypeData(options = {}, fetch, url) {
     }
 }
 export async function getGenreData(options = {}, fetch, url) {
-    console.log('Fetching genre data from:', BASE_API_PATH);
+    // console.log('Fetching genre data from:', BASE_API_PATH);
     const params = new URLSearchParams();
     if (options.genreId) params.append('id', options.genreId);
     if (options.sortBy) params.append('sortBy', options.sortBy);
     if (options.sortOrder) params.append('sortOrder', options.sortOrder);
     const query = params.toString();
-    console.log(query)
+    // console.log(query)
     
     try {
         const response = await fetch(`${BASE_API_PATH}/library/genre?${query}`, {
@@ -211,7 +211,7 @@ export async function getGenreData(options = {}, fetch, url) {
 }
 
 export async function searchData(query, type, includeExternal, fetch, url) {
-    console.log('Searching data from:', BASE_API_PATH);
+    // console.log('Searching data from:', BASE_API_PATH);
     if (!query || !query.trim()) {
         return {
             data: [],

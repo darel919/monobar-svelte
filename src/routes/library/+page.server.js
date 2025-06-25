@@ -12,7 +12,7 @@ export async function load({ url, fetch }) {
             serverData
         };
     } else {
-        console.log('Type provided:', type);
+        // console.log('Type provided:', type);
         
         let serverData;
         if (type === 'genre') {

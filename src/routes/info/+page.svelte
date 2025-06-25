@@ -19,9 +19,11 @@
 
 </script>
 
-<main class="flex flex-col min-h-screen px-8 pt-20">
+<main class="flex flex-col min-h-screen px-8 pt-20 text-white">
     {#if type === "Movie" || type === "Series"}
-        {#if serverData}            <section class="fixed inset-0 -z-1">                <YtPlayer 
+        {#if serverData}            
+        <section class="fixed inset-0 -z-1">                
+            <YtPlayer 
                     ytId=""
                     trailerData={serverData.RemoteTrailers || []}
                     mute={true}

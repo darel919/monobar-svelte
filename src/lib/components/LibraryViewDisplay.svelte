@@ -381,7 +381,7 @@ Props:
 {:else if responsiveViewMode === 'default_search'}
     <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
         {#each data as item}
-        {console.log(item)}
+        <!-- {console.log(item)} -->
             {@const itemId = item.Id || item.id || item.Name || ''}
               <a
                 href={disableClick ? undefined : `/info?id=${item.id}&type=${item.type}`}

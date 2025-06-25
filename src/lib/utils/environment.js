@@ -10,6 +10,10 @@ export function getBaseEnvironment(url) {
     }
     
     const hostname = url?.hostname || '';
+
+    if (hostname.includes('10.10.10.')) {
+        return 'development';
+    }
     
     if (hostname.includes('server.drl')) {
         return 'production_local';

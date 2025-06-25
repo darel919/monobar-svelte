@@ -114,7 +114,7 @@
 
 {#if isOpen}  
   <div    
-      class="fixed bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden z-[9999]"
+      class="fixed bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden z-[9999] text-white"
       style={`width: ${modalPosition.width}px; height: ${modalPosition.height}px; left: ${modalPosition.left}px; top: ${modalPosition.top}px; pointer-events: auto;`}
       role="document"
       on:mouseenter
@@ -161,7 +161,11 @@
             </p>
           </a>
         </div>
-      {/if}      
+      {/if}
+      {:else}
+      <div>
+        <h1>Loading...</h1>
+      </div>      
     {/if}
   </div>
 {/if}
