@@ -1,6 +1,7 @@
 import { browser } from '$app/environment';
 import { authStore } from '../stores/authStore';
 import { get } from 'svelte/store';
+import { goto, invalidateAll } from '$app/navigation';
 import Cookies from 'js-cookie';
 
 export function getAuthorizationHeader(cookies: any = null) {
@@ -44,7 +45,7 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
   
   let authDetected = false;
   
-  const checkWindowClosed = setInterval(() => {
+  const checkWindowClosed = setInterval(async () => {
     if (authDetected) return;
     
     try {
@@ -61,7 +62,8 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
         authDetected = true;
         const redirectPath = localStorage.getItem("redirectAfterAuth") || "/";
         localStorage.removeItem("redirectAfterAuth");
-        window.location.href = redirectPath;
+        await invalidateAll();
+        goto(redirectPath, { replaceState: true });
         return;
       }
       
@@ -72,10 +74,11 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
         authDetected = true;
 
         authStore.checkAuthStatus();
-        setTimeout(() => {
+        setTimeout(async () => {
           const redirectPath = localStorage.getItem("redirectAfterAuth") || "/";
           localStorage.removeItem("redirectAfterAuth");
-          window.location.href = redirectPath;
+          await invalidateAll();
+          goto(redirectPath, { replaceState: true });
         }, 100);
         return;
       }
@@ -84,7 +87,7 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
         console.log('Login window closed, performing final auth check');
         clearInterval(checkWindowClosed);
 
-        setTimeout(() => {
+        setTimeout(async () => {
           const finalAuthState = get(authStore);
           const finalAuthCheck = finalAuthState.isAuthenticated;
           const finalStorageCheck = localStorage.getItem('authSuccess') === 'true';
@@ -100,7 +103,8 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
 
             const redirectPath = localStorage.getItem("redirectAfterAuth") || "/";
             localStorage.removeItem("redirectAfterAuth");
-            window.location.href = redirectPath;          
+            await invalidateAll();
+            goto(redirectPath, { replaceState: true });          
           } else {
             sessionStorage.setItem("authCancelled", "true");
             if (onAuthCancelled) onAuthCancelled("Login window was closed");

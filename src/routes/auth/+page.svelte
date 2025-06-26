@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
   import { authStore } from '$lib/stores/authStore';
+  import { goto, invalidateAll } from '$app/navigation';
   import Cookies from 'js-cookie';
 
   let status = 'Processing authentication...';
@@ -55,16 +56,18 @@
           status = 'Authentication successful! Redirecting...';
           isSuccess = true;
           
-          setTimeout(() => {
+          setTimeout(async () => {
             if (window.opener) {
               window.opener.postMessage({ type: 'AUTH_SUCCESS' }, window.location.origin);
               window.close();
             } else {
               const redirectPath = localStorage.getItem('redirectAfterAuth') || '/';
               localStorage.removeItem('redirectAfterAuth');
-              window.location.href = redirectPath;
+              await new Promise(resolve => setTimeout(resolve, 200));
+              await invalidateAll();
+              goto(redirectPath, { replaceState: true });
             }
-          }, 1000);
+          }, 1500);
         } else {
           status = 'Authentication failed. No valid token received.';
           isSuccess = false;
@@ -74,7 +77,7 @@
               window.opener.postMessage({ type: 'AUTH_ERROR', error: 'No token received' }, window.location.origin);
               window.close();
             } else {
-              window.location.href = '/';
+              goto('/', { replaceState: true });
             }
           }, 2000);
         }
@@ -88,7 +91,7 @@
             window.opener.postMessage({ type: 'AUTH_ERROR', error: 'Authentication failed' }, window.location.origin);
             window.close();
           } else {
-            window.location.href = '/';
+            goto('/', { replaceState: true });
           }
         }, 2000);
       }
