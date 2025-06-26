@@ -39,7 +39,7 @@
                     <label for="navbar-menu" aria-label="close sidebar" class="drawer-overlay"></label>              
                     <ul class="menu p-4 w-80 min-h-full bg-base-200">
                         <li>
-                            <a href="/" class="hidden sm:flex items-center {$page.url.pathname === '/' ? 'bg-base-300 font-bold' : ''}">
+                            <a href="/" class="hidden sm:flex items-center {$page.url.pathname === '/' ? 'bg-base-300 font-bold' : ''}"  onclick={closeDrawer}>
                                 <img src="/assets/TRANSPARENT_FAVICON.png" alt="Logo" class="sm:h-10 h-20 sm:w-10 w-20">
                             </a>                            
                             <!-- <a 
@@ -51,7 +51,8 @@
                             </a> -->
                         </li>
                         {#each homeData as item}
-                            <li>                                <a 
+                            <li>                                
+                                <a 
                                     href="/library?id={item.Id}" 
                                     class="text-lg {$page.url.pathname === '/library' && $page.url.searchParams.get('id') === item.Id ? 'bg-base-300 font-bold' : ''}"
                                     onclick={closeDrawer}
@@ -61,7 +62,8 @@
                             </li>
                         {/each}                        
                         <div class="divider"></div>
-                        <li>                            <a 
+                        <li>                            
+                            <a 
                                 href="/settings" 
                                 class="text-lg {$page.url.pathname === '/settings' ? 'bg-base-300 font-bold' : ''}"
                                 onclick={closeDrawer}

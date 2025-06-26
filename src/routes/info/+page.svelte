@@ -57,7 +57,7 @@
             </section>
             {:else}
             <section>
-                <h1 class="text-5xl font-bold my-8">{serverData.OriginalTitle ? serverData.OriginalTitle : serverData.Name}</h1>
+                <h1 class="text-5xl font-extralight my-8">{serverData.OriginalTitle ? serverData.OriginalTitle : serverData.Name}</h1>
             </section>
             {/if}
             

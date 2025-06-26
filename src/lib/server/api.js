@@ -106,7 +106,7 @@ export async function getItemWatchData(id, fetch, url) {
         };
     }
 }
-export async function getLibraryData(id, fetch, url) {
+export async function getLibraryData(id, fetch, url, options = {}) {
     // console.log('Fetching library data from:', BASE_API_PATH);
     if(!id) {
         return {
@@ -114,8 +114,15 @@ export async function getLibraryData(id, fetch, url) {
             error: 'ID is required'
         };
     }
+    
+    const params = new URLSearchParams();
+    params.append('id', id);
+    if (options.sortBy) params.append('sortBy', options.sortBy);
+    if (options.sortOrder) params.append('sortOrder', options.sortOrder);
+    const query = params.toString();
+    
     try {
-        const response = await fetch(`${BASE_API_PATH}/library?id=${id}`, {
+        const response = await fetch(`${BASE_API_PATH}/library?${query}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

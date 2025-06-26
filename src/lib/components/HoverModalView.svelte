@@ -40,7 +40,7 @@
   const MODAL_HEIGHT = 320;  
   let modalPosition = { left: 0, top: 0, width: 280, height: 157 };
   function updateModalPosition() {
-    console.log(item)
+    // console.log(item)
     if (hoveredItemId && typeof window !== 'undefined') {
       const hoveredElement = document.querySelector(`[data-item-id="${hoveredItemId}"]`);
       if (hoveredElement) {

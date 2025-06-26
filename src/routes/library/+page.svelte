@@ -1,17 +1,20 @@
 <script>
   import { page } from '$app/state';
-import { LibraryViewDisplay } from '$lib';
+  import { LibraryViewDisplay, LibrarySortControl } from '$lib';
   import StopState from '$lib/components/StopState.svelte';
   import ImageComponent from '$lib/components/ImageComponent.svelte';
-
-    // import LibraryViewDisplay from '$lib/components/LibraryViewDisplay.svelte';
+  import { useSettingsStore } from '$lib/stores/settings';
     
-    export let data;
+  export let data;
 
-    const type = page.url.searchParams.get('type') || null;
-    
-    $: serverData = data.serverData.data || null;
-    // console.log('Server Data:', data.serverData);
+  const type = page.url.searchParams.get('type') || null;
+  const settingsStore = useSettingsStore();
+  const settings = settingsStore.get();
+  
+  $: serverData = data.serverData.data || null;
+  $: id = data.id;
+  $: sortBy = data.sortBy;
+  $: sortOrder = data.sortOrder;
 </script>
 
 {#if type === 'genre'}
@@ -32,12 +35,21 @@ import { LibraryViewDisplay } from '$lib';
         </div>
         
         <!-- Content -->
-        <div class="relative z-10 p-8 pt-4 transition-fade-in duration-200">
+        <div class="relative z-10 p-8 pt-4 transition-fade-in duration-200">            
             <!-- Genre Title -->
-            <section class="mb-8 py-8">
-                <h1 class="text-5xl font-bold mb-4 text-white drop-shadow-lg">{serverData.SortName}</h1>
-                <p>{serverData.content.length} items.</p>
-            </section>
+             <section class="flex flex-row justify-between items-center">
+                <section class="mb-8 py-8">
+                    <h1 class="text-5xl font-extralight mb-4 text-white drop-shadow-lg">{serverData.SortName}</h1>
+                    <p>{serverData.content.length} items.</p>
+                </section>
+                <!-- Sort Control -->
+                {#if id}
+                    <section class="mb-6">
+                        <LibrarySortControl {id} {sortBy} {sortOrder} />
+                    </section>
+                {/if}
+             </section>
+            
             {#if serverData.content.length > 0}
             <section>
                 <LibraryViewDisplay data={serverData.content} viewMode="default_thumb_library" />
@@ -63,14 +75,24 @@ import { LibraryViewDisplay } from '$lib';
 </main>
 {:else}
 <main class="flex flex-col min-h-screen relative p-8 mt-16">
-
-
-    {#if serverData && serverData.content}
+    {#if serverData && serverData.content}        
         {#if serverData.library && serverData.library.Name} 
-            <section class="mb-8">
-                <h1 class="text-4xl mb-4">{serverData.library.Name}</h1>
+            <section class="flex flex-row justify-between items-center">
+                <section class="mb-8">
+                    <h1 class="text-4xl mb-4 font-extralight">{serverData.library.Name}</h1>
+                    <p>{serverData.content.length} items.</p>
+                </section>
+                {#if id}
+                <section class="mb-6">
+                    <LibrarySortControl {id} {sortBy} {sortOrder} />
+                </section>
+                {/if}
             </section>
         {/if}
+        
+        <!-- Sort Control -->
+
+        
         {#if serverData.content.length > 0}
             <section>
                 <LibraryViewDisplay data={serverData.content} viewMode="default_thumb_library" />

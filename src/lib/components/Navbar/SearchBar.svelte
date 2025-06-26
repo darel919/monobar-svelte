@@ -10,8 +10,10 @@
     /** @type {HTMLInputElement} */
     let searchInputRef;
     /** @type {any[]} */
-    let results = [];    let isLoading = false;
-    let showResults = false;    let hasSearched = false;
+    let results = [];    
+    let isLoading = false;
+    let showResults = false;    
+    let hasSearched = false;
     /** @type {HTMLDivElement | undefined} */
     let searchContainerRef;
     /** @type {number | undefined} */
@@ -151,7 +153,7 @@
         }    }
 </script>
 
-<div class="relative w-full max-w-md" bind:this={searchContainerRef}>
+<div class="relative w-full max-w-md " bind:this={searchContainerRef}>
     <form on:submit={handleSubmit} class="relative">
         <div class="relative flex items-center">
             {#if activePrefix}
@@ -175,7 +177,7 @@
                 on:input={handleSearchChange}
                 on:keydown={handleKeyDown}
                 on:focus={handleInputFocus}
-                class="input input-sm input-bordered w-full {activePrefix ? 'pl-20' : 'pl-3'} pr-8"
+                class="input input-sm input-bordered h-10 w-full {activePrefix ? 'pl-20' : 'pl-3'} pr-8 rounded-xl"
                 {placeholder}
                 autocomplete="off"
             />
@@ -189,7 +191,8 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-            </button>        </div>
+            </button>        
+        </div>
     </form>
     
     {#if showResults && searchQuery.trim() !== ''}

@@ -2,6 +2,11 @@
 @component
 Custom Image Component for handling image loading with error states, cookies, and custom headers
 
+Features:
+- Progressive enhancement with no-JavaScript fallback
+- Loading skeleton animation (JavaScript-dependent)
+- Direct image rendering when JavaScript is disabled
+
 Props:
 - src: Image source URL (can be null)
 - alt (required): Alt text for accessibility  
@@ -113,7 +118,8 @@ Props:
     });
 </script>
 
-<div class="relative w-full h-full" style="aspect-ratio: {aspectRatio};">
+<!-- JavaScript-enabled content -->
+<div class="js-content relative w-full h-full" style="aspect-ratio: {aspectRatio};">
     {#if showSkeleton && !isLoaded}
         <div class="skeleton absolute inset-0 w-full h-full {borderRadius} opacity-100 transition-opacity"></div>
     {/if}
@@ -129,3 +135,22 @@ Props:
         />
     {/if}
 </div>
+
+<!-- Fallback for when JavaScript is disabled -->
+<noscript>
+    <style>
+        .js-content {
+            display: none !important;
+        }
+    </style>
+    <div class="relative w-full h-full" style="aspect-ratio: {aspectRatio};">
+        {#if src}
+            <img
+                src={src}
+                {alt}
+                {loading}
+                class="w-full h-full object-cover {borderRadius}"
+            />
+        {/if}
+    </div>
+</noscript>

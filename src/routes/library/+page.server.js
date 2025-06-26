@@ -1,22 +1,29 @@
 import { getLibraryData, getLibraryTypeData, getGenreData } from '$lib/server/api.js';
+import { DEFAULT_LIBRARY_SORT_BY, DEFAULT_LIBRARY_SORT_ORDER } from '$lib/constants/defaults.js';
 
-export async function load({ url, fetch }) {
+export async function load({ url, fetch, cookies }) {
     const id = url.searchParams.get('id');
-    const sortBy = url.searchParams.get('sortBy');
-    const sortOrder = url.searchParams.get('sortOrder');
+    const sortBy = url.searchParams.get('sortBy') || cookies.get('librarySortBy') || DEFAULT_LIBRARY_SORT_BY;
+    const sortOrder = url.searchParams.get('sortOrder') || cookies.get('librarySortOrder') || DEFAULT_LIBRARY_SORT_ORDER;
     const type = url.searchParams.get('type') || null;
     console.log('Loading library data for ID:', id);
     if(!type) {
-        const serverData = await getLibraryData(id, fetch, url);  
+        const options = {
+            sortBy,
+            sortOrder
+        };
+        const serverData = await getLibraryData(id, fetch, url, options);  
         return {
-            serverData
+            serverData,
+            sortBy,
+            sortOrder,
+            id
         };
     } else {
         // console.log('Type provided:', type);
         
         let serverData;
         if (type === 'genre') {
-            // console.warn("Fetching genre data for ID:", id);
             const options = {
                 genreId: id,
                 sortBy,
@@ -33,7 +40,10 @@ export async function load({ url, fetch }) {
         }
         
         return {
-            serverData
+            serverData,
+            sortBy,
+            sortOrder,
+            id
         };
     }
 }

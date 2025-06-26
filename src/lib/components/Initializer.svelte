@@ -1,13 +1,24 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { browser } from '$app/environment';
     import { hydrateSettingsStore, useSettingsStore } from '$lib/stores/settings';
     import { themeUtils } from '$lib/utils/themeUtils';
 
     onMount(() => {
-        themeUtils.cleanupOldThemeStorage();
-        
+        if (!browser) return;
+
         const settingsStore = useSettingsStore();
-        hydrateSettingsStore();
+        
+        const stored = localStorage.getItem('monobar-settings');
+        if (!stored) {
+            console.log('No settings found in localStorage, applying defaults');
+            settingsStore.loadFromStorage();
+        } else {
+            console.log('Settings found in localStorage, loading saved preferences');
+            hydrateSettingsStore();
+        }
+
+        themeUtils.cleanupOldThemeStorage();
         
         const initializeTheme = () => {
             const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -24,10 +35,11 @@
                 document.documentElement.setAttribute('data-theme', themeToApply);
                 document.body.className = themeToApply === 'dark' ? 'dark' : 'light';
                 
-                console.log('Theme initialized:', themeToApply, 'from setting:', settings.theme);
+                console.log('App initialized with theme:', themeToApply, 'from setting:', settings.theme);
             });
         };
-          initializeTheme();
+        
+        initializeTheme();
 
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         const handleSystemThemeChange = (e: MediaQueryListEvent) => {

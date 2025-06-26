@@ -142,7 +142,7 @@
 </script>
 
 <div class="w-full max-w-4xl mx-auto mt-24 px-8 min-h-screen">
-    <h1 class="text-4xl font-bold mb-8 text-white">search</h1>
+    <h1 class="text-4xl font-extralight mb-8 text-white">search</h1>
     
     <form class="w-full flex flex-col gap-4" on:submit={handleSubmit}>        
         <div bind:this={searchContainerRef} class="relative flex items-center w-full">
@@ -170,7 +170,8 @@
                 class="input input-bordered w-full {activePrefix ? 'pl-28' : ''}"
                 placeholder={placeholder}
                 autocomplete="off"
-            />            {#if showLoading && isPending}
+            />            
+            {#if showLoading && isPending}
                 <div class="loading loading-spinner loading-sm absolute right-12"></div>
             {/if}            
             <!-- Search Dropdown -->
@@ -208,13 +209,14 @@
                 Search
             {/if}
         </button>
-    </form>    <div class="mt-8">
+    </form>    
+    <div class="mt-8">
         {#if error}
             <div class="flex justify-center items-center min-h-[300px]">
                 <StopState message="Error: {error}" />
             </div>        
         {:else if initialQuery && initialQuery.trim()}
-            <div class="search-results">
+            <div class="search-results py-8">
                 <div class="mb-8">
                     <h2 class="text-3xl font-semibold text-white mb-2">
                         Search Results for "{initialQuery}"

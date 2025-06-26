@@ -11,7 +11,7 @@
 
 <main class="flex flex-col min-h-screen p-8 pt-20">
     <section class="mb-8">
-        <h1 class="text-4xl">home</h1>
+        <h1 class="text-4xl font-extralight">home</h1>
         <!-- <p class="text-lg opacity-75">Media Library Display</p> -->
     </section>
 

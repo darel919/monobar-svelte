@@ -180,7 +180,7 @@ Props:
             {@const posterImgSrc = getImageSource(item)}
             {@const uniqueKey = `${itemId}-${item.Type || ''}-${index}`}            
             <a
-                href={disableClick ? undefined : `/info?id=${itemId}&type=${item.Type}`}
+                href={disableClick ? undefined : `/info?id=${itemId}&type=${item.type || item.Type}`}
                 class={`flex flex-col items-center ${itemHoverClass}`}
                 title={item.Overview || item.overview}
                 style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
@@ -381,7 +381,6 @@ Props:
 {:else if responsiveViewMode === 'default_search'}
     <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
         {#each data as item}
-        <!-- {console.log(item)} -->
             {@const itemId = item.Id || item.id || item.Name || ''}
               <a
                 href={disableClick ? undefined : `/info?id=${item.id}&type=${item.type}`}
@@ -390,9 +389,9 @@ Props:
                 style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
             >
                 <div class="relative w-full mb-2 aspect-[2/1]">                    
-                    {#if item.thumbPath}                        
+                    {#if item.thumbPath || item.posterPath}                        
                         <ImageComponent 
-                            src={item.thumbPath}
+                            src={item.thumbPath || item.posterPath}
                             alt={item.Name || 'Image'}
                             aspectRatio="2/1"
                             onload={() => handleImgLoad(itemId)}
