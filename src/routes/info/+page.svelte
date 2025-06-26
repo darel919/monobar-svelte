@@ -6,6 +6,7 @@
   import { useSettingsStore } from '$lib/stores/settings';
   import { browser } from '$app/environment';
   import CastViewDisplay from '$lib/components/CastViewDisplay.svelte';
+  import PlayActionButton from '$lib/components/PlayActionButton.svelte';
   
   export let data;
   
@@ -84,6 +85,8 @@
                     </section>
                 {/if}
             </section>
+
+            <PlayActionButton id={serverData.Id} type={serverData.Type} playUrl={serverData.playUrl} />
             
             <!-- Item Description -->
             {#if serverData.Overview && serverData.Overview !== ""}
