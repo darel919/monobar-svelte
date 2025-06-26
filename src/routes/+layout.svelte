@@ -5,6 +5,7 @@
 	import AppInitializer from '$lib/components/AppInitializer.svelte';
 	import ScrollToTop from '$lib/components/ScrollToTop.svelte';
 	import ReauthNotification from '$lib/components/Auth/ReauthNotification.svelte';
+	import JellyfinReauthNotification from '$lib/components/Auth/JellyfinReauthNotification.svelte';
 	
 	let { children, data } = $props();
 </script>
@@ -15,3 +16,4 @@
 <FooterComponent/>
 <ScrollToTop />
 <ReauthNotification />
+<JellyfinReauthNotification />

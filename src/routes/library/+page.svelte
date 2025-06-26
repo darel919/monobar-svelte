@@ -97,7 +97,7 @@
             <section>
                 <LibraryViewDisplay data={serverData.content} viewMode="default_thumb_library" />
             </section>
-            {:else}
+        {:else}
             <StopState
                 action="reload"
                 message="No content available"
@@ -105,12 +105,6 @@
                 actionText="Reload">
             </StopState>
         {/if}
-        <!-- <section class="mb-8">
-            <h2 class="text-2xl mb-4">Server Data</h2>
-            <div class="bg-base-800 p-4 rounded-lg">
-                <pre class="text-sm overflow-auto">{JSON.stringify(serverData, null, 2)}</pre>
-            </div>
-        </section> -->
         {:else} 
         <StopState
             action="reload"

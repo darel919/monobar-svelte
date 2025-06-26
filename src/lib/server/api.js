@@ -28,7 +28,7 @@ export async function getHomeData(fetch, url, cookies) {
             headers
         });
 
-        console.log(headers)
+        // console.log(headers)
         
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
@@ -83,9 +83,20 @@ export async function getItemInfoData(id, fetch, url, cookies) {
         };
     } catch (error) {
         console.error('Failed to fetch data:', error);
+        
+        let errorMessage = 'Unknown error';
+        if (error instanceof Error) {
+            try {
+                const parsedError = JSON.parse(error.message);
+                errorMessage = parsedError.error || parsedError.message || parsedError.error || error.message;
+            } catch {
+                errorMessage = error.message;
+            }
+        }
+        
         return {
             data: null,
-            error: error instanceof Error ? error.message : 'Unknown error'
+            error: errorMessage
         };
     }
 }

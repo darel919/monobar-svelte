@@ -1,4 +1,5 @@
-<script lang="ts">  import { onMount } from 'svelte';
+<script lang="ts">  
+  import { onMount } from 'svelte';
   import LibraryViewDisplay from '$lib/components/LibraryViewDisplay.svelte';
   import StopState from '$lib/components/StopState.svelte';
   import YtPlayer from '$lib/components/TrailerPlayer.svelte';
@@ -21,8 +22,8 @@
 
 <main class="flex flex-col min-h-screen px-8 pt-20 text-white">
     {#if type === "Movie" || type === "Series"}
-        {#if serverData}            
-        <section class="fixed inset-0 -z-1">                
+        {#if serverData && !data.serverData.error}            
+            <section class="fixed inset-0 -z-1">                
             <YtPlayer 
                     ytId=""
                     trailerData={serverData.RemoteTrailers || []}
@@ -94,8 +95,23 @@
                     </div>
                 </section>
             {/if}
+        {:else if data.serverData.error}
+        <StopState
+            action="back"
+            message="title unavailable."
+            actionDesc="This title is not available. Please try another title."
+            actionText="Go Back"
+            errorCode={String(data.serverData.error)}
+        />
+        {:else}
+        <StopState
+            action="back"
+            message="title unavailable."
+            actionDesc="The requested item is not available or does not exist."
+            actionText="Go Back"
+        />
         {/if}
-        {:else} 
+    {:else} 
         <StopState
         message="Invalid type."
         actionDesc="Your current request is not valid. Please recheck the URL."

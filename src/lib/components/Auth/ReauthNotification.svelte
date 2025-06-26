@@ -35,7 +35,7 @@
           </svg>
           <span class="font-semibold">Authentication Required</span>
         </div>
-        <p class="text-sm">You need to sign in again to continue using the application.</p>
+        <p class="text-sm">Your session has expired. Please sign in again to continue using the application.</p>
         <div class="flex gap-2 mt-2">
           <button 
             class="btn btn-sm btn-warning" 

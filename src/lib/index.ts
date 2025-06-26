@@ -11,6 +11,8 @@ export { default as AppInitializer } from './components/AppInitializer.svelte';
 export { default as AuthSession } from './components/Auth/AuthSession.svelte';
 export { default as LoginButton } from './components/Auth/LoginButton.svelte';
 export { default as ProtectedRoute } from './components/Auth/ProtectedRoute.svelte';
+export { default as ReauthNotification } from './components/Auth/ReauthNotification.svelte';
+export { default as JellyfinReauthNotification } from './components/Auth/JellyfinReauthNotification.svelte';
 
 // Export stores
 export { useSettingsStore, hydrateSettingsStore } from './stores/settings';

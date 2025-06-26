@@ -105,6 +105,7 @@ function createAuthStore() {
         
         let isAuthenticated = false;
         let parsedSession = null;
+        let needsReauth = false;
         
         if (userSession) {
           try {
@@ -123,17 +124,24 @@ function createAuthStore() {
               } else {
                 console.log('JWT token expired');
                 localStorage.removeItem('user-session');
+                Cookies.remove('user-session');
+                // Clear Jellyfin cookies when DWS token expires
+                Cookies.remove('jellyUserId');
+                Cookies.remove('jellyAccessToken');
                 parsedSession = null;
+                needsReauth = true;
               }
             }
           } catch (jwtError) {
             console.error('Invalid session format:', jwtError);
             localStorage.removeItem('user-session');
+            // Clear Jellyfin cookies when DWS session is invalid
+            Cookies.remove('jellyUserId');
+            Cookies.remove('jellyAccessToken');
             parsedSession = null;
           }
         }
 
-        let needsReauth = false;
         if (isAuthenticated && parsedSession && jellyUserId && jellyAccessToken) {
           const providerId = parsedSession.user?.user_metadata?.provider_id;
           if (providerId) {
@@ -142,23 +150,37 @@ function createAuthStore() {
               console.log('Jellyfin credentials are invalid, clearing cookies');
               Cookies.remove('jellyUserId');
               Cookies.remove('jellyAccessToken');
-              needsReauth = true;
+              update(state => ({
+                ...state,
+                jellyUserId: null,
+                jellyAccessToken: null,
+                jellyAuthFailed: true,
+                jellyAuthError: 'Invalid Jellyfin credentials',
+                jellyAutoLoginAttempted: false,
+              }));
             }
           }
+        }
+        
+        // Clear Jellyfin cookies if DWS is not logged in
+        if (!isAuthenticated && (jellyUserId || jellyAccessToken)) {
+          console.log('DWS not authenticated, clearing Jellyfin cookies');
+          Cookies.remove('jellyUserId');
+          Cookies.remove('jellyAccessToken');
         }
         
         update(state => ({
           ...state,
           isAuthenticated,
           userSession: parsedSession,
-          jellyUserId: needsReauth ? null : (jellyUserId || null),
-          jellyAccessToken: needsReauth ? null : (jellyAccessToken || null),
+          jellyUserId: !isAuthenticated ? null : (jellyUserId || null),
+          jellyAccessToken: !isAuthenticated ? null : (jellyAccessToken || null),
           needsReauth,
           isLoading: false,
-          jellyAutoLoginAttempted: needsReauth ? false : state.jellyAutoLoginAttempted,
+          jellyAutoLoginAttempted: state.jellyAutoLoginAttempted,
         }));
 
-        if (isAuthenticated && parsedSession && (!jellyUserId || !jellyAccessToken) && !needsReauth) {
+        if (isAuthenticated && parsedSession && (!jellyUserId || !jellyAccessToken)) {
           const userId = parsedSession.user?.id;
           if (userId) {
 
@@ -191,10 +213,15 @@ function createAuthStore() {
         }
       } catch (error) {
         console.error('Auth check failed:', error);
+        // Clear Jellyfin cookies when auth check fails
+        Cookies.remove('jellyUserId');
+        Cookies.remove('jellyAccessToken');
         update(state => ({
           ...state,
           isAuthenticated: false,
           userSession: null,
+          jellyUserId: null,
+          jellyAccessToken: null,
           isLoading: false,
         }));
       }
@@ -252,6 +279,16 @@ function createAuthStore() {
           jellyAuthError: error?.message || 'Unknown error',
         }));
       }
+    },
+
+    clearJellyfinAuthState: () => {
+      if (!browser) return;
+      update(state => ({ 
+        ...state, 
+        jellyAuthFailed: false, 
+        jellyAuthError: null,
+        jellyAutoLoginAttempted: false,
+      }));
     },
 
     clearReauthState: () => {
