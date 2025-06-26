@@ -25,8 +25,7 @@ const STORAGE_KEY = 'monobar-settings';
 
 function loadFromStorage(): SettingsState {
   if (!browser) return defaultSettings;
-  
-  // Clean up old theme localStorage entry
+
   const oldTheme = localStorage.getItem('theme');
   if (oldTheme) {
     localStorage.removeItem('theme');
@@ -34,13 +33,13 @@ function loadFromStorage(): SettingsState {
   
   const stored = localStorage.getItem(STORAGE_KEY);
   if (!stored) {
-    // If we have an old theme but no new settings, migrate it
+
     if (oldTheme) {
       const migratedSettings = { ...defaultSettings, theme: oldTheme };
       saveToStorage(migratedSettings);
       return migratedSettings;
     }
-    // No settings found, save defaults to localStorage
+
     saveToStorage(defaultSettings);
     return defaultSettings;
   }
@@ -50,7 +49,6 @@ function loadFromStorage(): SettingsState {
     return { ...defaultSettings, ...parsed };
   } catch (error) {
     console.error('Failed to parse stored settings:', error);
-    // If parsing fails, save defaults and return them
     saveToStorage(defaultSettings);
     return defaultSettings;
   }
@@ -170,15 +168,13 @@ function createSettingsStore() {
     
     cleanupOldStorage: () => {
       if (browser) {
-        // Remove any old localStorage keys that might cause conflicts
         const keysToRemove = ['theme', 'playTrailersAutomatically', 'playNextEnabled', 'subtitleSize', 'homeViewMode', 'librarySortBy', 'librarySortOrder'];
         keysToRemove.forEach(key => {
           if (localStorage.getItem(key)) {
             localStorage.removeItem(key);
           }
         });
-        
-        // Remove old cookie-based sort preferences
+
         document.cookie = 'librarySortBy=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         document.cookie = 'librarySortOrder=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       }

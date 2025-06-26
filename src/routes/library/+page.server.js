@@ -11,7 +11,7 @@ export async function load({ url, fetch, cookies }) {
             sortBy,
             sortOrder
         };
-        const serverData = await getLibraryData(id, fetch, url, options);  
+        const serverData = await getLibraryData(id, fetch, url, options, cookies);  
         return {
             serverData,
             sortBy,
@@ -19,8 +19,6 @@ export async function load({ url, fetch, cookies }) {
             id
         };
     } else {
-        // console.log('Type provided:', type);
-        
         let serverData;
         if (type === 'genre') {
             const options = {
@@ -28,14 +26,14 @@ export async function load({ url, fetch, cookies }) {
                 sortBy,
                 sortOrder
             };
-            serverData = await getGenreData(options, fetch, url);
+            serverData = await getGenreData(options, fetch, url, cookies);
         } else {
             const options = {
                 id,
                 sortBy,
                 sortOrder
             };
-            serverData = await getLibraryTypeData(options, fetch, url);
+            serverData = await getLibraryTypeData(options, fetch, url, cookies);
         }
         
         return {

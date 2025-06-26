@@ -41,14 +41,10 @@ Props:
       isInitializing = false;
     }
   });
-
-  // Update local state when props change
   $: if (!isInitializing) {
     currentSortBy = sortBy;
     currentSortOrder = sortOrder;
   }
-
-  // Save to settings when values change (only when user changes them, not during initialization)
   $: if (browser && settingsStore && !isInitializing && currentSortBy && currentSortOrder) {
     const settings = settingsStore.get();
     if (currentSortBy !== settings.librarySortBy) {

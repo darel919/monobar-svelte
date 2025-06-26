@@ -166,7 +166,6 @@ Props:
     }
 
     const itemHoverClass = "transition-transform duration-200 ease-in-out hover:-translate-y-1 p-1";
-    // console.log(item)
 </script>
 
 {#if !data?.length}

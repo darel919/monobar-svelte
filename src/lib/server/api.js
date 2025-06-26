@@ -1,28 +1,38 @@
 // @ts-nocheck
 import { dev } from '$app/environment';
-import { APP_PATH, DEV_API_BASE_URL, PROD_API_BASE_URL } from '$env/static/private';
+import { PUBLIC_APP_PATH, PUBLIC_DEV_API_BASE_URL, PUBLIC_PROD_API_BASE_URL } from '$env/static/public';
 import { getBaseEnvironment } from '$lib/utils/environment.js';
+import { getAuthorizationHeader } from '$lib/utils/authUtils';
 
-const BASE_API_PATH = (() => {
-    const path = APP_PATH;
-    const endpoint = dev ? DEV_API_BASE_URL : PROD_API_BASE_URL;
+export const BASE_API_PATH = (() => {
+    const path = PUBLIC_APP_PATH;
+    const endpoint = PUBLIC_DEV_API_BASE_URL;
     return `${endpoint}${path}`;
 })();
 
-export async function getHomeData(fetch, url) {
-    // console.log('Fetching data from:', BASE_API_PATH);
+export async function getHomeData(fetch, url, cookies) {
     try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url)
+        };
+        
+        const authHeader = getAuthorizationHeader(cookies);
+        if (authHeader) {
+            headers['Authorization'] = authHeader;
+        }
+        
         const response = await fetch(`${BASE_API_PATH}`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'User-Agent': 'dp-Monobar',
-                'X-Environment': getBaseEnvironment(url)
-            }
+            headers
         });
+
+        console.log(headers)
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
         }
         
         const data = await response.json();
@@ -38,8 +48,7 @@ export async function getHomeData(fetch, url) {
         };
     }
 }
-export async function getItemInfoData(id, fetch, url) {
-    // console.log('Fetching item data from:', BASE_API_PATH);
+export async function getItemInfoData(id, fetch, url, cookies) {
     if(!id) {
         return {
             data: null,
@@ -47,17 +56,25 @@ export async function getItemInfoData(id, fetch, url) {
         };
     }
     try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url)
+        };
+        
+        const authHeader = getAuthorizationHeader(cookies);
+        if (authHeader) {
+            headers['Authorization'] = authHeader;
+        }
+        
         const response = await fetch(`${BASE_API_PATH}/watch?intent=info&id=${id}`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'User-Agent': 'dp-Monobar',
-                'X-Environment': getBaseEnvironment(url)
-            }
+            headers
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
         }
         
         const data = await response.json();
@@ -72,8 +89,7 @@ export async function getItemInfoData(id, fetch, url) {
         };
     }
 }
-export async function getItemWatchData(id, fetch, url) {
-    // console.log('Fetching item watch data from:', BASE_API_PATH);
+export async function getItemWatchData(id, fetch, url, cookies) {
     if(!id) {
         return {
             data: null,
@@ -81,17 +97,25 @@ export async function getItemWatchData(id, fetch, url) {
         };
     }
     try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url)
+        };
+        
+        const authHeader = getAuthorizationHeader(cookies);
+        if (authHeader) {
+            headers['Authorization'] = authHeader;
+        }
+        
         const response = await fetch(`${BASE_API_PATH}/watch?intent=play&id=${id}`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'User-Agent': 'dp-Monobar',
-                'X-Environment': getBaseEnvironment(url)
-            }
+            headers
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
         }
         
         const data = await response.json();
@@ -106,8 +130,7 @@ export async function getItemWatchData(id, fetch, url) {
         };
     }
 }
-export async function getLibraryData(id, fetch, url, options = {}) {
-    // console.log('Fetching library data from:', BASE_API_PATH);
+export async function getLibraryData(id, fetch, url, options = {}, cookies) {
     if(!id) {
         return {
             data: null,
@@ -122,17 +145,25 @@ export async function getLibraryData(id, fetch, url, options = {}) {
     const query = params.toString();
     
     try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url)
+        };
+        
+        const authHeader = getAuthorizationHeader(cookies);
+        if (authHeader) {
+            headers['Authorization'] = authHeader;
+        }
+        
         const response = await fetch(`${BASE_API_PATH}/library?${query}`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'User-Agent': 'dp-Monobar',
-                'X-Environment': getBaseEnvironment(url)
-            }
+            headers
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
         }
         
         const data = await response.json();
@@ -147,8 +178,7 @@ export async function getLibraryData(id, fetch, url, options = {}) {
         };
     }
 }
-export async function getLibraryTypeData(options = {}, fetch, url) {
-    // console.log('Fetching library type data from:', BASE_API_PATH);
+export async function getLibraryTypeData(options = {}, fetch, url, cookies) {
     const params = new URLSearchParams();
     if (options.id) params.append('id', options.id);
     if (options.sortBy) params.append('sortBy', options.sortBy);
@@ -156,17 +186,25 @@ export async function getLibraryTypeData(options = {}, fetch, url) {
     const query = params.toString();
     
     try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url)
+        };
+        
+        const authHeader = getAuthorizationHeader(cookies);
+        if (authHeader) {
+            headers['Authorization'] = authHeader;
+        }
+        
         const response = await fetch(`${BASE_API_PATH}/library/type?${query}`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'User-Agent': 'dp-Monobar',
-                'X-Environment': getBaseEnvironment(url)
-            }
+            headers
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
         }
         
         const data = await response.json();
@@ -181,27 +219,33 @@ export async function getLibraryTypeData(options = {}, fetch, url) {
         };
     }
 }
-export async function getGenreData(options = {}, fetch, url) {
-    // console.log('Fetching genre data from:', BASE_API_PATH);
+export async function getGenreData(options = {}, fetch, url, cookies) {
     const params = new URLSearchParams();
     if (options.genreId) params.append('id', options.genreId);
     if (options.sortBy) params.append('sortBy', options.sortBy);
     if (options.sortOrder) params.append('sortOrder', options.sortOrder);
     const query = params.toString();
-    // console.log(query)
     
     try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url)
+        };
+        
+        const authHeader = getAuthorizationHeader(cookies);
+        if (authHeader) {
+            headers['Authorization'] = authHeader;
+        }
+        
         const response = await fetch(`${BASE_API_PATH}/library/genre?${query}`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'User-Agent': 'dp-Monobar',
-                'X-Environment': getBaseEnvironment(url)
-            }
+            headers
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
         }
         
         const data = await response.json();
@@ -217,8 +261,7 @@ export async function getGenreData(options = {}, fetch, url) {
     }
 }
 
-export async function searchData(query, type, includeExternal, fetch, url) {
-    // console.log('Searching data from:', BASE_API_PATH);
+export async function searchData(query, type, includeExternal, fetch, url, cookies) {
     if (!query || !query.trim()) {
         return {
             data: [],
@@ -235,17 +278,25 @@ export async function searchData(query, type, includeExternal, fetch, url) {
             searchUrl += `&type=${encodeURIComponent(type)}`;
         }
 
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url)
+        };
+        
+        const authHeader = getAuthorizationHeader(cookies);
+        if (authHeader) {
+            headers['Authorization'] = authHeader;
+        }
+
         const response = await fetch(searchUrl, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'User-Agent': 'dp-Monobar',
-                'X-Environment': getBaseEnvironment(url)
-            }
+            headers
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
         }
         
         const data = await response.json();

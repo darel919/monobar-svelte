@@ -75,11 +75,7 @@ Props:
                 const blob = await response.blob();
                 imageUrl = URL.createObjectURL(blob);
             } else {
-                const response = await fetch(src, {
-                    headers: {
-                        // 'X-Environment': getBaseEnvironment(page.url)
-                    }
-                });
+                const response = await fetch(src);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);

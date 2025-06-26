@@ -15,7 +15,8 @@
     overview?: string;
     title?: string;
     thumbPath?: string;
-    posterPath?: string;    ImageTags?: {
+    posterPath?: string;    
+    ImageTags?: {
       Primary?: string;
       Logo?: string;
       Backdrop?: string;
@@ -25,7 +26,8 @@
       Name: string;
       Url: string;
     }[];
-  }  export let isOpen: boolean = false;
+  }  
+  export let isOpen: boolean = false;
   export let item: LibraryItem | null = null;
   export let modalMode: 'mini' | 'full' = 'mini';
   export let hoveredItemId: string | null = null;
@@ -40,7 +42,6 @@
   const MODAL_HEIGHT = 320;  
   let modalPosition = { left: 0, top: 0, width: 280, height: 157 };
   function updateModalPosition() {
-    // console.log(item)
     if (hoveredItemId && typeof window !== 'undefined') {
       const hoveredElement = document.querySelector(`[data-item-id="${hoveredItemId}"]`);
       if (hoveredElement) {

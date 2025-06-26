@@ -1,7 +1,7 @@
 import { searchData, getLibraryData, getGenreData } from '$lib/server/api.js';
 import { getSearchTypeDisplayName, parseSearchInput } from '$lib/utils/searchUtils.js';
 
-export async function load({ url, fetch }) {
+export async function load({ url, fetch, cookies }) {
     const query = url.searchParams.get('q') || '';
     const typeParam = url.searchParams.get('type') || '';
     const includeExternal = url.searchParams.get('includeExternal') === 'true';
@@ -32,14 +32,14 @@ export async function load({ url, fetch }) {
     } else if (query.trim()) {
         try {
             // Try using the dedicated search API first
-            const searchResult = await searchData(parsedQuery || query, type, includeExternal, fetch, url);
+            const searchResult = await searchData(parsedQuery || query, type, includeExternal, fetch, url, cookies);
             
             if (searchResult.data && searchResult.data.length > 0) {
                 results = searchResult.data;
             } else if (type === 'genre') {
                 // For genre searches, search through genres specifically
                 const searchTerm = parsedQuery || query;
-                const genreData = await getGenreData({}, fetch, url);
+                const genreData = await getGenreData({}, fetch, url, cookies);
                 if (genreData.data && Array.isArray(genreData.data)) {
                     results = genreData.data.filter(/** @param {any} genre */ genre => 
                         (genre.Name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -49,7 +49,7 @@ export async function load({ url, fetch }) {
             } else {
                 // Fallback for other search types
                 const searchTerm = parsedQuery || query;
-                const libraryData = await getLibraryData(null, fetch, url);
+                const libraryData = await getLibraryData(null, fetch, url, {}, cookies);
                 if (libraryData.data && Array.isArray(libraryData.data)) {
                     results = libraryData.data.filter(/** @param {any} item */ item => 
                         (item.Name?.toLowerCase().includes(searchTerm.toLowerCase())) ||

@@ -1,10 +1,8 @@
 import { getItemInfoData } from '$lib/server/api.js';
 
-export async function load({ url, fetch }) {
+export async function load({ url, fetch, cookies }) {
     const id = url.searchParams.get('id');
     const type = url.searchParams.get('type');
-    
-    // console.log('Loading info data for ID:', id, 'Type:', type);
     
     if (!id) {
         return {
@@ -14,7 +12,7 @@ export async function load({ url, fetch }) {
             }
         };
     }
-      const serverData = await getItemInfoData(id, fetch, url);
+    const serverData = await getItemInfoData(id, fetch, url, cookies);
     
     return {
         serverData,

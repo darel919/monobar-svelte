@@ -7,9 +7,18 @@ export { default as ScrollToTop } from './components/ScrollToTop.svelte';
 export { default as Settings } from './components/Settings.svelte';
 export { default as AppInitializer } from './components/AppInitializer.svelte';
 
+// Export Auth components
+export { default as AuthSession } from './components/Auth/AuthSession.svelte';
+export { default as LoginButton } from './components/Auth/LoginButton.svelte';
+export { default as ProtectedRoute } from './components/Auth/ProtectedRoute.svelte';
+
 // Export stores
 export { useSettingsStore, hydrateSettingsStore } from './stores/settings';
+export { authStore } from './stores/authStore';
 
+// Export auth utilities
+// Export auth utilities
+export * from './utils/authUtils';
 // Export search utilities
 export * from './utils/searchUtils.js';
 // Export theme utilities

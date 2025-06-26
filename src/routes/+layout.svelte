@@ -4,6 +4,7 @@
 	import FooterComponent from '$lib/components/Navbar/Footer.svelte';
 	import AppInitializer from '$lib/components/AppInitializer.svelte';
 	import ScrollToTop from '$lib/components/ScrollToTop.svelte';
+	import ReauthNotification from '$lib/components/Auth/ReauthNotification.svelte';
 	
 	let { children, data } = $props();
 </script>
@@ -13,3 +14,4 @@
 {@render children()}
 <FooterComponent/>
 <ScrollToTop />
+<ReauthNotification />

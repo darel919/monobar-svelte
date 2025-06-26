@@ -33,11 +33,13 @@ import { onMount, onDestroy } from 'svelte';
     
     onMount(() => {
         settingsStore = useSettingsStore();
+        console.log(selectedYtId)
     });
     
     let videoLoaded = false;
     let videoEnded = false;
-    let isInViewport = false;
+    let videoError = false;
+    let isInViewport = true;
     let iframeRef: HTMLIFrameElement;
     let containerRef: HTMLDivElement;
     let observer: IntersectionObserver;
@@ -65,6 +67,8 @@ import { onMount, onDestroy } from 'svelte';
             selectedYtId = selectRandomTrailer();
         } else if (ytId) {
             selectedYtId = ytId;
+        } else {
+            selectedYtId = '';
         }
     }
 
@@ -77,8 +81,9 @@ import { onMount, onDestroy } from 'svelte';
             playerRef = null;
         }
         videoLoaded = false;
-        videoEnded = false;
+        videoError = false;
         currentYtId = selectedYtId;
+        videoEnded = !selectedYtId;
     }
 
     onMount(() => {
@@ -103,6 +108,8 @@ import { onMount, onDestroy } from 'svelte';
             );
             
             observer.observe(containerRef);
+        } else {
+            isInViewport = true;
         }
     });    
     onDestroy(() => {
@@ -127,6 +134,10 @@ import { onMount, onDestroy } from 'svelte';
                                 videoEnded = true;
                                 videoLoaded = false;
                             }
+                        },
+                        onError: (event: any) => {
+                            videoError = true;
+                            videoLoaded = false;
                         }
                     }
                 });
@@ -144,16 +155,16 @@ import { onMount, onDestroy } from 'svelte';
         bind:this={containerRef}
         class="w-full h-full relative"
     >        
-    <ImageComponent
+        <ImageComponent
             src={backdrop}
             alt="Backdrop"
             loading="eager"
             containerClass="absolute inset-0"
-            imageClass={`transition-opacity duration-1000 ${!videoLoaded || videoEnded || !isInViewport || !isTrailerEnabled ? 'opacity-100' : 'opacity-0'}`}
+            imageClass={`transition-opacity duration-1000 ${!videoLoaded || videoEnded || videoError || !isInViewport || !isTrailerEnabled ? 'opacity-100' : 'opacity-0'}`}
             borderRadius="rounded-none"
             showSkeleton={true}
-        />          
-        {#if selectedYtId && isTrailerEnabled && !videoEnded && isInViewport}
+        />
+        {#if selectedYtId && isTrailerEnabled && !videoEnded && !videoError && isInViewport}
             <div 
                 class={`absolute inset-0 w-full h-full transition-opacity duration-1000 ${videoLoaded ? 'opacity-100' : 'opacity-0'}`}
             >
@@ -171,6 +182,10 @@ import { onMount, onDestroy } from 'svelte';
                                 videoLoaded = true;
                                 createPlayer();
                             }, 1000);
+                        }}
+                        on:error={() => {
+                            videoError = true;
+                            videoLoaded = false;
                         }}
                     >
                     </iframe>

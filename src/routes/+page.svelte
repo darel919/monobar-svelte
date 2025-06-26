@@ -1,7 +1,7 @@
 <script>
     import LibraryViewDisplay from '$lib/components/LibraryViewDisplay.svelte';
     import StopState from '$lib/components/StopState.svelte';
-    
+        
     export let data;
     
     $: serverData = data.serverData;
@@ -12,8 +12,8 @@
 <main class="flex flex-col min-h-screen p-8 pt-20">
     <section class="mb-8">
         <h1 class="text-4xl font-extralight">home</h1>
-        <!-- <p class="text-lg opacity-75">Media Library Display</p> -->
     </section>
+
 
     {#if libraryCategories.length === 0}
     <StopState
@@ -46,16 +46,6 @@
             <LibraryViewDisplay data={libraryComingSoon} viewMode="default_thumb_home" />
         </section>
     {/if}
-
-
-    <!-- {#if serverData}
-        <section class="mb-8">
-            <h2 class="text-2xl mb-4">Server Data</h2>
-            <div class="bg-base-800 p-4 rounded-lg">
-                <pre class="text-sm overflow-auto">{JSON.stringify(serverData, null, 2)}</pre>
-            </div>
-        </section>
-    {/if} -->
 </main>
 
 
