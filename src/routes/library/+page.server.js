@@ -1,10 +1,9 @@
 import { getLibraryData, getLibraryTypeData, getGenreData } from '$lib/server/api.js';
-import { DEFAULT_LIBRARY_SORT_BY, DEFAULT_LIBRARY_SORT_ORDER } from '$lib/constants/defaults.js';
 
 export async function load({ url, fetch, cookies }) {
     const id = url.searchParams.get('id');
-    const sortBy = url.searchParams.get('sortBy') || cookies.get('librarySortBy') || DEFAULT_LIBRARY_SORT_BY;
-    const sortOrder = url.searchParams.get('sortOrder') || cookies.get('librarySortOrder') || DEFAULT_LIBRARY_SORT_ORDER;
+    const sortBy = url.searchParams.get('sortBy') || cookies.get('librarySortBy') || "ProductionYear";
+    const sortOrder = url.searchParams.get('sortOrder') || cookies.get('librarySortOrder') || "desc";
     const type = url.searchParams.get('type') || null;
     console.log('Loading library data for ID:', id);
     if(!type) {
