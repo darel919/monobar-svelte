@@ -23,6 +23,32 @@ export function getAuthorizationHeader(cookies: any = null) {
     return null;
 }
 
+export function getSessionId() {
+    if (!browser) return '';
+    try {
+        return localStorage.getItem('DeviceId') || '';
+    } catch (error) {
+        console.error('Failed to get session ID:', error);
+        return '';
+    }
+}
+
+export function getSessionHeaders(cookies: any = null) {
+    const headers: { [key: string]: string } = {};
+    
+    const authHeader = getAuthorizationHeader(cookies);
+    if (authHeader) {
+        headers['Authorization'] = authHeader;
+    }
+    
+    const sessionId = getSessionId();
+    if (sessionId) {
+        headers['X-Session-Id'] = sessionId;
+    }
+    
+    return headers;
+}
+
 export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: string) => void): boolean {
   if (!browser) return false;
   

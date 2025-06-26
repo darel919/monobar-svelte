@@ -16,6 +16,7 @@ Props:
 - withCredentials: Include cookies in cross-origin requests (defaults to false)
 - headers: Custom HTTP headers for the request (defaults to {})
 - showSkeleton: Show loading skeleton animation (defaults to true)
+- fallbackName: Name to display when image fails to load (defaults to '')
 - onload: Callback function called when image loads successfully
 - onerror: Callback function called when image fails to load
 -->
@@ -35,6 +36,7 @@ Props:
     export let withCredentials: boolean = false;
     export let headers: { [key: string]: string } = {};
     export let showSkeleton: boolean = true;
+    export let fallbackName: string = '';
     export let onload: (() => void) | undefined = undefined;
     export let onerror: (() => void) | undefined = undefined;
     
@@ -129,6 +131,10 @@ Props:
             on:load={handleLoad}
             on:error={handleError}
         />
+    {:else if hasError && fallbackName}
+        <div class="flex items-center justify-center w-full h-full bg-gray-200 rounded-lg text-xs text-gray-500 {borderRadius}">
+            <div class="font-bold text-center p-2">{fallbackName}</div>
+        </div>
     {/if}
 </div>
 
@@ -147,6 +153,10 @@ Props:
                 {loading}
                 class="w-full h-full object-cover {borderRadius}"
             />
+        {:else if fallbackName}
+            <div class="flex items-center justify-center w-full h-full bg-gray-200 rounded-lg text-xs text-gray-500 {borderRadius}">
+                <div class="font-bold text-center p-2">{fallbackName}</div>
+            </div>
         {/if}
     </div>
 </noscript>

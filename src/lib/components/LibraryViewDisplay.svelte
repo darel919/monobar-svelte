@@ -190,6 +190,7 @@ Props:
                             alt={item.Name || item.title || 'Image'}
                             aspectRatio="2/3"
                             borderRadius="rounded-lg"
+                            fallbackName={item.OriginalTitle || item.Name || item.title || 'Unknown'}
                             onload={() => handleImgLoad(itemId)}
                             onerror={() => handleImgError(itemId)}
                         />
@@ -227,6 +228,7 @@ Props:
                             alt={item.Name || 'Image'}
                             aspectRatio="16/9"
                             borderRadius="rounded-sm"
+                            fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
                             onload={() => handleImgLoad(itemId)}
                             onerror={() => handleImgError(itemId)}
                         />
@@ -265,6 +267,7 @@ Props:
                             alt={item.Name || 'Image'}
                             aspectRatio="16/9"
                             borderRadius="rounded-none"
+                            fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
                             onload={() => handleImgLoad(itemId)}
                             onerror={() => handleImgError(itemId)}
                         />
@@ -321,6 +324,7 @@ Props:
                                 alt={item.Name || 'Image'}
                                 aspectRatio="16/9"
                                 borderRadius="rounded-none"
+                                fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
                                 onload={() => handleImgLoad(itemId)}
                                 onerror={() => handleImgError(itemId)}
                             />
@@ -393,6 +397,7 @@ Props:
                             src={item.thumbPath || item.posterPath}
                             alt={item.Name || 'Image'}
                             aspectRatio="2/1"
+                            fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
                             onload={() => handleImgLoad(itemId)}
                             onerror={() => handleImgError(itemId)}
                         />
@@ -430,6 +435,7 @@ Props:
                             src={item.thumbPath}
                             alt={item.Name || 'Image'}
                             aspectRatio="2/1"
+                            fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
                             onload={() => handleImgLoad(itemId)}
                             onerror={() => handleImgError(itemId)}
                         />

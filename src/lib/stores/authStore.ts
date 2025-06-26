@@ -2,6 +2,7 @@ import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import Cookies from 'js-cookie';
 import { BASE_API_PATH } from '$lib/config/api';
+import { getDeviceProfileHeader, getDeviceIdentification } from '$lib/utils/deviceUtils';
 
 export interface UserSession {
   access_token?: string;
@@ -65,23 +66,55 @@ function createAuthStore() {
   const store = {
     subscribe,
     set,
-    update,
-
+    update,    
+    async calculateDeviceProfile() {
+      if (!browser) return '';
+      
+      try {
+        return getDeviceProfileHeader();
+      } catch (error) {
+        console.error('Failed to calculate device profile:', error);
+        return '';
+      }
+    },
+    
+    getDeviceId() {
+      if (!browser) return '';
+      try {
+        return localStorage.getItem('DeviceId') || '';
+      } catch (error) {
+        console.error('Failed to get device ID:', error);
+        return '';
+      }
+    },
     validateJellyfinCredentials: async (providerId: string, jellyAccessToken: string) => {
       if (!browser) return { isValid: false, error: 'Not in browser environment' };
 
       try {
-        const response = await fetch(`${BASE_API_PATH}/jellyfin/v2/profile`, {
+        const headers: { [key: string]: string } = {
+          'Content-Type': 'application/json',
+          'Authorization': `monobar_user=${providerId},monobar_token=${jellyAccessToken}`,
+          'X-Device-Profile': await store.calculateDeviceProfile()
+        };
+        
+        const sessionId = store.getDeviceId();
+        if (sessionId) {
+          headers['X-Session-Id'] = sessionId;
+        }
+        
+        const response = await fetch(`${BASE_API_PATH}/jellyfin/profile`, {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `monobar_user=${providerId},monobar_token=${jellyAccessToken}`,
-          },
+          headers,
         });
+
 
         if (response.ok) {
           const data = await response.json();
           if (data.name && data.id && data.last_login && data.last_activity) {
+            if (data.deviceId) {
+              localStorage.setItem('DeviceId', data.deviceId);
+              console.warn('Device ID set from Jellyfin profile:', data.deviceId);
+            }
             return { isValid: true, data };
           }
         }
@@ -124,6 +157,7 @@ function createAuthStore() {
               } else {
                 console.log('JWT token expired');
                 localStorage.removeItem('user-session');
+                localStorage.removeItem('DeviceId');
                 Cookies.remove('user-session');
                 // Clear Jellyfin cookies when DWS token expires
                 Cookies.remove('jellyUserId');
@@ -135,6 +169,7 @@ function createAuthStore() {
           } catch (jwtError) {
             console.error('Invalid session format:', jwtError);
             localStorage.removeItem('user-session');
+            localStorage.removeItem('DeviceId');
             // Clear Jellyfin cookies when DWS session is invalid
             Cookies.remove('jellyUserId');
             Cookies.remove('jellyAccessToken');
@@ -148,6 +183,7 @@ function createAuthStore() {
             const validation = await store.validateJellyfinCredentials(providerId, jellyAccessToken);
             if (!validation.isValid) {
               console.log('Jellyfin credentials are invalid, clearing cookies');
+              localStorage.removeItem('DeviceId');
               Cookies.remove('jellyUserId');
               Cookies.remove('jellyAccessToken');
               update(state => ({
@@ -165,6 +201,7 @@ function createAuthStore() {
         // Clear Jellyfin cookies if DWS is not logged in
         if (!isAuthenticated && (jellyUserId || jellyAccessToken)) {
           console.log('DWS not authenticated, clearing Jellyfin cookies');
+          localStorage.removeItem('DeviceId');
           Cookies.remove('jellyUserId');
           Cookies.remove('jellyAccessToken');
         }
@@ -214,6 +251,7 @@ function createAuthStore() {
       } catch (error) {
         console.error('Auth check failed:', error);
         // Clear Jellyfin cookies when auth check fails
+        localStorage.removeItem('DeviceId');
         Cookies.remove('jellyUserId');
         Cookies.remove('jellyAccessToken');
         update(state => ({
@@ -244,12 +282,19 @@ function createAuthStore() {
       try {
         const providerId = currentState?.userSession?.user?.user_metadata?.provider_id || '';
         
-        const response = await fetch(`${BASE_API_PATH}/jellyfin/v2/login`, {
+        const headers: { [key: string]: string } = {
+          'Content-Type': 'application/json',
+          'Authorization': providerId,
+        };
+        
+        const sessionId = store.getDeviceId();
+        if (sessionId) {
+          headers['X-Session-Id'] = sessionId;
+        }
+        
+        const response = await fetch(`${BASE_API_PATH}/jellyfin/login`, {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': providerId,
-          },
+          headers,
         });
 
         if (!response.ok) {
@@ -259,6 +304,11 @@ function createAuthStore() {
         const data = await response.json();
         Cookies.set('jellyUserId', data.userId);
         Cookies.set('jellyAccessToken', data.access_token);
+
+        const validation = await store.validateJellyfinCredentials(providerId, data.access_token);
+        if (!validation.isValid) {
+          throw new Error('Failed to validate Jellyfin credentials after login');
+        }
 
         update(state => ({
           ...state,
@@ -310,6 +360,7 @@ function createAuthStore() {
       try {
         localStorage.removeItem('user-session');
         localStorage.removeItem('redirectAfterAuth');
+        localStorage.removeItem('DeviceId');
         
         Cookies.remove('jellyUserId');
         Cookies.remove('jellyAccessToken');

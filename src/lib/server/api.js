@@ -2,7 +2,7 @@
 import { dev } from '$app/environment';
 import { PUBLIC_APP_PATH, PUBLIC_DEV_API_BASE_URL, PUBLIC_PROD_API_BASE_URL } from '$env/static/public';
 import { getBaseEnvironment } from '$lib/utils/environment.js';
-import { getAuthorizationHeader } from '$lib/utils/authUtils';
+import { getAuthorizationHeader, getSessionHeaders } from '$lib/utils/authUtils';
 
 export const BASE_API_PATH = (() => {
     const path = PUBLIC_APP_PATH;
@@ -15,13 +15,9 @@ export async function getHomeData(fetch, url, cookies) {
         const headers = {
             'Content-Type': 'application/json',
             'User-Agent': 'dp-Monobar',
-            'X-Environment': getBaseEnvironment(url)
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
         };
-        
-        const authHeader = getAuthorizationHeader(cookies);
-        if (authHeader) {
-            headers['Authorization'] = authHeader;
-        }
         
         const response = await fetch(`${BASE_API_PATH}`, {
             method: 'GET',
@@ -59,13 +55,9 @@ export async function getItemInfoData(id, fetch, url, cookies) {
         const headers = {
             'Content-Type': 'application/json',
             'User-Agent': 'dp-Monobar',
-            'X-Environment': getBaseEnvironment(url)
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
         };
-        
-        const authHeader = getAuthorizationHeader(cookies);
-        if (authHeader) {
-            headers['Authorization'] = authHeader;
-        }
         
         const response = await fetch(`${BASE_API_PATH}/watch?intent=info&id=${id}`, {
             method: 'GET',
@@ -111,13 +103,9 @@ export async function getItemWatchData(id, fetch, url, cookies) {
         const headers = {
             'Content-Type': 'application/json',
             'User-Agent': 'dp-Monobar',
-            'X-Environment': getBaseEnvironment(url)
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
         };
-        
-        const authHeader = getAuthorizationHeader(cookies);
-        if (authHeader) {
-            headers['Authorization'] = authHeader;
-        }
         
         const response = await fetch(`${BASE_API_PATH}/watch?intent=play&id=${id}`, {
             method: 'GET',
@@ -159,13 +147,9 @@ export async function getLibraryData(id, fetch, url, options = {}, cookies) {
         const headers = {
             'Content-Type': 'application/json',
             'User-Agent': 'dp-Monobar',
-            'X-Environment': getBaseEnvironment(url)
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
         };
-        
-        const authHeader = getAuthorizationHeader(cookies);
-        if (authHeader) {
-            headers['Authorization'] = authHeader;
-        }
         
         const response = await fetch(`${BASE_API_PATH}/library?${query}`, {
             method: 'GET',
@@ -200,13 +184,9 @@ export async function getLibraryTypeData(options = {}, fetch, url, cookies) {
         const headers = {
             'Content-Type': 'application/json',
             'User-Agent': 'dp-Monobar',
-            'X-Environment': getBaseEnvironment(url)
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
         };
-        
-        const authHeader = getAuthorizationHeader(cookies);
-        if (authHeader) {
-            headers['Authorization'] = authHeader;
-        }
         
         const response = await fetch(`${BASE_API_PATH}/library/type?${query}`, {
             method: 'GET',
@@ -241,13 +221,9 @@ export async function getGenreData(options = {}, fetch, url, cookies) {
         const headers = {
             'Content-Type': 'application/json',
             'User-Agent': 'dp-Monobar',
-            'X-Environment': getBaseEnvironment(url)
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
         };
-        
-        const authHeader = getAuthorizationHeader(cookies);
-        if (authHeader) {
-            headers['Authorization'] = authHeader;
-        }
         
         const response = await fetch(`${BASE_API_PATH}/library/genre?${query}`, {
             method: 'GET',
@@ -292,13 +268,9 @@ export async function searchData(query, type, includeExternal, fetch, url, cooki
         const headers = {
             'Content-Type': 'application/json',
             'User-Agent': 'dp-Monobar',
-            'X-Environment': getBaseEnvironment(url)
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
         };
-        
-        const authHeader = getAuthorizationHeader(cookies);
-        if (authHeader) {
-            headers['Authorization'] = authHeader;
-        }
 
         const response = await fetch(searchUrl, {
             method: 'GET',

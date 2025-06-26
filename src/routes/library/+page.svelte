@@ -30,6 +30,7 @@
                 imageClass="object-cover pointer-events-none opacity-70"
                 borderRadius="rounded-none"
                 showSkeleton={false}
+                fallbackName={serverData.Name || 'Library'}
             />
             <div class="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-base-100"></div>
         </div>

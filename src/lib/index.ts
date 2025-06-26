@@ -6,6 +6,7 @@ export { default as SearchBar } from './components/Navbar/SearchBar.svelte';
 export { default as ScrollToTop } from './components/ScrollToTop.svelte';
 export { default as Settings } from './components/Settings.svelte';
 export { default as AppInitializer } from './components/AppInitializer.svelte';
+export { default as VersionDisplay } from './components/VersionDisplay.svelte';
 
 // Export Auth components
 export { default as AuthSession } from './components/Auth/AuthSession.svelte';

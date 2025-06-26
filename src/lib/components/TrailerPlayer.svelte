@@ -33,7 +33,7 @@ import { onMount, onDestroy } from 'svelte';
     
     onMount(() => {
         settingsStore = useSettingsStore();
-        console.log(selectedYtId)
+        // console.log(selectedYtId)
     });
     
     let videoLoaded = false;

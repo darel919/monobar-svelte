@@ -213,7 +213,7 @@
     <div class="mt-8">
         {#if error}
             <div class="flex justify-center items-center min-h-[300px]">
-                <StopState message="Error: {error}" />
+                <StopState errorCode={error} message="search is unavailable." />
             </div>        
         {:else if initialQuery && initialQuery.trim()}
             <div class="search-results py-8">
@@ -247,7 +247,6 @@
                     </div>
                 {/if}
             </div>
-        {:else}
 
         {/if}
     </div>

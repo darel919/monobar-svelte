@@ -1,5 +1,6 @@
 <script>
     import Settings from '$lib/components/Settings.svelte';
+  import VersionInfo from '$lib/components/VersionInfo.svelte';
 </script>
 
 <svelte:head>
@@ -10,4 +11,5 @@
     <h1 class="text-4xl font-extralight mb-8 text-white">settings</h1>
     
     <Settings />
+    <VersionInfo/>
 </div>

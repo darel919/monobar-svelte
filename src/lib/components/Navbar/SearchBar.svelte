@@ -3,6 +3,7 @@
     import { onMount } from 'svelte';
     import { browser } from '$app/environment';
     import { parseSearchInput, getSearchPlaceholder, buildSearchUrl, SEARCH_TYPES } from '$lib/utils/searchUtils.js';
+    import { getSessionHeaders } from '$lib/utils/authUtils';
     
     let searchQuery = '';
     /** @type {string | null} */
@@ -30,7 +31,10 @@
                 searchUrl += `&type=${encodeURIComponent(type)}`;
             }
             
-            const response = await fetch(searchUrl);
+            const sessionHeaders = getSessionHeaders();
+            const response = await fetch(searchUrl, {
+                headers: sessionHeaders
+            });
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
