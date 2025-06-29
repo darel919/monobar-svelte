@@ -70,6 +70,8 @@ export async function getItemInfoData(id, fetch, url, cookies) {
         }
         
         const data = await response.json();
+
+
         return {
             data
         };
@@ -104,13 +106,14 @@ export async function getItemWatchData(id, fetch, url, cookies) {
             'Content-Type': 'application/json',
             'User-Agent': 'dp-Monobar',
             'X-Environment': getBaseEnvironment(url),
-            ...getSessionHeaders(cookies)
+            ...await getSessionHeaders(cookies)
         };
         
         const response = await fetch(`${BASE_API_PATH}/watch?intent=play&id=${id}`, {
             method: 'GET',
             headers
         });
+        // console.log(response)
         
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
@@ -118,6 +121,8 @@ export async function getItemWatchData(id, fetch, url, cookies) {
         }
         
         const data = await response.json();
+
+                // console.log('Item Info Data:', data);
         return {
             data
         };

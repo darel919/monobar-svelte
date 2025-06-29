@@ -23,14 +23,19 @@ export function getAuthorizationHeader(cookies: any = null) {
     return null;
 }
 
-export function getSessionId() {
-    if (!browser) return '';
-    try {
-        return localStorage.getItem('DeviceId') || '';
-    } catch (error) {
-        console.error('Failed to get session ID:', error);
-        return '';
+export function getSessionId(cookies: any = null) {
+    if (browser) {
+        try {
+            return Cookies.get('DeviceId') || '';
+        } catch (error) {
+            console.error('Failed to get session ID:', error);
+            return '';
+        }
+    } else if (cookies && typeof cookies.get === 'function') {
+        // Server-side: get DeviceId from cookies
+        return cookies.get('DeviceId') || '';
     }
+    return '';
 }
 
 export function getSessionHeaders(cookies: any = null) {
@@ -41,7 +46,7 @@ export function getSessionHeaders(cookies: any = null) {
         headers['Authorization'] = authHeader;
     }
     
-    const sessionId = getSessionId();
+    const sessionId = getSessionId(cookies);
     if (sessionId) {
         headers['X-Session-Id'] = sessionId;
     }

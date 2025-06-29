@@ -2,20 +2,14 @@
 import { onMount, onDestroy } from 'svelte';
 import WatchPlayer from '$lib/components/WatchPlayer.svelte';
 import StopState from '$lib/components/StopState.svelte';
-import type { SeriesData } from '$lib/utils/episodeUtils';
 import { page } from '$app/stores';
 import { browser } from '$app/environment';
-
-let watchData: any = null;
-let seriesData: SeriesData | null = null;
-let fetchError: string | null = null;
-
-let id: string | null = null;
-let type: string | null = null;
-let seriesId: string | null = null;
-
-let status: string | undefined = undefined;
-let error: string | null | undefined = undefined;
+import { BASE_API_PATH } from '$lib/config/api';
+  import { getAuthorizationHeader, getSessionId } from '$lib/utils/authUtils.js';
+export let data;
+  
+$: watchData = data.serverData.data || null;
+$: playUrl = watchData?.playbackUrl || null;
 
 $: id = $page.url.searchParams.get('id');
 $: type = $page.url.searchParams.get('type');
@@ -26,6 +20,8 @@ if (browser) {
         console.warn('Watch page unmounted');
     });
 }
+
+
 </script>
 
 {#if !id || !type}
@@ -37,13 +33,11 @@ if (browser) {
         action="back"
         actionText="Go back"
     />
-{:else if fetchError}
-    <div class="error">{fetchError}</div>
-{:else if status === 'error' && error}
-    <div class="error">{error}</div>
 {:else}
-    <main class="min-h-screen mt-20">
-        <WatchPlayer poster={watchData?.poster} fullData={watchData} id={id} type={type} seriesData={seriesData} />
-        <!-- <SeasonsEpisodesViewer seriesData={seriesData} currentEpisodeId={currentEpisodeId} mode="watch" /> -->
+    <main class="min-h-screen pt-16">
+       <section class="relative max-h-screen w-full aspect-video bg-black rounded-lg overflow-hidden my-6">
+         <WatchPlayer id={id} poster={watchData?.BackdropImageTags} 
+            fullData={watchData} type={type} />
+       </section>
     </main>
 {/if}

@@ -83,7 +83,7 @@ function createAuthStore() {
     getDeviceId() {
       if (!browser) return '';
       try {
-        return localStorage.getItem('DeviceId') || '';
+        return Cookies.get('DeviceId') || '';
       } catch (error) {
         console.error('Failed to get device ID:', error);
         return '';
@@ -110,7 +110,7 @@ function createAuthStore() {
           const data = await response.json();
           if (data.name && data.id && data.last_login && data.last_activity) {
             if (data.deviceId) {
-              localStorage.setItem('DeviceId', data.deviceId);
+              Cookies.set('DeviceId', data.deviceId, { path: '/', sameSite: 'lax' });
               console.warn('Device ID set from Jellyfin profile:', data.deviceId);
             }
             return { isValid: true, data };
@@ -155,7 +155,7 @@ function createAuthStore() {
               } else {
                 console.log('JWT token expired');
                 localStorage.removeItem('user-session');
-                localStorage.removeItem('DeviceId');
+                Cookies.remove('DeviceId', { path: '/' });
                 Cookies.remove('user-session');
                 // Clear Jellyfin cookies when DWS token expires
                 Cookies.remove('jellyUserId');
@@ -167,7 +167,7 @@ function createAuthStore() {
           } catch (jwtError) {
             console.error('Invalid session format:', jwtError);
             localStorage.removeItem('user-session');
-            localStorage.removeItem('DeviceId');
+            Cookies.remove('DeviceId', { path: '/' });
             // Clear Jellyfin cookies when DWS session is invalid
             Cookies.remove('jellyUserId');
             Cookies.remove('jellyAccessToken');
@@ -181,7 +181,7 @@ function createAuthStore() {
             const validation = await store.validateJellyfinCredentials(providerId, jellyAccessToken);
             if (!validation.isValid) {
               console.log('Jellyfin credentials are invalid, clearing cookies');
-              localStorage.removeItem('DeviceId');
+              Cookies.remove('DeviceId', { path: '/' });
               Cookies.remove('jellyUserId');
               Cookies.remove('jellyAccessToken');
               update(state => ({
@@ -199,7 +199,7 @@ function createAuthStore() {
         // Clear Jellyfin cookies if DWS is not logged in
         if (!isAuthenticated && (jellyUserId || jellyAccessToken)) {
           console.log('DWS not authenticated, clearing Jellyfin cookies');
-          localStorage.removeItem('DeviceId');
+          Cookies.remove('DeviceId', { path: '/' });
           Cookies.remove('jellyUserId');
           Cookies.remove('jellyAccessToken');
         }
@@ -249,7 +249,7 @@ function createAuthStore() {
       } catch (error) {
         console.error('Auth check failed:', error);
         // Clear Jellyfin cookies when auth check fails
-        localStorage.removeItem('DeviceId');
+        Cookies.remove('DeviceId', { path: '/' });
         Cookies.remove('jellyUserId');
         Cookies.remove('jellyAccessToken');
         update(state => ({
@@ -359,7 +359,6 @@ function createAuthStore() {
       try {
         localStorage.removeItem('user-session');
         localStorage.removeItem('redirectAfterAuth');
-        localStorage.removeItem('DeviceId');
         
         Cookies.remove('jellyUserId');
         Cookies.remove('jellyAccessToken');

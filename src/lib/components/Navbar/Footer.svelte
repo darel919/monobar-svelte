@@ -20,8 +20,11 @@
 
 <footer class="footer sm:footer-horizontal bg-black text-white p-8 flex flex-col border-base-200 border-t relative z-20">
     <a href="/" class="flex items-center">
+        
+        <!-- <section class="mr-2">
         <img src="assets/TRANSPARENT_FAVICON.png" alt="darel's Projects" class="w-12 h-12 rounded-full" />
-        <section class="ml-2">
+        </section> -->
+        <section class="">
             <h2 class="font-bold text-xl">moNobar</h2>
             <VersionDisplay version={appVersion} buildDate={appBuildDate} />
         </section>

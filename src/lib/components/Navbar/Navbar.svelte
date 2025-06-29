@@ -144,7 +144,7 @@
                     <label for="navbar-menu-pc" 
                         class="btn custom-navbar-logo border-none hover:opacity-90 transition-colors duration-200"
                     >
-                        <img src="/assets/TRANSPARENT.png" alt="Logo" class="h-10 w-full object-contain" />
+                        <img src="/assets/TRANSPARENT_FAVICON.png" alt="Logo" class="h-12 w-full object-contain" />
                     </label>
                 </div>
                 <!-- Navigation Drawer (desktop, no homeData) -->
@@ -233,7 +233,7 @@
         </div>
         <!-- Right section - User avatar (always visible, anchored right) -->
         <div class="flex items-center gap-2 min-w-[40px] justify-end ml-auto flex-shrink-0">
-            <a href="/account" class="focus:outline-none ml-4">
+            <a href={ isAuthenticated ? "/account" : "/login"} class="focus:outline-none ml-4">
                 {#if isAuthenticated && userSession?.user.user_metadata.avatar_url}
                     <img
                         src={userSession?.user.user_metadata.avatar_url}
