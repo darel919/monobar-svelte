@@ -17,6 +17,7 @@ html {
 [data-theme="light"] {
   --color-base-100: #fafafb;
   --color-base-200: #e7e7e7;
+  --color-navbar: #e7e7e780;
   --color-base-300: #e7e8ec;
   --color-base-content: #000000;
   --color-primary: #2c4eb8;
@@ -39,6 +40,7 @@ html {
 [data-theme="dark"] {
   --color-base-100: #0a0a0a;
   --color-base-200: #15151c;
+  --color-navbar: #15151c7a;
   --color-base-300: #131318;
   --color-base-content: #e8e8ec;
   --color-primary: #4d6fd1;

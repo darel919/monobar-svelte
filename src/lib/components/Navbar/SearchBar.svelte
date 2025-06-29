@@ -47,7 +47,8 @@
         }
     }
 
-    $: placeholder = activePrefix ? SEARCH_TYPES[activePrefix]?.placeholder || 'Search' : 'Search';    onMount(() => {
+    $: placeholder = activePrefix ? SEARCH_TYPES[activePrefix]?.placeholder || 'Search' : 'Search';    
+    onMount(() => {
         /**
          * @param {MouseEvent} event
          */        const handleClickOutside = (event) => {
@@ -126,7 +127,8 @@
      * @param {KeyboardEvent} e
      */    function handleKeyDown(e) {
         if (e.key === 'Enter') {
-            handleSubmit(e);        } else if (e.key === 'Backspace' && activePrefix && searchQuery === '') {
+            handleSubmit(e);        
+        } else if (e.key === 'Backspace' && activePrefix && searchQuery === '') {
             activePrefix = null;
         }
     }
@@ -158,6 +160,7 @@
 </script>
 
 <div class="relative w-full max-w-md " bind:this={searchContainerRef}>
+    <!-- Input field -->
     <form on:submit={handleSubmit} class="relative">
         <div class="relative flex items-center">
             {#if activePrefix}
@@ -181,7 +184,7 @@
                 on:input={handleSearchChange}
                 on:keydown={handleKeyDown}
                 on:focus={handleInputFocus}
-                class="input input-sm input-bordered h-10 w-full {activePrefix ? 'pl-20' : 'pl-3'} pr-8 rounded-xl"
+                class="input input-sm h-10 w-full {activePrefix ? 'pl-20' : 'pl-3'} pr-8 rounded-xl"
                 {placeholder}
                 autocomplete="off"
             />
@@ -199,6 +202,7 @@
         </div>
     </form>
     
+    <!-- Results  -->
     {#if showResults && searchQuery.trim() !== ''}
         <div class="absolute top-full w-full">
             <div class="relative mt-2">

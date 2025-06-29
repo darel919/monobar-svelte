@@ -26,10 +26,12 @@
             <VersionDisplay version={appVersion} buildDate={appBuildDate} />
         </section>
     </a>
+    <a target="_blank" href="https://github.com/darel919/monobar-svelte/issues/new" title="If you're having problem with anything, please open a new issue on GitHub by clicking here." class="link link-hover">Having trouble?</a>
     <nav>
         <h6 class="footer-title">External Links</h6>
-        <a class="link link-hover" target="_blank" href="https://darelisme.my.id" title="DWS home page">DWS Home</a>
-        <a class="link link-hover" target="_blank" href="https://status.darelisme.my.id" title="DWS status page">Status</a>
+        <a class="link link-hover" target="_blank" href="https://darelisme.my.id" title="DWS home page">at DWS</a>
+        <a class="link link-hover" target="_blank" href="https://github.com/darel919/monobar-svelte" title="GitHub Repo of moNobar">GitHub Repository</a>
+        <a class="link link-hover" target="_blank" href="https://status.darelisme.my.id" title="DWS status page">Service Status</a>
     </nav>
     <aside>
     </aside>
