@@ -25,7 +25,7 @@
 <main class="flex flex-col min-h-screen px-8 pt-20 text-white">
     {#if type === "Movie" || type === "Series"}
         {#if serverData && !data.serverData.error}    
-        {console.log("Server Data:", serverData)}        
+        <!-- {console.log("Server Data:", serverData)}         -->
             <section class="fixed inset-0 -z-1">                
                 <YtPlayer 
                     ytId=""
@@ -111,13 +111,34 @@
                 </section>
             {/if}
             </section>
-
-            {#if serverData.People && serverData.People.length > 0}
-            <section class="-ml-4">
-                <CastViewDisplay
-                data={serverData.People}
-                />
-            </section>
+            {console.log("Server Data:", serverData)}
+            {#if serverData.People}
+            {#if serverData.People.Directors && serverData.People.Directors.content && serverData.People.Directors.content.length > 0} 
+                    <section class="my-2">
+                        <!-- <CastViewDisplay
+                            data={serverData.People.Actors.content}
+                        /> -->
+                        {#each serverData.People.Directors.content as item}
+                            <section class="mb-4">
+                                <div class="text-md mb-2">Directed by: <b>{item.Name}</b></div>
+                                <!-- {#if item.ImageTags && item.ImageTags.Primary}
+                                    <img src={item.ImageTags.Primary} alt={item.Name} class="h-24 w-24 object-cover rounded-full" />
+                                {:else}
+                                    <span class="text-sm text-gray-400">No image available</span>
+                                {/if} -->
+                                </section>
+                        {/each}
+                    </section>
+                {/if}
+                {#if serverData.People.Actors && serverData.People.Actors.content && serverData.People.Actors.content.length > 0} 
+                    <p>Cast:</p>    
+                    <section class="-ml-4 my-2">
+                        <CastViewDisplay
+                            data={serverData.People.Actors.content}
+                        />
+                    </section>
+                {/if}
+                
             {/if}
             <!-- Recommendation/Similar Items -->
             {#if serverData.recommendation && serverData.recommendation.length > 0}

@@ -88,6 +88,14 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
         authDetected = true;
         const redirectPath = localStorage.getItem("redirectAfterAuth") || "/";
         localStorage.removeItem("redirectAfterAuth");
+        // Wait for store to be fully updated before navigation
+        let tries = 0;
+        while (tries < 10) {
+          const state = get(authStore);
+          if (state.isAuthenticated) break;
+          await new Promise(res => setTimeout(res, 50));
+          tries++;
+        }
         await invalidateAll();
         goto(redirectPath, { replaceState: true });
         return;
@@ -99,13 +107,19 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
         clearInterval(checkWindowClosed);
         authDetected = true;
 
-        authStore.checkAuthStatus();
-        setTimeout(async () => {
-          const redirectPath = localStorage.getItem("redirectAfterAuth") || "/";
-          localStorage.removeItem("redirectAfterAuth");
-          await invalidateAll();
-          goto(redirectPath, { replaceState: true });
-        }, 100);
+        await authStore.checkAuthStatus();
+        // Wait for store to be fully updated before navigation
+        let tries = 0;
+        while (tries < 10) {
+          const state = get(authStore);
+          if (state.isAuthenticated) break;
+          await new Promise(res => setTimeout(res, 50));
+          tries++;
+        }
+        const redirectPath = localStorage.getItem("redirectAfterAuth") || "/";
+        localStorage.removeItem("redirectAfterAuth");
+        await invalidateAll();
+        goto(redirectPath, { replaceState: true });
         return;
       }
       
@@ -125,7 +139,15 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
             localStorage.removeItem('authSuccess');
             authDetected = true;
 
-            authStore.checkAuthStatus();
+            await authStore.checkAuthStatus();
+            // Wait for store to be fully updated before navigation
+            let tries = 0;
+            while (tries < 10) {
+              const state = get(authStore);
+              if (state.isAuthenticated) break;
+              await new Promise(res => setTimeout(res, 50));
+              tries++;
+            }
 
             const redirectPath = localStorage.getItem("redirectAfterAuth") || "/";
             localStorage.removeItem("redirectAfterAuth");

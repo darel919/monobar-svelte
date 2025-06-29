@@ -73,7 +73,7 @@ Props:
                 <div class="mt-4 w-24 sm:w-28 text-center" title={item.Name} style="max-width: 124px;">
                     <p class="truncate font-bold">{item.Name}</p>
                     {#if item.Role}
-                        <p class="truncate text-xs">{item.Role}</p>
+                        <p class="truncate text-xs">as {item.Role}</p>
                     {/if}
                 </div>
             </a>

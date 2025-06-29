@@ -43,6 +43,7 @@ export interface AuthState {
   jellyAuthError: string | null;
   needsReauth: boolean;
   jellyAutoLoginAttempted: boolean;
+  retryCount: number;
 }
 
 const initialState: AuthState = {
@@ -58,6 +59,7 @@ const initialState: AuthState = {
   jellyAuthError: null,
   needsReauth: false,
   jellyAutoLoginAttempted: false,
+  retryCount: 0,
 };
 
 function createAuthStore() {
@@ -96,11 +98,7 @@ function createAuthStore() {
           'Authorization': `monobar_user=${providerId},monobar_token=${jellyAccessToken}`,
           'X-Device-Profile': await store.calculateDeviceProfile()
         };
-        
-        const sessionId = store.getDeviceId();
-        if (sessionId) {
-          headers['X-Session-Id'] = sessionId;
-        }
+  
         
         const response = await fetch(`${BASE_API_PATH}/jellyfin/profile`, {
           method: 'GET',
@@ -276,8 +274,11 @@ function createAuthStore() {
         console.log('Jellyfin login already in progress, skipping duplicate request');
         return;
       }
-
-      update(state => ({ ...state, isJellyLoading: true, jellyAuthFailed: false, jellyAuthError: null }));
+      if (currentState?.retryCount !== undefined && currentState.retryCount >= 10) {
+        update(state => ({ ...state, jellyAuthFailed: true, isJellyLoading: false, jellyAuthError: 'Maximum retry attempts reached.' }));
+        return;
+      }
+      update(state => ({ ...state, isJellyLoading: true, jellyAuthFailed: false, jellyAuthError: null, retryCount: (state.retryCount ?? 0) + 1 }));
 
       try {
         const providerId = currentState?.userSession?.user?.user_metadata?.provider_id || '';
@@ -286,11 +287,6 @@ function createAuthStore() {
           'Content-Type': 'application/json',
           'Authorization': providerId,
         };
-        
-        const sessionId = store.getDeviceId();
-        if (sessionId) {
-          headers['X-Session-Id'] = sessionId;
-        }
         
         const response = await fetch(`${BASE_API_PATH}/jellyfin/login`, {
           method: 'GET',
@@ -318,6 +314,7 @@ function createAuthStore() {
           jellyAuthFailed: false,
           jellyAuthError: null,
           needsReauth: false,
+          retryCount: 0,
         }));
         console.log('Jellyfin login successful:', data);
       } catch (error: any) {
@@ -338,6 +335,7 @@ function createAuthStore() {
         jellyAuthFailed: false, 
         jellyAuthError: null,
         jellyAutoLoginAttempted: false,
+        retryCount: 0,
       }));
     },
 
@@ -349,6 +347,7 @@ function createAuthStore() {
         jellyAuthFailed: false, 
         jellyAuthError: null,
         jellyAutoLoginAttempted: false,
+        retryCount: 0,
       }));
     },
 

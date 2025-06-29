@@ -16,6 +16,9 @@ Props:
   import { getAuthorizationHeader, getSessionId } from '$lib/utils/authUtils';
   import { getDeviceProfileHeader } from '$lib/utils/deviceUtils';
   import { BASE_API_PATH } from '$lib/config/api';
+  import { getBaseEnvironment } from '$lib/utils/environment';
+
+  const url = window.location.href;
 
   interface NextUpEpisode {
     playUrl?: string;
@@ -80,8 +83,9 @@ Props:
       }
 
       const headers: { [key: string]: string } = {
-        "X-Device-Profile": await getDeviceProfileHeader(),
+        // "X-Device-Profile": await getDeviceProfileHeader(),
         "X-Session-Id": deviceId,
+        "X-Environment": getBaseEnvironment(new URL(url)),
         'Origin': window.location.origin
       };
 
