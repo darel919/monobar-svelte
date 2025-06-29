@@ -33,9 +33,18 @@
     });
 
     function closeDrawer() {
-        const drawerToggle = /** @type {HTMLInputElement} */ (document.getElementById('navbar-menu'));
+        console.warn('Closing drawer');
+        // Close mobile drawer
+        const drawerToggle = document.getElementById('navbar-menu');
         if (drawerToggle) {
+            // @ts-ignore
             drawerToggle.checked = false;
+        }
+        // Close desktop drawer
+        const drawerTogglePc = document.getElementById('navbar-menu-pc');
+        if (drawerTogglePc) {
+            // @ts-ignore
+            drawerTogglePc.checked = false;
         }
     }
 
@@ -206,7 +215,7 @@
 
         </div>
         <!-- HomeData links: only visible on desktop -->
-        <section class="hidden sm:flex gap-6 mx-8 items-center">
+        <section class="hidden sm:flex gap-8 mx-6 items-center">
             {#each homeData as item}
                 <a 
                     href="/library?id={item.Id}" 
@@ -216,10 +225,29 @@
                 </a>
             {/each}
         </section>
-        <!-- Center section - Search (always visible) -->
-        <div class="flex-1 px-4 max-w-xl">
-            <SearchBar />        
-        </div>        
+        <!-- Center section - Search (responsive, single instance) -->
+        <div class="flex-1 flex items-center px-2 sm:px-0 min-w-0 ml-4">
+            <div class="flex-grow flex items-center ml-auto min-w-0 max-w-full sm:max-w-[300px]">
+                <SearchBar />
+            </div>
+        </div>
+        <!-- Right section - User avatar (always visible, anchored right) -->
+        <div class="flex items-center gap-2 min-w-[40px] justify-end ml-auto flex-shrink-0">
+            <a href="/account" class="focus:outline-none ml-4">
+                {#if isAuthenticated && userSession?.user.user_metadata.avatar_url}
+                    <img
+                        src={userSession?.user.user_metadata.avatar_url}
+                        alt="User Avatar"
+                        class="h-10 w-10 rounded-full object-cover border border-base-300 shadow-sm hover:opacity-80 transition-opacity duration-150"
+                        referrerpolicy="no-referrer"
+                    />
+                {:else}
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-10 w-10 text-base-content/60">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 19.25a7.75 7.75 0 0 1 15.5 0v.25a.75.75 0 0 1-.75.75h-14a.75.75 0 0 1-.75-.75v-.25Z" />
+                    </svg>
+                {/if}
+            </a>
+        </div>
     </div>
 </header>
 <style>
@@ -228,6 +256,18 @@
     }
     :global([data-theme="dark"] .custom-navbar-logo) {
         background-color: transparent !important;
+    }
+    @media (max-width: 767px) {
+        .sm\\:flex {
+            display: none !important;
+        }
+        .sm\\:min-w-\[300px\], .sm\\:max-w-\[480px\], .sm\\:w-auto, .sm\\:px-0 {
+            min-width: 0 !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
     }
 </style>
 

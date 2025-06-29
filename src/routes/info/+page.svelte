@@ -54,6 +54,14 @@
 
             <!-- Badge display -->
             <section class="flex flex-row items-center gap-4 mb-8">
+                <!-- Rating certification display -->
+                {#if serverData.OfficialRating}
+                    <section class="flex flex-wrap gap-4" title="Rating Certification">
+                        <span class="text-sm cursor-default">
+                            {serverData.OfficialRating}
+                        </span>
+                    </section>
+                {/if}
                 <!-- Production Year Display -->
                 {#if serverData.ProductionYear}
                     <section class="flex flex-wrap gap-4">
