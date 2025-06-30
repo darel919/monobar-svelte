@@ -9,6 +9,7 @@
 	import { authStore } from '$lib/stores/authStore';
 	import { invalidateAll } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import HomeDetection from '$lib/components/HomeDetection.svelte';
 	
 	let { children, data } = $props();
 
@@ -28,6 +29,7 @@
 	});
 </script>
 
+<HomeDetection />
 <AppInitializer />
 <NavbarComponent homeData={data.homeData} />
 {@render children()}
