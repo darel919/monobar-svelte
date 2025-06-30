@@ -155,16 +155,6 @@ Props:
         }, 100);
     }
 
-    function handleImgLoad(id: string): void {
-        imgLoaded = { ...imgLoaded, [id]: true };
-        imgError = { ...imgError, [id]: false };
-    }
-
-    function handleImgError(id: string): void {
-        imgLoaded = { ...imgLoaded, [id]: true };
-        imgError = { ...imgError, [id]: true };
-    }
-
     const itemHoverClass = "transition-transform duration-200 ease-in-out hover:-translate-y-1 p-1";
 </script>
 
@@ -185,14 +175,13 @@ Props:
                 style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
             >
                 <div class="relative w-full mb-4 aspect-[2/3]">
-                    {#if posterImgSrc && !imgError[itemId]}                        <ImageComponent 
+                    {#if posterImgSrc && !imgError[itemId]}                        
+                    <ImageComponent 
                             src={posterImgSrc}
                             alt={item.Name || item.title || 'Image'}
                             aspectRatio="2/3"
                             borderRadius="rounded-lg"
                             fallbackName={item.OriginalTitle || item.Name || item.title || 'Unknown'}
-                            onload={() => handleImgLoad(itemId)}
-                            onerror={() => handleImgError(itemId)}
                         />
                     {:else}
                         <div class="flex items-center justify-center w-full h-full bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
@@ -212,7 +201,8 @@ Props:
 {:else if responsiveViewMode === "default_thumb_library"}
     <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">        
         {#each data as item}
-            {@const itemId = item.Id || item.id || item.Name || ''}            <a
+            {@const itemId = item.Id || item.id || item.Name || ''}            
+            <a
                 href={disableClick ? undefined : `/info?id=${item.Id}&type=${item.Type}`}
                 class={`flex flex-col items-center ${itemHoverClass}`}
                 title={item.Overview}
@@ -229,8 +219,6 @@ Props:
                             aspectRatio="16/9"
                             borderRadius="rounded-sm"
                             fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
-                            onload={() => handleImgLoad(itemId)}
-                            onerror={() => handleImgError(itemId)}
                         />
                     {:else}
                         <div class="flex flex-col items-center justify-center w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center">
@@ -251,7 +239,8 @@ Props:
 {:else if responsiveViewMode === "default_thumb_home"}
     <section class="flex overflow-x-auto gap-0 pb-4 scrollbar-hide">        
         {#each data as item}
-            {@const itemId = item.Id || item.id || item.Name || ''}              <a
+            {@const itemId = item.Id || item.id || item.Name || ''}              
+            <a
                 href={disableClick ? undefined : `/info?id=${item.Id}&type=${item.Type}`}
                 class={`flex flex-col items-center min-w-[280px] max-w-[280px] ${itemHoverClass} flex-shrink-0`}
                 title={item.Overview}
@@ -268,8 +257,6 @@ Props:
                             aspectRatio="16/9"
                             borderRadius="rounded-none"
                             fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
-                            onload={() => handleImgLoad(itemId)}
-                            onerror={() => handleImgError(itemId)}
                         />
                     {:else}
                         <div class="flex flex-col items-center justify-center w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center">
@@ -325,8 +312,6 @@ Props:
                                 aspectRatio="16/9"
                                 borderRadius="rounded-none"
                                 fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
-                                onload={() => handleImgLoad(itemId)}
-                                onerror={() => handleImgError(itemId)}
                             />
                         {:else}
                             <div class="flex flex-col items-center justify-center w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center">
@@ -355,19 +340,6 @@ Props:
                 title={item.Overview}
                 style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
             >
-                <!-- <div class="relative w-full mb-2 aspect-[2/1]">                    
-                    {#if item.thumbPath}                        
-                        <ImageComponent 
-                            src={item.ImageTags?.Backdrop}
-                            alt={item.Name || 'Image'}
-                            aspectRatio="2/1"
-                            onload={() => handleImgLoad(itemId)}
-                            onerror={() => handleImgError(itemId)}
-                        />
-                    {:else}
-                        <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
-                    {/if}
-                </div> -->
                 <section class="flex flex-col text-center items-center w-full">
                     {#if item.OriginalTitle}
                         <h2 class="w-full text-lg font-bold truncate">{item.OriginalTitle}</h2>
@@ -398,8 +370,6 @@ Props:
                             alt={item.Name || 'Image'}
                             aspectRatio="2/1"
                             fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
-                            onload={() => handleImgLoad(itemId)}
-                            onerror={() => handleImgError(itemId)}
                         />
                     {:else}
                         <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
@@ -436,8 +406,6 @@ Props:
                             alt={item.Name || 'Image'}
                             aspectRatio="2/1"
                             fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
-                            onload={() => handleImgLoad(itemId)}
-                            onerror={() => handleImgError(itemId)}
                         />
                     {:else}
                         <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>

@@ -7,6 +7,7 @@
   import { browser } from '$app/environment';
   import CastViewDisplay from '$lib/components/CastViewDisplay.svelte';
   import PlayActionButton from '$lib/components/PlayActionButton.svelte';
+  import SeasonsEpisodesViewer from '$lib/components/SeasonsEpisodesViewer.svelte';
   
   export let data;
   
@@ -19,6 +20,7 @@
   $: serverData = data.serverData.data || null;
   $: id = data.id;
   $: type = data.type;
+  $: currentEpisodeId = data.episodeId || null;
 
 </script>
 
@@ -119,7 +121,16 @@
                 </section>
             {/if}
             </section>
-            {console.log("Server Data:", serverData)}
+
+            {#if type === 'Series' && (serverData.availableSeasons)}
+                <section class=" mt-8">
+                    <SeasonsEpisodesViewer
+                        seriesData={serverData.availableSeasons}
+                        mode="info"
+                    />
+                </section>
+            {/if}
+
             {#if serverData.People}
             {#if serverData.People.Directors && serverData.People.Directors.content && serverData.People.Directors.content.length > 0} 
                     <section class="my-2">

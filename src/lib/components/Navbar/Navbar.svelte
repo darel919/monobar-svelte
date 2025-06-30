@@ -257,17 +257,5 @@
     :global([data-theme="dark"] .custom-navbar-logo) {
         background-color: transparent !important;
     }
-    @media (max-width: 767px) {
-        .sm\\:flex {
-            display: none !important;
-        }
-        .sm\\:min-w-\[300px\], .sm\\:max-w-\[480px\], .sm\\:w-auto, .sm\\:px-0 {
-            min-width: 0 !important;
-            max-width: 100% !important;
-            width: 100% !important;
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-        }
-    }
 </style>
 

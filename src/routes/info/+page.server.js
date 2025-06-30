@@ -3,6 +3,7 @@ import { getItemInfoData } from '$lib/server/api.js';
 export async function load({ url, fetch, cookies }) {
     const id = url.searchParams.get('id');
     const type = url.searchParams.get('type');
+    const episodeId = url.searchParams.get('episodeId');
     
     if (!id) {
         return {
@@ -17,6 +18,7 @@ export async function load({ url, fetch, cookies }) {
     return {
         serverData,
         id,
-        type
+        type,
+        episodeId
     };
 }

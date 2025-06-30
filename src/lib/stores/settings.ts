@@ -4,6 +4,8 @@ import { browser } from '$app/environment';
 interface SettingsState {
   playTrailersAutomatically: boolean;
   playNextEnabled: boolean;
+  playNextShowThreshold: number;
+  playNextAutoProgressThreshold: number;
   theme: string;
   subtitleSize: string;
   homeViewMode: string;
@@ -14,6 +16,8 @@ interface SettingsState {
 const defaultSettings: SettingsState = {
   playTrailersAutomatically: true,
   playNextEnabled: true,
+  playNextShowThreshold: 40,
+  playNextAutoProgressThreshold: 12,
   theme: 'system',
   subtitleSize: 'medium',
   homeViewMode: 'posterView',
@@ -147,6 +151,21 @@ function createSettingsStore() {
     setLibrarySortOrder: (sortOrder: string) => {
       update(state => {
         const newState = { ...state, librarySortOrder: sortOrder };
+        saveToStorage(newState);
+        return newState;
+      });
+    },
+    
+    setPlayNextShowThreshold: (value: number) => {
+      update(state => {
+        const newState = { ...state, playNextShowThreshold: value };
+        saveToStorage(newState);
+        return newState;
+      });
+    },
+    setPlayNextAutoProgressThreshold: (value: number) => {
+      update(state => {
+        const newState = { ...state, playNextAutoProgressThreshold: value };
         saveToStorage(newState);
         return newState;
       });

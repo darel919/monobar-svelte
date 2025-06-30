@@ -36,12 +36,14 @@ import WatchPlayerStats from './WatchPlayerStats.svelte';
 import Settings from './Settings.svelte';
 import { browser } from '$app/environment';
 import { useSettingsStore } from '$lib/stores/settings';
+import Hls from 'hls.js';
 
 const isDev = import.meta.env && import.meta.env.DEV;
 
 export let poster: string | null = null;
 export let fullData: any = null;
 export let type: string;
+export let id: string | null = null;
 
 let art: any; // ensure art is declared and accessible
 let artRef: HTMLDivElement | null = null;
@@ -57,6 +59,8 @@ let wasInFullscreen = false;
 let userQualitySelected = false;
 let showStatsModal = false;
 let showPlayerSettingsModal = false;
+let lastPlayerId: string | null = null;
+let isMounted = false;
 
 function startPlaybackReporting() {
     if (playbackReportInterval) clearInterval(playbackReportInterval);
@@ -115,9 +119,9 @@ function setUserPreference(key: string, value: any) {
     } catch {}
 }
 
-
-const getSubtitleFontSize = (sizePreference) => {
-    const sizeMap = {
+// --- TypeScript type fixes for all arrow functions and object keys ---
+const getSubtitleFontSize = (sizePreference: string): string => {
+    const sizeMap: Record<string, string> = {
         'small': '18px',
         'medium': '24px',
         'large': '32px',
@@ -128,8 +132,8 @@ const getSubtitleFontSize = (sizePreference) => {
 const adaptSubtitleFormat = () => {
     if (!fullData?.subtitles?.length) return [];
     try {
-        const nameCount = {};
-        return fullData.subtitles.map((subitem, index) => {
+        const nameCount: Record<string, number> = {};
+        return fullData.subtitles.map((subitem: any, index: number) => {
             let name = subitem.name || subitem.html || `Subtitle ${index+1}`;
             if (nameCount[name]) {
                 nameCount[name] += 1;
@@ -185,220 +189,247 @@ function reportPlaybackStatus(intent: string) {
     });
 }
 
+async function initializePlayer() {
+    if (!browser || !artRef || !fullData?.playbackUrl) return;
+    const { default: Artplayer } = await import('artplayer');
+    const Hls = (await import('hls.js')).default;
+    const artplayerPluginHlsControl = (await import('artplayer-plugin-hls-control')).default;
+    const artplayerPluginChapter = (await import('artplayer-plugin-chapter')).default;
+    const subtitles = adaptSubtitleFormat();
+    // --- Subtitle preference logic ---
+    const subtitlePref = getUserPreference('subtitlePref', null);
+    if (subtitles.length > 0) {
+        if (subtitlePref) {
+            selectedSubtitle = subtitles.find((s: any) => s.name === subtitlePref) || subtitles[0];
+        } else {
+            selectedSubtitle = subtitles.find((s: any) => s.default) || subtitles[0];
+        }
+    } else {
+        selectedSubtitle = null;
+    }
+    // --- End subtitle preference logic ---
+    
+    const currentSubtitleSizePref = settingsStore.get().subtitleSize;
+    userSubtitleSize = currentSubtitleSizePref;
+    Artplayer.AUTO_PLAYBACK_TIMEOUT = 15000;
+    Artplayer.RECONNECT_SLEEP_TIME  = 3000;
+    Artplayer.RECONNECT_TIME_MAX  = 7;
+    art = new Artplayer({
+        container: artRef,
+        url: fullData.playbackUrl,
+        poster: poster || '',
+        setting: true,
+        autoplay: true,
+        fullscreen: true,
+        mutex: true,
+        subtitleOffset: true,
+        lang: navigator.language.toLowerCase(),
+        backdrop: true,
+        autoPlayback: true,
+        hotkey: true,
+        pip: true,
+        airplay: true,
+        theme: '#ff0000',
+        type: 'm3u8',
+        autoMini: true,
+        contextmenu: [],
+        subtitle: selectedSubtitle ? {
+            url: selectedSubtitle.url,
+            type: 'vtt',
+            escape: true,
+            encoding: 'utf-8',
+        } : {},
+        settings: [
+            ...(subtitles.length > 0 ? [{
+                width: 250,
+                html: 'Subtitle',
+                tooltip: selectedSubtitle?.name,
+                selector: subtitles,                    
+                onSelect: function (item) {
+                    art.subtitle.switch(item.url, {
+                        name: item.html,
+                        escape: true,
+                    });
+                    setUserPreference('subtitlePref', item.name);
+                    setTimeout(() => {
+                        const currentSubtitleSizePref = getUserPreference('subtitleSize', 'medium');
+                        const fontSize = getSubtitleFontSize(currentSubtitleSizePref);
+                        art.subtitle.style({
+                            fontSize: fontSize,
+                            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+                            fontWeight: 'bold'
+                        });
+                    }, 100);
+                    return item.html;
+                },                  
+            }] : []),
+            {
+                html: 'Stats for Nerds',
+                tooltip: 'Show playback stats',
+                onClick: function () {
+                    if (art && art.fullscreen) {
+                        wasInFullscreen = true;
+                        art.fullscreen = false;
+                    } else {
+                        wasInFullscreen = false;
+                    }
+                    openStats();
+                    return '';
+                }
+            },
+            {
+                html: 'Player Settings',
+                tooltip: 'Adjust player settings',
+                onClick: function () {
+                    if (art && art.fullscreen) {
+                        wasInFullscreen = true;
+                        art.fullscreen = false;
+                    } else {
+                        wasInFullscreen = false;
+                    }
+                    openPlayerSettings();
+                    return '';
+                }
+            },
+        ],
+        plugins: [
+            artplayerPluginHlsControl({
+                 quality: {
+                    control: true,
+                    setting: true,
+                    getName: (level) => level.height + 'P',
+                    title: 'Quality',
+                    auto: 'Auto',
+                },
+                audio: {
+                    control: true,
+                    setting: true,
+                    getName: (track) => (track && typeof track.name === 'string' ? track.name : 'Track'),
+                    title: 'Audio',
+                    auto: 'Auto',
+                }
+            }),
+            artplayerPluginChapter({
+                chapters: fullData?.Chapters || [],
+            }),
+        ],
+        customType: {
+            m3u8: function playM3u8(video, url, art) {
+                if (Hls.isSupported()) {
+                    if (art.hls) art.hls.destroy();
+                    const hls = new Hls({
+                        debug: false,
+                        autoStartLoad: true,
+                        lowLatencyMode: true,
+                        maxBufferLength: 120,
+                        maxMaxBufferLength: 180,
+                        xhrSetup: (xhr) => {
+                            const environment = getBaseEnvironment(new URL(url, window.location.origin));
+                            xhr.setRequestHeader('X-Environment', environment);
+                            try {
+                                const jellyAccessToken = getCookie('jellyAccessToken');
+                                const jellyUserId = getCookie('jellyUserId');
+                                if (jellyAccessToken && jellyUserId) {
+                                    xhr.setRequestHeader('Authorization', `monobar_user=${jellyUserId},monobar_token=${jellyAccessToken}`);
+                                }
+                            } catch (error) {
+                                if (isDev) console.warn('Could not access auth cookies for HLS request:', error);
+                            }
+                        }
+                    });
+                    hls.on(Hls.Events.ERROR, function (event, data) {
+                        if (isDev) console.error('HLS Error:', event, data);
+                        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                            if (data.response && data.response.code === 401) {
+                                alert('Server reported you are not authorized to access media fragments. Playback will be interrupted.');
+                                goto('/', { replaceState: true });
+                                return;
+                            }
+                        }
+                        if (data.fatal) {
+                            handlePlayerError(data);
+                        }
+                    });
+                    hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                        if (hls.levels && hls.levels.length > 0 && !userQualitySelected) {
+                            const qualityPref = getUserPreference('qualityPref', null);
+                            let initialLevel = hls.levels.length - 1;
+                            if (qualityPref) {
+                                const idx = hls.levels.findIndex((l) => l.height + 'P' === qualityPref);
+                                if (idx !== -1) initialLevel = idx;
+                            }
+                            hls.currentLevel = initialLevel;
+                                if (art.setting) {
+                                    const qualitySetting = art.setting.find((s) => s.html === 'Quality');
+                                if (qualitySetting) {
+                                    qualitySetting.tooltip = hls.levels[initialLevel].height + 'P';
+                                }
+                            }
+                        }
+                    });
+                    hls.loadSource(url);
+                    hls.attachMedia(video);
+                    art.hls = hls;
+                    art.on('destroy', () => hls.destroy());
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    video.src = url;
+                } else {
+                    alert("Your browser doesn't support HLS playback.");
+                    art.notice.show = 'Unsupported playback format: m3u8';
+                }
+            }
+        },
+    });
+    artStore.set(art);
+    handleArtEvents();
+    // Immediately apply subtitle style after Artplayer is initialized
+    applySubtitleStyle(userSubtitleSize);
+}
+
+// Watch for id changes to destroy and re-init player
+$: if (browser && typeof id !== 'undefined' && id && id !== lastPlayerId && isMounted) {
+    if (art) {
+        stopPlaybackReporting();
+        reportPlaybackStatus('stop');
+        art.destroy();
+        art = null;
+    }
+    lastPlayerId = id;
+    initializePlayer();
+}
+
 onMount(() => {
-    let cleanup: (() => void) | undefined;
-    // Subscribe to settingsStore for subtitleSize changes
-    settingsUnsubscribe = settingsStore.subscribe(settings => {
+    isMounted = true;
+    settingsUnsubscribe = settingsStore.subscribe((settings: any) => {
         if (settings.subtitleSize !== userSubtitleSize) {
             userSubtitleSize = settings.subtitleSize;
             applySubtitleStyle(userSubtitleSize);
         }
     });
-    (async () => {
-        if (!browser) return;
-        const { default: Artplayer } = await import('artplayer');
-        const Hls = (await import('hls.js')).default;
-        const artplayerPluginHlsControl = (await import('artplayer-plugin-hls-control')).default;
-        const artplayerPluginChapter = (await import('artplayer-plugin-chapter')).default;
-
-        if (!artRef || !fullData?.playbackUrl) return;
-        const subtitles = adaptSubtitleFormat();
-        // --- Subtitle preference logic ---
-        const subtitlePref = getUserPreference('subtitlePref', null);
-        if (subtitles.length > 0) {
-            if (subtitlePref) {
-                selectedSubtitle = subtitles.find((s: any) => s.name === subtitlePref) || subtitles[0];
-            } else {
-                selectedSubtitle = subtitles.find((s: any) => s.default) || subtitles[0];
-            }
-        } else {
-            selectedSubtitle = null;
-        }
-        // --- End subtitle preference logic ---
-        const currentSubtitleSizePref = settingsStore.get().subtitleSize;
-        userSubtitleSize = currentSubtitleSizePref;
-        art = new Artplayer({
-            container: artRef,
-            url: fullData.playbackUrl,
-            poster: poster || '',
-            setting: true,
-            autoplay: true,
-            fullscreen: true,
-            mutex: true,
-            subtitleOffset: true,
-            lang: navigator.language.toLowerCase(),
-            backdrop: true,
-            autoPlayback: true,
-            hotkey: true,
-            pip: true,
-            airplay: true,
-            theme: '#ff0000',
-            type: 'm3u8',
-            autoMini: true,
-            contextmenu: [],
-            subtitle: selectedSubtitle ? {
-                url: selectedSubtitle.url,
-                type: 'vtt',
-                escape: true,
-                encoding: 'utf-8',
-            } : {},
-            settings: [
-                ...(subtitles.length > 0 ? [{
-                    width: 250,
-                    html: 'Subtitle',
-                    tooltip: selectedSubtitle?.name,
-                    selector: subtitles,                    
-                    onSelect: function (item) {
-                        art.subtitle.switch(item.url, {
-                            name: item.html,
-                            escape: true,
-                        });
-                        setUserPreference('subtitlePref', item.name);
-                        setTimeout(() => {
-                            const currentSubtitleSizePref = getUserPreference('subtitleSize', 'medium');
-                            const fontSize = getSubtitleFontSize(currentSubtitleSizePref);
-                            art.subtitle.style({
-                                fontSize: fontSize,
-                                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                                fontWeight: 'bold'
-                            });
-                        }, 100);
-                        return item.html;
-                    },                  
-                }] : []),
-                {
-                    html: 'Stats for Nerds',
-                    tooltip: 'Show playback stats',
-                    onClick: function () {
-                        if (art && art.fullscreen) {
-                            wasInFullscreen = true;
-                            art.fullscreen = false;
-                        } else {
-                            wasInFullscreen = false;
-                        }
-                        openStats();
-                        return '';
-                    }
-                },
-                {
-                    html: 'Player Settings',
-                    tooltip: 'Adjust player settings',
-                    onClick: function () {
-                        if (art && art.fullscreen) {
-                            wasInFullscreen = true;
-                            art.fullscreen = false;
-                        } else {
-                            wasInFullscreen = false;
-                        }
-                        openPlayerSettings();
-                        return '';
-                    }
-                },
-            ],
-            plugins: [
-                artplayerPluginHlsControl({
-                    quality: {
-                        auto: 'Auto',
-                    },
-                    audio: {
-                        control: true,
-                        setting: true,
-                        getName: (track) => (track && typeof track.name === 'string' ? track.name : 'Track'),
-                        title: 'Audio',
-                        auto: 'Auto',
-                    }
-                }),
-                artplayerPluginChapter({
-                    chapters: fullData?.Chapters || [],
-                }),
-            ],
-            customType: {
-                m3u8: function playM3u8(video, url, art) {
-                    if (Hls.isSupported()) {
-                        if (art.hls) art.hls.destroy();
-                        const hls = new Hls({
-                            debug: false,
-                            autoStartLoad: true,
-                            lowLatencyMode: true,
-                            maxBufferLength: 120,
-                            maxMaxBufferLength: 180,
-                            xhrSetup: (xhr) => {
-                                const environment = getBaseEnvironment(new URL(url, window.location.origin));
-                                xhr.setRequestHeader('X-Environment', environment);
-                                try {
-                                    const jellyAccessToken = getCookie('jellyAccessToken');
-                                    const jellyUserId = getCookie('jellyUserId');
-                                    if (jellyAccessToken && jellyUserId) {
-                                        xhr.setRequestHeader('Authorization', `monobar_user=${jellyUserId},monobar_token=${jellyAccessToken}`);
-                                    }
-                                } catch (error) {
-                                    if (isDev) console.warn('Could not access auth cookies for HLS request:', error);
-                                }
-                            }
-                        });
-                        hls.on(Hls.Events.ERROR, function (event, data) {
-                            if (isDev) console.error('HLS Error:', event, data);
-                            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-                                if (data.response && data.response.code === 401) {
-                                    alert('Server reported you are not authorized to access media fragments. Playback will be interrupted.');
-                                    goto('/', { replaceState: true });
-                                    return;
-                                }
-                            }
-                            if (data.fatal) {
-                                handlePlayerError(data);
-                            }
-                        });
-                        hls.on(Hls.Events.MANIFEST_PARSED, function () {
-                            if (hls.levels && hls.levels.length > 0 && !userQualitySelected) {
-                                const qualityPref = getUserPreference('qualityPref', null);
-                                let initialLevel = hls.levels.length - 1;
-                                if (qualityPref) {
-                                    const idx = hls.levels.findIndex((l) => l.height + 'P' === qualityPref);
-                                    if (idx !== -1) initialLevel = idx;
-                                }
-                                hls.currentLevel = initialLevel;
-                                if (art.setting) {
-                                    const qualitySetting = art.setting.find((s) => s.html === 'Quality');
-                                    if (qualitySetting) {
-                                        qualitySetting.tooltip = hls.levels[initialLevel].height + 'P';
-                                    }
-                                }
-                            }
-                        });
-                        hls.loadSource(url);
-                        hls.attachMedia(video);
-                        art.hls = hls;
-                        art.on('destroy', () => hls.destroy());
-                    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                        video.src = url;
-                    } else {
-                        alert("Your browser doesn't support HLS playback.");
-                        art.notice.show = 'Unsupported playback format: m3u8';
-                    }
-                }
-            },
-        });
-        artStore.set(art);
-        handleArtEvents();
-        // Immediately apply subtitle style after Artplayer is initialized
-        applySubtitleStyle(userSubtitleSize);
-        cleanup = () => {
-            if (art) art.destroy();
-            stopPlaybackReporting();
-            reportPlaybackStatus('stop');
-        };
-    })();
+    if (typeof id !== 'undefined' && id) {
+        lastPlayerId = id;
+        initializePlayer();
+    }
     return () => {
-        if (cleanup) cleanup();
+        isMounted = false;
+        stopPlaybackReporting();
+        reportPlaybackStatus('stop');
+        if (art) {
+            art.destroy();
+            art = null;
+        }
         if (settingsUnsubscribe) settingsUnsubscribe();
     };
 });
 
 unmount(() => {
-    reportPlaybackStatus('stop');
-    if (art) art.destroy();
+    isMounted = false;
     stopPlaybackReporting();
+    reportPlaybackStatus('stop');
+    if (art) {
+        art.destroy();
+        art = null;
+    }
 });
 
 function getStatusData(preservedCurrentTime = null) {
