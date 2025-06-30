@@ -33,7 +33,9 @@ import { getCookie } from '$lib/utils/cookieUtils.js';
 import { getAuthorizationHeader, getSessionId } from '$lib/utils/authUtils';
 import { BASE_API_PATH } from '$lib/config/api';
 import WatchPlayerStats from './WatchPlayerStats.svelte';
+import Settings from './Settings.svelte';
 import { browser } from '$app/environment';
+import { useSettingsStore } from '$lib/stores/settings';
 
 const isDev = import.meta.env && import.meta.env.DEV;
 
@@ -41,17 +43,20 @@ export let poster: string | null = null;
 export let fullData: any = null;
 export let type: string;
 
+let art: any; // ensure art is declared and accessible
 let artRef: HTMLDivElement | null = null;
-let art: any = null;
 export const artStore = writable<any>(null);
 let showSettings = false;
 let playbackReportInterval: ReturnType<typeof setInterval> | null = null;
 let isPlaying = false;
 let userSubtitleSize: string = 'medium';
+let settingsStore = useSettingsStore();
+let settingsUnsubscribe: (() => void) | null = null;
 let selectedSubtitle: any = null;
 let wasInFullscreen = false;
 let userQualitySelected = false;
 let showStatsModal = false;
+let showPlayerSettingsModal = false;
 
 function startPlaybackReporting() {
     if (playbackReportInterval) clearInterval(playbackReportInterval);
@@ -80,6 +85,12 @@ function handleArtEvents() {
     art.on('destroy', () => {
         stopPlaybackReporting();
         reportPlaybackStatus('stop');
+    });
+    // Re-apply subtitle style on subtitle switch
+    art.on('subtitleSwitch', () => {
+        setTimeout(() => {
+            applySubtitleStyle(userSubtitleSize);
+        }, 100);
     });
     // Start reporting if already playing (autoplay)
     if (!art.paused) {
@@ -176,6 +187,13 @@ function reportPlaybackStatus(intent: string) {
 
 onMount(() => {
     let cleanup: (() => void) | undefined;
+    // Subscribe to settingsStore for subtitleSize changes
+    settingsUnsubscribe = settingsStore.subscribe(settings => {
+        if (settings.subtitleSize !== userSubtitleSize) {
+            userSubtitleSize = settings.subtitleSize;
+            applySubtitleStyle(userSubtitleSize);
+        }
+    });
     (async () => {
         if (!browser) return;
         const { default: Artplayer } = await import('artplayer');
@@ -197,6 +215,8 @@ onMount(() => {
             selectedSubtitle = null;
         }
         // --- End subtitle preference logic ---
+        const currentSubtitleSizePref = settingsStore.get().subtitleSize;
+        userSubtitleSize = currentSubtitleSizePref;
         art = new Artplayer({
             container: artRef,
             url: fullData.playbackUrl,
@@ -216,10 +236,6 @@ onMount(() => {
             type: 'm3u8',
             autoMini: true,
             contextmenu: [],
-            // icons: {
-            //     loading: '<img src="/assets/ANIMATED.gif" style="width: 128px;">',
-            //     // state: '<img src="/assets/img/state.png">',
-            // },
             subtitle: selectedSubtitle ? {
                 url: selectedSubtitle.url,
                 type: 'vtt',
@@ -263,7 +279,21 @@ onMount(() => {
                         openStats();
                         return '';
                     }
-                }
+                },
+                {
+                    html: 'Player Settings',
+                    tooltip: 'Adjust player settings',
+                    onClick: function () {
+                        if (art && art.fullscreen) {
+                            wasInFullscreen = true;
+                            art.fullscreen = false;
+                        } else {
+                            wasInFullscreen = false;
+                        }
+                        openPlayerSettings();
+                        return '';
+                    }
+                },
             ],
             plugins: [
                 artplayerPluginHlsControl({
@@ -351,6 +381,8 @@ onMount(() => {
         });
         artStore.set(art);
         handleArtEvents();
+        // Immediately apply subtitle style after Artplayer is initialized
+        applySubtitleStyle(userSubtitleSize);
         cleanup = () => {
             if (art) art.destroy();
             stopPlaybackReporting();
@@ -359,6 +391,7 @@ onMount(() => {
     })();
     return () => {
         if (cleanup) cleanup();
+        if (settingsUnsubscribe) settingsUnsubscribe();
     };
 });
 
@@ -438,10 +471,48 @@ function openStats() {
 function closeStats() {
     showStatsModal = false;
 }
+
+function openPlayerSettings() {
+    showPlayerSettingsModal = true;
+}
+function closePlayerSettings() {
+    showPlayerSettingsModal = false;
+}
+
+function applySubtitleStyle(size) {
+    if (art && art.subtitle) {
+        const fontSize = getSubtitleFontSize(size);
+        art.subtitle.style({
+            fontSize,
+            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+            fontWeight: 'bold'
+        });
+    }
+}
+
+// Reactively update subtitle font size when userSubtitleSize changes and art is initialized
+$: if (art && userSubtitleSize) {
+    applySubtitleStyle(userSubtitleSize);
+}
 </script>
 
 <!-- Player container -->
 <div bind:this={artRef} class="absolute w-full h-full left-0 right-0 top-0 bottom-0"></div>
+
+{#if showPlayerSettingsModal}
+    <div class="modal modal-open">
+        <div class="modal-box max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-lg">Player Settings</h3>
+                <button class="btn btn-sm btn-circle btn-ghost" on:click={closePlayerSettings}>✕</button>
+            </div>
+            <Settings showBackButton={false} context="player" />
+            <div class="modal-action">
+                <button class="btn" on:click={closePlayerSettings}>Close</button>
+            </div>
+        </div>
+    </div>
+{/if}
 
 {#if showStatsModal}
     <WatchPlayerStats visible={showStatsModal} art={$artStore} onClose={closeStats} />
