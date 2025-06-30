@@ -42,16 +42,10 @@
     class="btn btn-primary btn-lg flex items-center space-x-2 {isLoading ? 'loading' : ''} {className}"
   >
     {#if !isLoading}
-      <svg class="w-5 h-5" viewBox="0 0 24 24">
-        <path
-          fill="currentColor"
-          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-        />
-        <path
-          fill="currentColor"
-          d="M12 10.25c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5.67 1.5 1.5 1.5 1.5-.67 1.5-1.5z"
-        />
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25" />
       </svg>
+
       Login with DWS
     {:else}
       <span class="loading loading-spinner loading-sm"></span>

@@ -40,8 +40,8 @@
   <div class="flex flex-col items-center justify-center min-h-screen p-8">
     <div class="card bg-base-200 shadow-xl max-w-md w-full">
       <div class="card-body text-center">
-        <h1 class="card-title justify-center text-3xl mb-6">Welcome to Monobar</h1>
-        <p class="text-lg mb-8">Please log in to continue</p>
+        <h1 class="card-title justify-center text-3xl mb-6">Sign in to moNobar</h1>
+        <!-- <p class="text-lg mb-8">Please log in to continue</p> -->
         
         <div class="card-actions justify-center">
           <LoginButton 

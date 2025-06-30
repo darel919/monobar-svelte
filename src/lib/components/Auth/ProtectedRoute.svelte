@@ -7,7 +7,7 @@
 
   export let requireAuth: boolean = true;
   export let redirectOnUnauth: boolean = false;
-  export let redirectPath: string = '/login';
+  export let redirectPath: string = '/auth/login';
   export let allowedRoles: string[] = [];
   export let showFallback: boolean = true;
 

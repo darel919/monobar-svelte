@@ -17,7 +17,7 @@
 
   function handleReauth() {
     authStore.clearReauthState();
-    window.location.href = '/login';
+    window.location.href = '/auth/login';
   }
 
   function handleDismiss() {

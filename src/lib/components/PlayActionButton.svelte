@@ -18,7 +18,7 @@ Props:
   import { BASE_API_PATH } from '$lib/config/api';
   import { getBaseEnvironment } from '$lib/utils/environment';
 
-  const url = window.location.href;
+  const url = window.location.href || null;
 
   interface NextUpEpisode {
     playUrl?: string;

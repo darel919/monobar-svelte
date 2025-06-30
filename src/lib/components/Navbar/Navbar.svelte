@@ -123,8 +123,8 @@
                         {:else}
                             <li>
                                 <a 
-                                    href="/login" 
-                                    class="text-lg {$page.url.pathname === '/login' ? 'bg-base-300 font-bold' : ''}"
+                                    href="/auth/login" 
+                                    class="text-lg {$page.url.pathname === '/auth/login' ? 'bg-base-300 font-bold' : ''}"
                                     onclick={closeDrawer}
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
@@ -198,8 +198,8 @@
                         {:else}
                             <li>
                                 <a 
-                                    href="/login" 
-                                    class="text-lg {$page.url.pathname === '/login' ? 'bg-base-300 font-bold' : ''}"
+                                    href="/auth/login" 
+                                    class="text-lg {$page.url.pathname === '/auth/login' ? 'bg-base-300 font-bold' : ''}"
                                     onclick={closeDrawer}
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
@@ -233,7 +233,7 @@
         </div>
         <!-- Right section - User avatar (always visible, anchored right) -->
         <div class="flex items-center gap-2 min-w-[40px] justify-end ml-auto flex-shrink-0">
-            <a href={ isAuthenticated ? "/account" : "/login"} class="focus:outline-none ml-4">
+            <a href={ isAuthenticated ? "/account" : "/auth/login"} class="focus:outline-none ml-4">
                 {#if isAuthenticated && userSession?.user.user_metadata.avatar_url}
                     <img
                         src={userSession?.user.user_metadata.avatar_url}
@@ -242,7 +242,7 @@
                         referrerpolicy="no-referrer"
                     />
                 {:else}
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-10 w-10 text-base-content/60">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-7 w-7 text-base-content/60">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 19.25a7.75 7.75 0 0 1 15.5 0v.25a.75.75 0 0 1-.75.75h-14a.75.75 0 0 1-.75-.75v-.25Z" />
                     </svg>
                 {/if}
