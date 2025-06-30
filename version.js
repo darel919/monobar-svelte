@@ -14,7 +14,7 @@ if (!fs.existsSync(generatedDir)) {
   fs.mkdirSync(generatedDir, { recursive: true });
 }
 
-const version = packageJson.version;
+const version = `svelte-${packageJson.version}`;
 const buildDate = new Date().toISOString();
 const versionData = {
   version,

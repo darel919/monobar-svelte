@@ -123,7 +123,7 @@
             </section>
 
             {#if type === 'Series' && (serverData.availableSeasons)}
-                <section class=" mt-8">
+                <section class="backdrop-blur-md bg-[var(--color-navbar)] text-black dark:text-white rounded-xl mt-8">
                     <SeasonsEpisodesViewer
                         seriesData={serverData.availableSeasons}
                         mode="info"

@@ -234,7 +234,7 @@
                                         </h5>
 
                                         <!-- Episode subdata -->
-                                        <div class="flex items-center gap-3 mb-2 text-xs text-gray-500">
+                                        <div class="flex items-center gap-3 mb-2 text-xs">
                                             {#if episode.PremiereDate}
                                                 <span>{formatDate(episode.PremiereDate)}</span>
                                             {/if}
@@ -250,7 +250,7 @@
 
                                         <!-- Episode description -->
                                         {#if episode.Overview}
-                                            <p class="text-xs text-gray-600 line-clamp-3 leading-relaxed flex-1">
+                                            <p class="text-xs  line-clamp-3 leading-relaxed flex-1">
                                                 {episode.Overview}
                                             </p>
                                         {/if}
@@ -306,7 +306,7 @@
                                                         <div 
                                                             class="h-full bg-accent transition-all duration-300"
                                                             style={{ width: `${getWatchProgress(episode)}%` }}
-                                                        />
+                                                        ></div>
                                                     </div>
                                                 {/if}
                                             {:else}
@@ -324,7 +324,7 @@
                                         </h5>
                                         
                                         <!-- Episode sub-data -->
-                                        <div class="flex items-center gap-3 mb-2 text-xs text-gray-500">
+                                        <div class="flex items-center gap-3 mb-2 text-xs">
                                             {#if episode.PremiereDate}
                                                 <span>{formatDate(episode.PremiereDate)}</span>
                                             {/if}
@@ -340,7 +340,7 @@
                                         
                                         <!-- Overview  -->
                                         {#if episode.Overview}
-                                            <p class="text-xs text-gray-600 line-clamp-3 leading-relaxed flex-1">
+                                            <p class="text-xs  line-clamp-3 leading-relaxed flex-1">
                                                 {episode.Overview}
                                             </p>
                                         {/if}
@@ -402,7 +402,7 @@
                                                         <div 
                                                             class="h-full bg-accent transition-all duration-300"
                                                             style={{ width: `${getWatchProgress(episode)}%` }}
-                                                        />
+                                                        ></div>
                                                     </div>
                                                 {/if}
                                             {:else}
@@ -425,7 +425,7 @@
                                                 </h5>
                                             </div>
                                             
-                                            <div class="flex items-center text-gray-500 mb-2 text-xs gap-3">
+                                            <div class="flex items-center  mb-2 text-xs gap-3">
                                                 {#if episode.PremiereDate }
                                                     <span>{formatDate(episode.PremiereDate)}</span>
                                                 {/if}
@@ -440,7 +440,7 @@
                                             </div>
 
                                             {#if episode.Overview && !isWatchMode }
-                                                <p class="text-sm text-gray-600 line-clamp-2">
+                                                <p class="text-sm  line-clamp-2">
                                                     {episode.Overview}
                                                 </p>
                                             {/if}
@@ -470,7 +470,7 @@
                 </div>
             </div>
         {:else}
-            <div class="p-4 text-center text-gray-500">
+            <div class="p-4 text-center ">
                 <p>No episodes available for this season</p>
             </div>
         {/if}

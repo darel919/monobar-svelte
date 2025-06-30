@@ -1,11 +1,12 @@
 <script lang="ts">
-import { onDestroy } from 'svelte';
+import { onDestroy, onMount } from 'svelte';
 import WatchPlayer from '$lib/components/WatchPlayer.svelte';
 import StopState from '$lib/components/StopState.svelte';
 import SeasonsEpisodesViewer from '$lib/components/SeasonsEpisodesViewer.svelte';
 import { page } from '$app/stores';
 import { browser } from '$app/environment';
   import CastViewDisplay from '$lib/components/CastViewDisplay.svelte';
+  import { goto } from '$app/navigation';
 export let data;
   
 $: watchData = data.serverData.data || null;
@@ -16,9 +17,30 @@ $: type = $page.url.searchParams.get('type');
 
 if (browser) {
   // console.log(seriesData)
+    onMount(() => {
+        console.warn('Watch page mounted');
+        if (type === 'Series') {
+          console.log(seriesData)
+          if (seriesData.availableSeasons && seriesData.availableSeasons.length > 0) {
+              const firstSeason = seriesData.availableSeasons[0];
+              if (firstSeason.episodes && firstSeason.episodes.length > 0) {
+                  const firstEpisode = firstSeason.episodes[0];
+                  goto(`/watch?id=${firstEpisode.Id}&type=Episode&seriesId=${id}`, { replaceState: true });
+                  return;
+              }
+          } else {
+            // If no episodes found, show error
+            alert("No episodes available for this series.");
+            goto(`/info?id=${id}&type=Series`, { replaceState: true });
+            return;
+          }
+         
+      }
+    });
     onDestroy(() => {
         console.warn('Watch page unmounted');
     });
+
 }
 
 
