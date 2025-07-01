@@ -13,7 +13,7 @@ function handleSignOut() {
 
 <section class="mx-auto px-8 min-h-screen mt-20">
     <h1 class="text-4xl font-extralight mb-6">your account</h1>
-    {console.log('Auth Store:', $authStore)}
+    <!-- {console.log('Auth Store:', $authStore)} -->
 
     {#if $authStore.isAuthenticated && $authStore.userSession?.user}
         <div class="flex items-center gap-6 mb-8">

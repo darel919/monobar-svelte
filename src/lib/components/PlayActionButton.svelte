@@ -63,14 +63,14 @@ Props:
       return;
     }
 
-    console.log(`PlayActionButton: Fetching playback data for ${type} ${id}`);
+    // console.log(`PlayActionButton: Fetching playback data for ${type} ${id}`);
 
     let actualPlayUrl = playUrl;
     let actualId = id;
     let actualType = type;
 
     if (type === 'Series' && seriesData?.nextUpEpisode?.playUrl) {
-      console.log('PlayActionButton: Using next up episode for series playback');
+      // console.log('PlayActionButton: Using next up episode for series playback');
       actualPlayUrl = seriesData.nextUpEpisode.playUrl;
       actualId = seriesData.nextUpEpisode.Id || id;
       actualType = 'Episode';
@@ -94,7 +94,7 @@ Props:
         headers['Authorization'] = authHeader;
       }
 
-      console.log(`PlayActionButton: Making request to ${actualPlayUrl}`);
+      // console.log(`PlayActionButton: Making request to ${actualPlayUrl}`);
 
       const response = await fetch(actualPlayUrl, {
         method: 'GET',
@@ -112,7 +112,7 @@ Props:
         throw new Error('Invalid playback response from server');
       }
 
-      console.log('PlayActionButton: Playback data received successfully');
+      // console.log('PlayActionButton: Playback data received successfully');
       playbackData = { ...data, episodeId: actualId, episodeType: actualType };
       error = null;
     } catch (err: any) {
@@ -132,14 +132,14 @@ Props:
   }
 
   function handlePlay() {
-    console.log(`PlayActionButton: Play button clicked for ${type} ${id}`);
+    // console.log(`PlayActionButton: Play button clicked for ${type} ${id}`);
     isLoading = true;
 
     if (playbackData) {
       if (type === 'Series' && playbackData.episodeId) {
         // Navigate to series episode
         const watchUrl = `/watch?id=${playbackData.episodeId}&type=${playbackData.episodeType}&seriesId=${id}`;
-        console.log(`PlayActionButton: Navigating to series episode: ${watchUrl}`);
+        // console.log(`PlayActionButton: Navigating to series episode: ${watchUrl}`);
         goto(watchUrl);
       } else if (type === 'Episode') {
         // Navigate to episode
@@ -151,12 +151,12 @@ Props:
         } else {
           watchUrl = `/watch?id=${id}&type=${type}`;
         }
-        console.log(`PlayActionButton: Navigating to episode: ${watchUrl}`);
+        // console.log(`PlayActionButton: Navigating to episode: ${watchUrl}`);
         goto(watchUrl);
       } else {
         // Navigate to regular content
         const watchUrl = `/watch?id=${id}&type=${type}`;
-        console.log(`PlayActionButton: Navigating to content: ${watchUrl}`);
+        // console.log(`PlayActionButton: Navigating to content: ${watchUrl}`);
         goto(watchUrl);
       }
     } else {

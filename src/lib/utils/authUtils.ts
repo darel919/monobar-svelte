@@ -85,10 +85,10 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
       const authSuccessFlag = localStorage.getItem('authSuccess') === 'true';
       const userSessionExists = localStorage.getItem('user-session');
       
-      console.log('Auth check:', { isAuthenticated, authSuccessFlag, hasUserSession: !!userSessionExists });
+      // console.log('Auth check:', { isAuthenticated, authSuccessFlag, hasUserSession: !!userSessionExists });
       
       if (isAuthenticated) {
-        console.log('Auth detected via store state');
+        // console.log('Auth detected via store state');
         clearInterval(checkWindowClosed);
         authDetected = true;
         const redirectPath = localStorage.getItem("redirectAfterAuth") || "/";
@@ -107,7 +107,7 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
       }
       
       if (authSuccessFlag) {
-        console.log('Auth detected via localStorage flag');
+        // console.log('Auth detected via localStorage flag');
         localStorage.removeItem('authSuccess');
         clearInterval(checkWindowClosed);
         authDetected = true;
@@ -129,7 +129,7 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
       }
       
       if (loginWindow.closed) {
-        console.log('Login window closed, performing final auth check');
+        console.warn('Login window closed, performing final auth check');
         clearInterval(checkWindowClosed);
 
         setTimeout(async () => {
@@ -138,7 +138,7 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
           const finalStorageCheck = localStorage.getItem('authSuccess') === 'true';
           const finalUserSession = localStorage.getItem('user-session');
           
-          console.log('Final auth check:', { finalAuthCheck, finalStorageCheck, hasFinalUserSession: !!finalUserSession });
+          // console.log('Final auth check:', { finalAuthCheck, finalStorageCheck, hasFinalUserSession: !!finalUserSession });
           
           if (finalAuthCheck || finalStorageCheck || finalUserSession) {
             localStorage.removeItem('authSuccess');

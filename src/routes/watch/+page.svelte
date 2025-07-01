@@ -38,7 +38,7 @@ if (browser) {
     onMount(() => {
         console.warn('Watch page mounted');
         if (type === 'Series') {
-          console.log(seriesData)
+          // console.log(seriesData)
           if (seriesData.availableSeasons && seriesData.availableSeasons.length > 0) {
               const firstSeason = seriesData.availableSeasons[0];
               if (firstSeason.episodes && firstSeason.episodes.length > 0) {
@@ -68,7 +68,7 @@ if (browser) {
     <title>{documentTitle}</title>
 </svelte:head>
 
-{console.log('watchData', watchData)}
+<!-- {console.log('watchData', watchData)} -->
 {#if !id || !type}
     <div class="error">Missing id or type</div>
 {:else if type !== 'Movie' && type !== 'Episode' && type !== 'Series'}

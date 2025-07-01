@@ -17,10 +17,10 @@
         const accessToken = urlParams.get('at');
         const refreshToken = urlParams.get('rt');
         
-        console.log('Auth callback params:', { 
-          hasAccessToken: !!accessToken, 
-          hasRefreshToken: !!refreshToken
-        });
+        // console.log('Auth callback params:', { 
+        //   hasAccessToken: !!accessToken, 
+        //   hasRefreshToken: !!refreshToken
+        // });
         
         if (accessToken) {
           const tokenParts = accessToken.split('.');

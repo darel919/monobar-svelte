@@ -153,7 +153,7 @@ function createAuthStore() {
               if (tokenPayload.exp && tokenPayload.exp > currentTime) {
                 isAuthenticated = true;
               } else {
-                console.log('JWT token expired');
+                console.warn('JWT token expired');
                 localStorage.removeItem('user-session');
                 Cookies.remove('DeviceId', { path: '/' });
                 Cookies.remove('user-session');
@@ -180,7 +180,7 @@ function createAuthStore() {
           if (providerId) {
             const validation = await store.validateJellyfinCredentials(providerId, jellyAccessToken);
             if (!validation.isValid) {
-              console.log('Jellyfin credentials are invalid, clearing cookies');
+              console.warn('Jellyfin credentials are invalid, clearing cookies');
               Cookies.remove('DeviceId', { path: '/' });
               Cookies.remove('jellyUserId');
               Cookies.remove('jellyAccessToken');
@@ -198,7 +198,7 @@ function createAuthStore() {
         
         // Clear Jellyfin cookies if DWS is not logged in
         if (!isAuthenticated && (jellyUserId || jellyAccessToken)) {
-          console.log('DWS not authenticated, clearing Jellyfin cookies');
+          console.warn('DWS not authenticated, clearing Jellyfin cookies');
           Cookies.remove('DeviceId', { path: '/' });
           Cookies.remove('jellyUserId');
           Cookies.remove('jellyAccessToken');
@@ -271,7 +271,7 @@ function createAuthStore() {
       });
       unsubscribe();
       if (currentState?.isJellyLoading) {
-        console.log('Jellyfin login already in progress, skipping duplicate request');
+        // console.log('Jellyfin login already in progress, skipping duplicate request');
         return;
       }
       if (currentState?.retryCount !== undefined && currentState.retryCount >= 10) {
@@ -316,7 +316,7 @@ function createAuthStore() {
           needsReauth: false,
           retryCount: 0,
         }));
-        console.log('Jellyfin login successful:', data);
+        // console.log('Jellyfin login successful:', data);
       } catch (error: any) {
         console.error('Jellyfin login error:', error);
         update(state => ({
@@ -401,7 +401,7 @@ function createAuthStore() {
       if (browser) {
         subscribe(state => {
           if (state.isAuthenticated) {
-            console.log('User is authenticated');
+            // console.log('User is authenticated');
           }
         });
       }
