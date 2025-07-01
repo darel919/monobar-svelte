@@ -7,16 +7,18 @@ export async function load({ url, fetch, cookies }) {
     
     if (!id) {
         return {
-            serverData: {
+            serverData: Promise.resolve({
                 data: null,
                 error: 'ID parameter is required'
-            }
+            }),
+            id,
+            type,
+            episodeId
         };
     }
-    const serverData = await getItemInfoData(id, fetch, url, cookies);
     
     return {
-        serverData,
+        serverData: getItemInfoData(id, fetch, url, cookies),
         id,
         type,
         episodeId

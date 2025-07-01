@@ -1,9 +1,7 @@
 import { getHomeData } from '$lib/server/api.js';
 
 export async function load({ fetch, url, cookies }) {
-    const serverData = await getHomeData(fetch, url, cookies);
-    
     return {
-        serverData
+        serverData: getHomeData(fetch, url, cookies)
     };
 }

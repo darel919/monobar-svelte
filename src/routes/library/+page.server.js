@@ -5,39 +5,39 @@ export async function load({ url, fetch, cookies }) {
     const sortBy = url.searchParams.get('sortBy') || cookies.get('librarySortBy') || "ProductionYear";
     const sortOrder = url.searchParams.get('sortOrder') || cookies.get('librarySortOrder') || "desc";
     const type = url.searchParams.get('type') || null;
-    // console.log('Loading library data for ID:', id);
+    
     if(!type) {
         const options = {
             sortBy,
             sortOrder
         };
-        const serverData = await getLibraryData(id, fetch, url, options, cookies);  
+        
         return {
-            serverData,
+            serverData: getLibraryData(id, fetch, url, options, cookies),
             sortBy,
             sortOrder,
             id
         };
     } else {
-        let serverData;
+        let serverDataPromise;
         if (type === 'genre') {
             const options = {
                 genreId: id,
                 sortBy,
                 sortOrder
             };
-            serverData = await getGenreData(options, fetch, url, cookies);
+            serverDataPromise = getGenreData(options, fetch, url, cookies);
         } else {
             const options = {
                 id,
                 sortBy,
                 sortOrder
             };
-            serverData = await getLibraryTypeData(options, fetch, url, cookies);
+            serverDataPromise = getLibraryTypeData(options, fetch, url, cookies);
         }
         
         return {
-            serverData,
+            serverData: serverDataPromise,
             sortBy,
             sortOrder,
             id

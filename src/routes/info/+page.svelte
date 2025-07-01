@@ -17,23 +17,29 @@
     settingsStore = useSettingsStore();
   });
   
-  $: serverData = data.serverData.data || null;
   $: id = data.id;
   $: type = data.type;
   $: currentEpisodeId = data.episodeId || null;
 
-  // Document title logic
-  $: documentTitle = (() => {
+  let documentTitle = 'Loading - Monobar';
+  
+  $: data.serverData.then(serverDataResult => {
+    const serverData = serverDataResult.data || null;
     if (serverData) {
       const itemName = serverData.Name || 'Unknown';
       if (type === 'Series') {
-        return `TV show: ${itemName} - moNobar`;
+        documentTitle = `TV show: ${itemName} - moNobar`;
       } else if (type === 'Movie') {
-        return `Movie: ${itemName} - moNobar`;
+        documentTitle = `Movie: ${itemName} - moNobar`;
+      } else {
+        documentTitle = `${itemName} - moNobar`;
       }
+    } else {
+      documentTitle = 'Content - Monobar';
     }
-    return 'Monobar';
-  })();
+  }).catch(() => {
+    documentTitle = 'Error - Monobar';
+  });
 
 </script>
 
@@ -41,9 +47,21 @@
     <title>{documentTitle}</title>
 </svelte:head>
 
-<main class="flex flex-col min-h-screen px-8 pt-20 text-white">
-    {#if type === "Movie" || type === "Series"}
-        {#if serverData && !data.serverData.error}    
+{#await data.serverData}
+  <main class="flex flex-col min-h-screen px-8 pt-20 text-white">
+      <div class="flex items-center justify-center min-h-[60vh]">
+          <div class="flex flex-col items-center gap-4">
+              <div class="loading loading-spinner loading-lg"></div>
+              <p class="text-lg opacity-70">Loading content...</p>
+          </div>
+      </div>
+  </main>
+{:then serverDataResult}
+  {@const serverData = serverDataResult.data || null}
+
+  <main class="flex flex-col min-h-screen px-8 pt-20 text-white">
+      {#if type === "Movie" || type === "Series"}
+          {#if serverData && !serverDataResult.error}    
         <!-- {console.log("Server Data:", serverData)}         -->
             <section class="fixed inset-0 -z-1">                
                 <YtPlayer 
@@ -180,13 +198,12 @@
                     </div>
                 </section>
             {/if}
-        {:else if data.serverData.error}
+        {:else if serverDataResult.error}
         <StopState
             action="back"
             message="title unavailable."
             actionDesc="This title is not available. Please try another title."
             actionText="Go Back"
-            errorCode={String(data.serverData.error)}
         />
         {:else}
         <StopState
@@ -205,4 +222,14 @@
         ></StopState>
     {/if}
    
-</main>
+  </main>
+{:catch error}
+  <main class="flex flex-col min-h-screen px-8 pt-20 text-white">
+      <StopState
+          action="back"
+          message="Failed to load content"
+          actionDesc="There was an error loading the content. Please try again."
+          actionText="Go Back"
+      />
+  </main>
+{/await}
