@@ -15,6 +15,24 @@ $: seriesData = data.seriesData || null;
 $: id = $page.url.searchParams.get('id');
 $: type = $page.url.searchParams.get('type');
 
+// Document title logic
+$: documentTitle = (() => {
+  if (type === 'Episode' && watchData && seriesData) {
+    const seriesName = seriesData.Name || 'Unknown Series';
+    const seasonNum = watchData.ParentIndexNumber ? `S${String(watchData.ParentIndexNumber).padStart(2, '0')}` : '';
+    const episodeNum = watchData.IndexNumber ? `E${String(watchData.IndexNumber).padStart(2, '0')}` : '';
+    const episodeName = watchData.Name || '';
+    
+    if (seasonNum && episodeNum) {
+      return `Playing: ${seriesName} ${seasonNum}${episodeNum}${episodeName ? ` - ${episodeName}` : ''}`;
+    }
+    return `Playing: ${seriesName}${episodeName ? ` - ${episodeName}` : ''}`;
+  } else if (type === 'Movie' && watchData) {
+    return `Playing: ${watchData.Name || 'Unknown Movie'}`;
+  }
+  return 'Monobar';
+})();
+
 if (browser) {
   // console.log(seriesData)
     onMount(() => {
@@ -45,6 +63,11 @@ if (browser) {
 
 
 </script>
+
+<svelte:head>
+    <title>{documentTitle}</title>
+</svelte:head>
+
 {console.log('watchData', watchData)}
 {#if !id || !type}
     <div class="error">Missing id or type</div>

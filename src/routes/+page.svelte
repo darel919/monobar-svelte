@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import LibraryViewDisplay from '$lib/components/LibraryViewDisplay.svelte';
     import StopState from '$lib/components/StopState.svelte';
     import { authStore } from '$lib/stores/authStore';
@@ -10,6 +10,8 @@
     $: libraryCategories = serverData?.data || [];
     $: libraryComingSoon = serverData?.data?.comingSoon || [];
     $: serverError = serverData?.error;
+
+    
 
     // Automatically handle expired/invalid JWT: try reauth, then sign out if fails
     onMount(() => {
@@ -39,7 +41,12 @@
             }
         }
     });
+
 </script>
+
+<svelte:head>
+    <title>Home - moNobar</title>
+</svelte:head>
 
 <main class="flex flex-col min-h-screen p-8 pt-20">
     <section class="mb-8">

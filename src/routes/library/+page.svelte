@@ -4,6 +4,7 @@
   import StopState from '$lib/components/StopState.svelte';
   import ImageComponent from '$lib/components/ImageComponent.svelte';
   import { useSettingsStore } from '$lib/stores/settings';
+  import { onMount } from 'svelte';
     
   export let data;
 
@@ -15,7 +16,23 @@
   $: id = data.id;
   $: sortBy = data.sortBy;
   $: sortOrder = data.sortOrder;
+
+    $: documentTitle = (() => {
+    if (serverData) {
+        if (type === 'genre' && serverData.Name) {
+            return `Genre: ${serverData.Name} - moNobar`;
+        } else if (serverData.library?.Name) {
+            return `${serverData.library.Name} - moNobar`;
+        }
+    }
+    return 'Monobar';
+    })();
+
 </script>
+
+<svelte:head>
+    <title>{documentTitle}</title>
+</svelte:head>
 
 {#if type === 'genre'}
 <main class="flex flex-col min-h-screen relative pt-16">

@@ -7,6 +7,9 @@ function handleSignOut() {
     goto('/');
 }
 </script>
+<svelte:head>
+    <title>your account - moNobar</title>
+</svelte:head>
 
 <section class="mx-auto px-8 min-h-screen mt-20">
     <h1 class="text-4xl font-extralight mb-6">your account</h1>

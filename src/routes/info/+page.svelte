@@ -22,7 +22,24 @@
   $: type = data.type;
   $: currentEpisodeId = data.episodeId || null;
 
+  // Document title logic
+  $: documentTitle = (() => {
+    if (serverData) {
+      const itemName = serverData.Name || 'Unknown';
+      if (type === 'Series') {
+        return `TV show: ${itemName} - moNobar`;
+      } else if (type === 'Movie') {
+        return `Movie: ${itemName} - moNobar`;
+      }
+    }
+    return 'Monobar';
+  })();
+
 </script>
+
+<svelte:head>
+    <title>{documentTitle}</title>
+</svelte:head>
 
 <main class="flex flex-col min-h-screen px-8 pt-20 text-white">
     {#if type === "Movie" || type === "Series"}

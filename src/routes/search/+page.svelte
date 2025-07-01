@@ -8,7 +8,20 @@
     import ImageComponent from '$lib/components/ImageComponent.svelte';    
     import { parseSearchInput, getSearchPlaceholder, buildSearchUrl, buildFullQuery, SEARCH_TYPES } from '$lib/utils/searchUtils.js';    
     export let data;    
-    $: ({ query: initialQuery, type, includeExternal: initialIncludeExternal, results, error, onlineLookupError, searchTypeDisplay } = data);    // Initialize query and activePrefix based on URL parameters
+    $: ({ query: initialQuery, type, includeExternal: initialIncludeExternal, results, error, onlineLookupError, searchTypeDisplay } = data);    
+    
+    // Document title logic
+    $: documentTitle = (() => {
+        if (initialQuery?.trim()) {
+            if (type && searchTypeDisplay) {
+                return `Search ${searchTypeDisplay}: ${initialQuery} - moNobar`;
+            }
+            return `Search: ${initialQuery} - moNobar`;
+        }
+        return 'Search - moNobar';
+    })();
+    
+    // Initialize query and activePrefix based on URL parameters
     let query = '';
     /** @type {string | null} */
     let activePrefix = null;
@@ -141,6 +154,11 @@
     }
 </script>
 
+<svelte:head>
+    <title>{documentTitle}</title>
+</svelte:head>
+
+<main class="min-h-screen pt-16 px-4">
 <div class="w-full max-w-4xl mx-auto mt-24 px-8 min-h-screen">
     <h1 class="text-4xl font-extralight mb-8 text-white">search</h1>
     
@@ -251,4 +269,5 @@
         {/if}
     </div>
 </div>
+</main>
 
