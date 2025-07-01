@@ -1,7 +1,7 @@
 {
 	"name": "monobar-svelte",
 	"private": true,
-	"version": "0.0.1",
+	"version": "0.0.3",
 	"type": "module",
 	"scripts": {
 		"dev": "bun run version.js && vite dev --host",
@@ -24,7 +24,7 @@
 		"tailwindcss": "^4.1.11",
 		"typescript": "^5.8.3",
 		"vite": "^7.0.0",
-		"vite-plugin-devtools-json": "^0.2.0"
+		"vite-plugin-devtools-json": "^0.2.1"
 	},
 	"dependencies": {
 		"@types/js-cookie": "^3.0.6",

@@ -1,6 +1,6 @@
 <script lang="ts">
 import { onDestroy, onMount } from 'svelte';
-import WatchPlayer from '$lib/components/WatchPlayer.svelte';
+import WatchPlayer from '$lib/components/Watch/WatchPlayer.svelte';
 import StopState from '$lib/components/StopState.svelte';
 import SeasonsEpisodesViewer from '$lib/components/SeasonsEpisodesViewer.svelte';
 import { page } from '$app/stores';
@@ -64,7 +64,7 @@ if (browser) {
               <!-- Player section -->
               <section class="relative w-full aspect-video bg-black rounded-lg overflow-hidden my-6">
                 <WatchPlayer id={id} poster={watchData?.BackdropImageTags} 
-                    fullData={watchData} type={type} />
+                    fullData={watchData} type={type} seriesData={seriesData} />
               </section>
               <!-- Episode Data Section -->
               <div class="bg-base-200 rounded-lg p-6">
@@ -178,7 +178,7 @@ if (browser) {
     <main class="min-h-screen pt-16">
        <section class="relative max-h-screen w-full aspect-video bg-black rounded-lg overflow-hidden my-6">
          <WatchPlayer id={id} poster={watchData?.BackdropImageTags} 
-            fullData={watchData} type={type} />
+            fullData={watchData} type={type} seriesData={seriesData} />
        </section>
     </main>
 {/if}

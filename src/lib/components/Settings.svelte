@@ -46,6 +46,22 @@
         }
     }
 
+    function handleShowThresholdChange(e: Event) {
+        const target = e.target as HTMLInputElement;
+        const value = parseInt(target.value);
+        if (settingsStore && !isNaN(value)) {
+            settingsStore.setPlayNextShowThreshold(value);
+        }
+    }
+
+    function handleAutoProgressThresholdChange(e: Event) {
+        const target = e.target as HTMLInputElement;
+        const value = parseInt(target.value);
+        if (settingsStore && !isNaN(value)) {
+            settingsStore.setPlayNextAutoProgressThreshold(value);
+        }
+    }
+
     function handleResetSettings() {
         if (!browser || !settingsStore) return;
         
@@ -69,7 +85,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
                     </svg>
                     Playback
-                </h2>                <!-- Play Trailers Automatically -->
+                </h2>                
+                <!-- Play Trailers Automatically -->
                 {#if context !== 'player'}
                     <div class="form-control w-full">
                         <label class="label cursor-pointer justify-start gap-4 flex flex-row flex-wrap items-start px-1">                            <input 
@@ -89,11 +106,12 @@
                 {/if}
 
                 <!-- Play Next for TV Series -->
-                <!-- <div class="form-control w-full">
-                    <label class="label cursor-pointer justify-start gap-4 flex flex-row flex-wrap items-start px-1">                        <input 
+                <div class="form-control w-full">
+                    <label class="label cursor-pointer justify-start gap-4 flex flex-row flex-wrap items-start px-1">
+                        <input 
                             type="checkbox" 
                             class="toggle toggle-primary mt-1" 
-                            checked={settingsStore ? $settingsStore.playNextEnabled : false}
+                            checked={settingsStore ? $settingsStore!.playNextEnabled : false}
                             onclick={handlePlayNextToggle}
                         />
                         <div class="flex flex-col flex-1">
@@ -103,7 +121,52 @@
                             </p>
                         </div>
                     </label>
-                </div> -->
+                </div>
+
+                <!-- Play Next Timing Settings -->
+                {#if settingsStore && $settingsStore!.playNextEnabled}
+                    <div class="form-control w-full">
+                        <div class="label">
+                            <span class="label-text text-lg font-medium">Play Next Timing</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label" for="playNextShowThreshold">
+                                    <span class="label-text">Show prompt at (seconds from end)</span>
+                                </label>
+                                <input 
+                                    id="playNextShowThreshold"
+                                    type="number" 
+                                    class="input input-bordered w-full" 
+                                    min="10" 
+                                    max="120" 
+                                    value={settingsStore ? $settingsStore!.playNextShowThreshold : 40}
+                                    oninput={handleShowThresholdChange}
+                                />
+                                <div class="label">
+                                    <span class="label-text-alt">Default: 40 seconds</span>
+                                </div>
+                            </div>
+                            <div class="form-control">
+                                <label class="label" for="playNextAutoProgressThreshold">
+                                    <span class="label-text">Auto-play at (seconds from end)</span>
+                                </label>
+                                <input 
+                                    id="playNextAutoProgressThreshold"
+                                    type="number" 
+                                    class="input input-bordered w-full" 
+                                    min="5" 
+                                    max="60" 
+                                    value={settingsStore ? $settingsStore!.playNextAutoProgressThreshold : 12}
+                                    oninput={handleAutoProgressThresholdChange}
+                                />
+                                <div class="label">
+                                    <span class="label-text-alt">Default: 12 seconds</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {/if}
 
                 <!-- Subtitle Size Selection -->
                 <div class="form-control">

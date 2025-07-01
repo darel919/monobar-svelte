@@ -33,9 +33,11 @@ import { getCookie } from '$lib/utils/cookieUtils.js';
 import { getAuthorizationHeader, getSessionId } from '$lib/utils/authUtils';
 import { BASE_API_PATH } from '$lib/config/api';
 import WatchPlayerStats from './WatchPlayerStats.svelte';
-import Settings from './Settings.svelte';
+import Settings from '../Settings.svelte';
+import PlayNext from './WatchPlayNext.svelte';
 import { browser } from '$app/environment';
 import { useSettingsStore } from '$lib/stores/settings';
+import { findNextEpisode, getNextEpisodeInfo, type SeriesData } from '$lib/utils/episodeUtils';
 import Hls from 'hls.js';
 
 const isDev = import.meta.env && import.meta.env.DEV;
@@ -44,6 +46,7 @@ export let poster: string | null = null;
 export let fullData: any = null;
 export let type: string;
 export let id: string | null = null;
+export let seriesData: SeriesData | null = null;
 
 let art: any; // ensure art is declared and accessible
 let artRef: HTMLDivElement | null = null;
@@ -62,6 +65,13 @@ let showPlayerSettingsModal = false;
 let lastPlayerId: string | null = null;
 let isMounted = false;
 
+// Play Next functionality
+let showPlayNext = false;
+let nextEpisodeInfo: any = null;
+let timeUpdateInterval: ReturnType<typeof setInterval> | null = null;
+let secondsRemaining = 0;
+let wasFullscreenBeforePlayNext = false;
+
 function startPlaybackReporting() {
     if (playbackReportInterval) clearInterval(playbackReportInterval);
     playbackReportInterval = setInterval(() => reportPlaybackStatus('timeupdate'), 7000);
@@ -74,20 +84,95 @@ function stopPlaybackReporting() {
     }
 }
 
+function startTimeTracking() {
+    if (timeUpdateInterval) clearInterval(timeUpdateInterval);
+    timeUpdateInterval = setInterval(() => {
+        checkPlayNextTiming();
+    }, 1000);
+}
+
+function stopTimeTracking() {
+    if (timeUpdateInterval) {
+        clearInterval(timeUpdateInterval);
+        timeUpdateInterval = null;
+    }
+}
+
+function checkPlayNextTiming() {
+    if (!art || !art.video || !seriesData || type !== 'Episode') return;
+    
+    const settings = settingsStore.get();
+    if (!settings.playNextEnabled) return;
+
+    const currentTime = art.currentTime;
+    const duration = art.duration;
+    secondsRemaining = duration - currentTime;
+
+    // Only proceed if we have valid timing data
+    if (!duration || duration <= 0 || secondsRemaining <= 0) return;
+
+    // Get next episode if we haven't already
+    if (!nextEpisodeInfo && id) {
+        const nextEpisode = findNextEpisode(id, seriesData);
+        if (nextEpisode) {
+            nextEpisodeInfo = getNextEpisodeInfo(nextEpisode, seriesData);
+        }
+    }
+
+    // Show Play Next prompt if within threshold and we have next episode
+    if (nextEpisodeInfo && secondsRemaining <= settings.playNextShowThreshold && !showPlayNext) {
+        // Exit fullscreen to show PlayNext component
+        if (art && art.fullscreen) {
+            wasFullscreenBeforePlayNext = true;
+            art.fullscreen = false;
+        } else {
+            wasFullscreenBeforePlayNext = false;
+        }
+        showPlayNext = true;
+    }
+}
+
+function handlePlayNext() {
+    if (nextEpisodeInfo) {
+        const watchUrl = `/watch?id=${nextEpisodeInfo.id}&type=Episode&seriesId=${nextEpisodeInfo.seriesId}`;
+        
+        // Store fullscreen preference for next episode
+        if (wasFullscreenBeforePlayNext) {
+            sessionStorage.setItem('restoreFullscreen', 'true');
+        }
+        
+        goto(watchUrl);
+    }
+    showPlayNext = false;
+}
+
+function handleCancelPlayNext() {
+    showPlayNext = false;
+    
+    // Restore fullscreen if user cancels
+    if (wasFullscreenBeforePlayNext && art) {
+        art.fullscreen = true;
+        wasFullscreenBeforePlayNext = false;
+    }
+}
+
 function handleArtEvents() {
     if (!art) return;
     art.on('play', () => {
         isPlaying = true;
         stopPlaybackReporting(); // Ensure no duplicate intervals
         startPlaybackReporting();
+        startTimeTracking(); // Start tracking for Play Next
     });
     art.on('pause', () => {
         isPlaying = false;
         stopPlaybackReporting();
         reportPlaybackStatus('pause');
+        stopTimeTracking(); // Stop tracking when paused
     });
     art.on('destroy', () => {
         stopPlaybackReporting();
+        stopTimeTracking();
         reportPlaybackStatus('stop');
     });
     // Re-apply subtitle style on subtitle switch
@@ -101,6 +186,7 @@ function handleArtEvents() {
         isPlaying = true;
         stopPlaybackReporting();
         startPlaybackReporting();
+        startTimeTracking(); // Start tracking for autoplay
     }
 }
 
@@ -143,7 +229,7 @@ const adaptSubtitleFormat = () => {
             }
             // Rewrite absolute URL to relative path for proxying
             let url = subitem.url;
-            if (url && url.startsWith('http://api.server.drl')) {
+            if (url && url.startsWith('http://api.server.drl') && isDev) {
                 const u = new URL(url);
                 url = u.pathname + u.search;
             }
@@ -245,7 +331,7 @@ async function initializePlayer() {
                 html: 'Subtitle',
                 tooltip: selectedSubtitle?.name,
                 selector: subtitles,                    
-                onSelect: function (item) {
+                onSelect: function (item: any) {
                     art.subtitle.switch(item.url, {
                         name: item.html,
                         escape: true,
@@ -297,14 +383,14 @@ async function initializePlayer() {
                  quality: {
                     control: true,
                     setting: true,
-                    getName: (level) => level.height + 'P',
+                    getName: (level: any) => level.height + 'P',
                     title: 'Quality',
                     auto: 'Auto',
                 },
                 audio: {
                     control: true,
                     setting: true,
-                    getName: (track) => (track && typeof track.name === 'string' ? track.name : 'Track'),
+                    getName: (track: any) => (track && typeof track.name === 'string' ? track.name : 'Track'),
                     title: 'Audio',
                     auto: 'Auto',
                 }
@@ -359,8 +445,8 @@ async function initializePlayer() {
                                 if (idx !== -1) initialLevel = idx;
                             }
                             hls.currentLevel = initialLevel;
-                                if (art.setting) {
-                                    const qualitySetting = art.setting.find((s) => s.html === 'Quality');
+                                if (art.setting && Array.isArray(art.setting)) {
+                                    const qualitySetting = art.setting.find((s: any) => s.html === 'Quality');
                                 if (qualitySetting) {
                                     qualitySetting.tooltip = hls.levels[initialLevel].height + 'P';
                                 }
@@ -384,16 +470,31 @@ async function initializePlayer() {
     handleArtEvents();
     // Immediately apply subtitle style after Artplayer is initialized
     applySubtitleStyle(userSubtitleSize);
+    
+    // Restore fullscreen if coming from PlayNext navigation
+    if (browser && sessionStorage.getItem('restoreFullscreen') === 'true') {
+        sessionStorage.removeItem('restoreFullscreen');
+        // Wait a bit for the player to be fully initialized
+        setTimeout(() => {
+            if (art && art.video) {
+                art.fullscreen = true;
+            }
+        }, 1000);
+    }
 }
 
 // Watch for id changes to destroy and re-init player
 $: if (browser && typeof id !== 'undefined' && id && id !== lastPlayerId && isMounted) {
     if (art) {
         stopPlaybackReporting();
+        stopTimeTracking();
         reportPlaybackStatus('stop');
         art.destroy();
         art = null;
     }
+    // Reset Play Next state when changing episodes
+    showPlayNext = false;
+    nextEpisodeInfo = null;
     lastPlayerId = id;
     initializePlayer();
 }
@@ -413,6 +514,7 @@ onMount(() => {
     return () => {
         isMounted = false;
         stopPlaybackReporting();
+        stopTimeTracking();
         reportPlaybackStatus('stop');
         if (art) {
             art.destroy();
@@ -425,6 +527,7 @@ onMount(() => {
 unmount(() => {
     isMounted = false;
     stopPlaybackReporting();
+    stopTimeTracking();
     reportPlaybackStatus('stop');
     if (art) {
         art.destroy();
@@ -485,7 +588,7 @@ function getStatusData(preservedCurrentTime = null) {
     };
 }
 
-function handlePlayerError(data) {
+function handlePlayerError(data: any) {
     if (isDev) console.error('Player error:', data);
     if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
         art.notice.show = 'Media error occurred. Please try again later.';
@@ -510,7 +613,7 @@ function closePlayerSettings() {
     showPlayerSettingsModal = false;
 }
 
-function applySubtitleStyle(size) {
+function applySubtitleStyle(size: string) {
     if (art && art.subtitle) {
         const fontSize = getSubtitleFontSize(size);
         art.subtitle.style({
@@ -547,5 +650,15 @@ $: if (art && userSubtitleSize) {
 
 {#if showStatsModal}
     <WatchPlayerStats visible={showStatsModal} art={$artStore} onClose={closeStats} />
+{/if}
+
+{#if showPlayNext && nextEpisodeInfo}
+    <PlayNext 
+        visible={showPlayNext}
+        {secondsRemaining}
+        {nextEpisodeInfo}
+        on:playNext={handlePlayNext}
+        on:cancel={handleCancelPlayNext}
+    />
 {/if}
 

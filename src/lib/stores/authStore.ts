@@ -294,7 +294,7 @@ function createAuthStore() {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to login to Jellyfin');
+          throw new Error('Failed to authenticate with backend services. Please check your credentials or try again later.');
         }
 
         const data = await response.json();

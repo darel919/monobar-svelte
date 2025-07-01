@@ -34,7 +34,8 @@
         <h6 class="footer-title">External Links</h6>
         <a class="link link-hover" target="_blank" href="https://darelisme.my.id" title="DWS home page">at DWS</a>
         <a class="link link-hover" target="_blank" href="https://github.com/darel919/monobar-svelte" title="GitHub Repo of moNobar">GitHub Repository</a>
-        <a class="link link-hover" target="_blank" href="https://status.darelisme.my.id" title="DWS status page">Service Status</a>
+        <a class="link link-hover" target="_blank" href="https://status.darelisme.my.id/?monitor=dws-monobar" title="DWS status page">Service Status</a>
+        
     </nav>
     <aside>
     </aside>
