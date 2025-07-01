@@ -71,6 +71,7 @@ let nextEpisodeInfo: any = null;
 let timeUpdateInterval: ReturnType<typeof setInterval> | null = null;
 let secondsRemaining = 0;
 let wasFullscreenBeforePlayNext = false;
+let playNextDismissedForEpisode = false;
 
 function startPlaybackReporting() {
     if (playbackReportInterval) clearInterval(playbackReportInterval);
@@ -120,7 +121,7 @@ function checkPlayNextTiming() {
     }
 
     // Show Play Next prompt if within threshold and we have next episode
-    if (nextEpisodeInfo && secondsRemaining <= settings.playNextShowThreshold && !showPlayNext) {
+    if (nextEpisodeInfo && secondsRemaining <= settings.playNextShowThreshold && !showPlayNext && !playNextDismissedForEpisode) {
         // Exit fullscreen to show PlayNext component
         if (art && art.fullscreen) {
             wasFullscreenBeforePlayNext = true;
@@ -148,6 +149,7 @@ function handlePlayNext() {
 
 function handleCancelPlayNext() {
     showPlayNext = false;
+    playNextDismissedForEpisode = true;
     
     // Restore fullscreen if user cancels
     if (wasFullscreenBeforePlayNext && art) {
@@ -495,6 +497,7 @@ $: if (browser && typeof id !== 'undefined' && id && id !== lastPlayerId && isMo
     // Reset Play Next state when changing episodes
     showPlayNext = false;
     nextEpisodeInfo = null;
+    playNextDismissedForEpisode = false;
     lastPlayerId = id;
     initializePlayer();
 }

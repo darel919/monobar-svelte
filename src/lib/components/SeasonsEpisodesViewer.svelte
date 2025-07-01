@@ -145,7 +145,7 @@
         <div class="p-4">
             <!-- mobile: Horizontal scroll, Desktop: Flex wrap  -->
             <div class="md:hidden">
-                <div class="flex gap-6 overflow-x-auto pb-2 scrollbar-hide">
+                <div class="flex gap-6 overflow-x-auto pb-2">
                     {#each availableSeasons as season, idx (season.Id)}
                         <button
                             type="button"
@@ -184,13 +184,14 @@
                 </div>
 
                 <!-- Display the episodes in the selected season -->
-                <div class={`${mode === 'info' ? 'flex flex-col gap-3 h-96 overflow-y-auto md:flex-row md:gap-4 md:overflow-x-auto md:overflow-y-visible md:h-auto md:pb-4 scrollbar-hide' : 'space-y-3 md:space-y-4'}`}>
+                <div class={`${mode === 'info' ? 'flex flex-col gap-3 h-96 overflow-y-auto md:flex-row md:gap-4 md:overflow-x-auto md:overflow-y-visible md:h-auto md:pb-4' : 'space-y-3 md:space-y-4'}`}>
                     {#each selectedSeason.episodes as episode, idx (episode.Id)}
                         <a
                             href={`/watch?id=${episode.Id}&type=Episode&seriesId=${selectedSeason.SeriesId}`}
                             class={`cursor-pointer transition-all duration-200 touch-manipulation active:scale-[0.98] ${mode === 'info' ? 'flex-shrink-0 w-full md:w-64' : ''} ${mode === 'info' ? '' : currentEpisodeId === episode.Id ? 'bg-primary/10 border-primary shadow-lg' : selectedEpisode?.Id === episode.Id ? 'shadow-md' : 'hover:shadow-md'} ${mode !== 'info' ? '' : currentEpisodeId === episode.Id ? 'md:ring-2 md:ring-primary' : 'hover:opacity-80'}`}
                             aria-label={`Episode ${episode.IndexNumber}`}
                         >
+                            <!-- Mobile layout -->
                             <div class={`${mode === 'info' ? 'md:hidden' : 'md:hidden'}`}>
                                 <div class="p-3">
                                     <div class="flex flex-col h-full">
@@ -275,6 +276,7 @@
                                 </div>
                             </div>
 
+                            <!-- Desktop layout -->
                             {#if mode === 'info'}
                                 <div class="hidden md:block p-3">
                                     <div class="flex flex-col h-full">

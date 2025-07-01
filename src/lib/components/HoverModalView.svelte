@@ -38,8 +38,6 @@
     settingsStore = useSettingsStore();
   });
 
-  const MODAL_WIDTH = 300;
-  const MODAL_HEIGHT = 320;  
   let modalPosition = { left: 0, top: 0, width: 280, height: 157 };
   function updateModalPosition() {
     if (hoveredItemId && typeof window !== 'undefined') {
@@ -57,7 +55,7 @@
         } else {
           // NETFLIX STYLE W=32,H199
           const extraWidth = 32;
-          const extraHeight = 100;
+          const extraHeight = 75;
           modalPosition = { 
             left: rect.left - (extraWidth / 2), 
             top: rect.top - (extraHeight / 2), 

@@ -95,15 +95,15 @@
 <main class="flex flex-col min-h-screen relative p-8 mt-16">
     {#if serverData && serverData.content}        
         {#if serverData.library && serverData.library.Name} 
-            <section class="flex flex-row justify-between items-center">
+            <section class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                 <section class="mb-8">
                     <h1 class="text-4xl mb-4 font-extralight">{serverData.library.Name}</h1>
                     <p>{serverData.content.length} items.</p>
                 </section>
                 {#if id}
-                <section class="mb-6">
-                    <LibrarySortControl {id} {sortBy} {sortOrder} />
-                </section>
+                    <section class="mb-12 sm:mb-6">
+                        <LibrarySortControl {id} {sortBy} {sortOrder} />
+                    </section>
                 {/if}
             </section>
         {/if}
