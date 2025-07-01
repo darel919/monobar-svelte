@@ -25,7 +25,7 @@ Usage:
 -->
 
 <script lang="ts">
-import { onMount, unmount } from 'svelte';
+import { onMount, onDestroy } from 'svelte';
 import { writable } from 'svelte/store';
 import { goto } from '$app/navigation';
 import { getBaseEnvironment } from '$lib/utils/environment.js';
@@ -527,7 +527,7 @@ onMount(() => {
     };
 });
 
-unmount(() => {
+onDestroy(() => {
     isMounted = false;
     stopPlaybackReporting();
     stopTimeTracking();

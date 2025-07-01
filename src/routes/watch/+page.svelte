@@ -68,16 +68,8 @@ if (browser) {
     <title>{documentTitle}</title>
 </svelte:head>
 
-<!-- {console.log('watchData', watchData)} -->
 {#if !id || !type}
     <div class="error">Missing id or type</div>
-{:else if type !== 'Movie' && type !== 'Episode' && type !== 'Series'}
-    <StopState
-        message="Invalid type."
-        actionDesc="Please recheck the URL."
-        action="back"
-        actionText="Go back"
-    />
 {:else if type === 'Episode' && watchData}
     <main class="min-h-screen pt-16 pb-12 px-4">
         <div class="max-w-7xl mx-auto">
@@ -165,7 +157,7 @@ if (browser) {
                               <li class="list-row">
                               {#if stars.image}
                                 <div>
-                                  <img class="size-10 rounded-box object-cover" src={stars.image}/>
+                                  <img class="size-10 rounded-box object-cover" src={stars.image} alt={stars.Name}/>
                                 </div>
                                 {:else}
                                 <div class="size-10 rounded-box bg-base-300 flex items-center justify-center">
@@ -197,11 +189,20 @@ if (browser) {
           </div>
         </div>
     </main>
-{:else}
-    <main class="min-h-screen pt-16">
+
+
+{:else if type === 'Movie'}
+<main class="min-h-screen pt-16">
        <section class="relative max-h-screen w-full aspect-video bg-black rounded-lg overflow-hidden my-6">
          <WatchPlayer id={id} poster={watchData?.BackdropImageTags} 
             fullData={watchData} type={type} seriesData={seriesData} />
        </section>
     </main>
+{:else}
+    <StopState
+      message="Invalid type {type}."
+      actionDesc="Please recheck the URL."
+      action="back"
+      actionText="Go back"
+  />
 {/if}
