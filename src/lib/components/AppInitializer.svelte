@@ -9,7 +9,7 @@
 
         const settingsStore = useSettingsStore();
         
-        console.log('Initializing app settings...');
+        // console.log('Initializing app settings...');
         hydrateSettingsStore();
 
         themeUtils.cleanupOldThemeStorage();
@@ -29,7 +29,7 @@
                 document.documentElement.setAttribute('data-theme', themeToApply);
                 document.body.className = themeToApply === 'dark' ? 'dark' : 'light';
                 
-                console.log('App initialized with theme:', themeToApply, 'from setting:', settings.theme);
+                // console.log('App initialized with theme:', themeToApply, 'from setting:', settings.theme);
             });
         };
         
@@ -42,7 +42,7 @@
                     const newTheme = e.matches ? 'dark' : 'light';
                     document.documentElement.setAttribute('data-theme', newTheme);
                     document.body.className = newTheme === 'dark' ? 'dark' : 'light';
-                    console.log('System theme changed to:', newTheme);
+                    // console.log('System theme changed to:', newTheme);
                 }
             });
         };

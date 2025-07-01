@@ -33,7 +33,7 @@
     });
 
     function closeDrawer() {
-        console.warn('Closing drawer');
+        // console.warn('Closing drawer');
         // Close mobile drawer
         const drawerToggle = document.getElementById('navbar-menu');
         if (drawerToggle) {

@@ -111,7 +111,7 @@ function createAuthStore() {
           if (data.name && data.id && data.last_login && data.last_activity) {
             if (data.deviceId) {
               Cookies.set('DeviceId', data.deviceId, { path: '/', sameSite: 'lax' });
-              console.warn('Device ID set from Jellyfin profile:', data.deviceId);
+              // console.log('Device ID set from Jellyfin profile:', data.deviceId);
             }
             return { isValid: true, data };
           }
