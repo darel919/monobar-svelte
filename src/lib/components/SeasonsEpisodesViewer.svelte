@@ -20,6 +20,7 @@
     let currentEpisodeRef: HTMLLIElement | null = null;
     let nextEpisodeRef: HTMLLIElement | null = null;
     let latestEpisodeRef: HTMLLIElement | null = null;
+    let isManualSeasonSelection = false;
     const dispatch = createEventDispatcher();
 
     $: availableSeasons = Array.isArray(seriesData?.availableSeasons) ? seriesData.availableSeasons : Array.isArray(seriesData) ? seriesData : [];
@@ -28,11 +29,49 @@
     $: episodes = selectedSeason?.episodes || [];
     $: selectedEpisode = selectedEpisodeIdx !== null ? episodes[selectedEpisodeIdx] : null;
 
+    // Auto-select season based on current episode (only if not manually selected)
+    $: if (currentEpisodeId && availableSeasons.length > 0 && !isManualSeasonSelection) {
+        const currentSeasonIdx = findSeasonIndexByEpisodeId(currentEpisodeId);
+        if (currentSeasonIdx !== -1 && currentSeasonIdx !== selectedSeasonIdx) {
+            selectedSeasonIdx = currentSeasonIdx;
+        }
+    }
+
+    // Initialize season selection on mount
+    onMount(() => {
+        if (currentEpisodeId && availableSeasons.length > 0) {
+            const currentSeasonIdx = findSeasonIndexByEpisodeId(currentEpisodeId);
+            if (currentSeasonIdx !== -1) {
+                selectedSeasonIdx = currentSeasonIdx;
+            }
+        }
+    });
+
+    // Reset manual selection flag when episode changes to allow auto-selection
+    let previousEpisodeId: string | null = null;
+    $: if (currentEpisodeId !== previousEpisodeId) {
+        previousEpisodeId = currentEpisodeId;
+        if (currentEpisodeId) {
+            isManualSeasonSelection = false;
+        }
+    }
+
     function handleSeasonChange(idx: number) {
         selectedSeasonIdx = idx;
         selectedEpisodeIdx = null;
         nextEpisodeIdx = null;
         latestUnplayedEpisodeIdx = null;
+        isManualSeasonSelection = true;
+    }
+
+    function findSeasonIndexByEpisodeId(episodeId: string): number {
+        for (let i = 0; i < availableSeasons.length; i++) {
+            const season = availableSeasons[i];
+            if (season.episodes && season.episodes.some((episode: any) => episode.Id === episodeId)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     function formatRuntime(ticks: number) {
@@ -201,7 +240,7 @@
                                                 <ImageComponent
                                                     src={episode.ImageTags.Primary}
                                                     alt={`Episode ${episode.IndexNumber}`}
-                                                    class="w-full h-full object-cover"
+                                                    imageClass="w-full h-full object-cover"
                                                     showSkeleton={true}
                                                     aspectRatio="16/9"
                                                     borderRadius="rounded"
@@ -222,7 +261,7 @@
                                                     <div class="absolute bottom-0 left-0 right-0 bg-black/20 h-1">
                                                         <div
                                                             class="h-full bg-accent transition-all duration-300"
-                                                            style="width: {getWatchProgress(episode)}%;"
+                                                            style="width: {getWatchProgress(episode) * 100}%;"
                                                         ></div>
                                                     </div>
                                                 {/if} <!-- closes hasWatchProgress(episode) -->
@@ -231,7 +270,7 @@
 
                                         <!-- Episode title -->
                                         <h5 class="font-semibold text-sm mb-2 line-clamp-2 leading-tight">
-                                            S{String(selectedSeason.IndexNumber || 1).padStart(2, '0')}E{String(episode.IndexNumber || index + 1).padStart(2, '0')}: {episode.Name}
+                                            S{String(selectedSeason.IndexNumber || 1).padStart(2, '0')}E{String(episode.IndexNumber || idx + 1).padStart(2, '0')}: {episode.Name}
                                         </h5>
 
                                         <!-- Episode subdata -->
@@ -266,7 +305,7 @@
                                             </div>
                                         {/if}
                                         
-                                        {#if nextEpisodeIdx?.Id === episode.Id && isWatchMode}
+                                        {#if nextEpisodeIdx === idx && isWatchMode}
                                             <div class="mt-2 flex items-center gap-2">
                                                 <div class="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
                                                 <span class="text-secondary font-medium text-xs">Up Next</span>
@@ -286,7 +325,7 @@
                                                 <ImageComponent
                                                     src={episode.ImageTags.Primary}
                                                     alt={`Episode ${episode.IndexNumber}`}
-                                                    class="w-full h-full object-cover"
+                                                    imageClass="w-full h-full object-cover"
                                                     showSkeleton={true}
                                                     aspectRatio="16/9"
                                                     borderRadius="rounded"
@@ -307,7 +346,7 @@
                                                     <div class="absolute bottom-0 left-0 right-0 bg-black/20 h-1">
                                                         <div 
                                                             class="h-full bg-accent transition-all duration-300"
-                                                            style={{ width: `${getWatchProgress(episode)}%` }}
+                                                            style="width: {getWatchProgress(episode) * 100}%;"
                                                         ></div>
                                                     </div>
                                                 {/if}
@@ -322,7 +361,7 @@
 
                                         <!-- Episode Name -->
                                         <h5 class="font-semibold text-sm mb-2 line-clamp-2 leading-tight">
-                                            S{String(selectedSeason.IndexNumber || 1).padStart(2, '0')}E{String(episode.IndexNumber || index + 1).padStart(2, '0')}: {episode.Name}
+                                            S{String(selectedSeason.IndexNumber || 1).padStart(2, '0')}E{String(episode.IndexNumber || idx + 1).padStart(2, '0')}: {episode.Name}
                                         </h5>
                                         
                                         <!-- Episode sub-data -->
@@ -357,7 +396,7 @@
                                             </div>
                                         {/if}
                                         
-                                        {#if nextEpisodeIdx?.Id === episode.Id && isWatchMode}
+                                        {#if nextEpisodeIdx === idx && isWatchMode}
                                             <div class="mt-2 flex items-center gap-2">
                                                 <div class="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
                                                 <span class="text-secondary font-medium text-xs">Up Next</span>
@@ -377,7 +416,7 @@
                                                 <ImageComponent
                                                     src={episode.ImageTags.Primary}
                                                     alt={`Episode ${episode.IndexNumber}`}
-                                                    class="w-full h-full object-cover"
+                                                    imageClass="w-full h-full object-cover"
                                                     showSkeleton={true}
                                                     aspectRatio="16/9"
                                                     borderRadius="rounded"
@@ -403,7 +442,7 @@
                                                     <div class="absolute bottom-0 left-0 right-0 bg-black/20 h-0.5">
                                                         <div 
                                                             class="h-full bg-accent transition-all duration-300"
-                                                            style={{ width: `${getWatchProgress(episode)}%` }}
+                                                            style="width: {getWatchProgress(episode) * 100}%;"
                                                         ></div>
                                                     </div>
                                                 {/if}
@@ -420,7 +459,7 @@
                                         <div class="flex-1 min-w-0">                                                
                                             <div class="flex items-center gap-2">
                                                 <span class="font-medium text-primary text-sm">
-                                                    {episode.IndexNumber + '.' || index + 1}
+                                                    {episode.IndexNumber + '.' || idx + 1}
                                                 </span>
                                                 <h5 class="font-semibold truncate">
                                                     {episode.Name}
@@ -457,7 +496,7 @@
                                                 </div>
                                             {/if}
 
-                                            {#if nextEpisodeIdx?.Id === episode.Id && isWatchMode }
+                                            {#if nextEpisodeIdx === idx && isWatchMode }
                                                 <div class="mt-2 flex items-center gap-2">
                                                     <span class="text-secondary font-medium text-xs">Up Next</span>
                                                 </div>

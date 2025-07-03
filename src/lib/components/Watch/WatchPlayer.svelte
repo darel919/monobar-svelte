@@ -89,7 +89,7 @@ function startTimeTracking() {
     if (timeUpdateInterval) clearInterval(timeUpdateInterval);
     timeUpdateInterval = setInterval(() => {
         checkPlayNextTiming();
-    }, 1000);
+    }, 500);
 }
 
 function stopTimeTracking() {
@@ -107,10 +107,15 @@ function checkPlayNextTiming() {
 
     const currentTime = art.currentTime;
     const duration = art.duration;
+    
+    // Add more robust validation for timing values
+    if (!duration || duration <= 0 || isNaN(duration) || 
+        !currentTime || currentTime < 0 || isNaN(currentTime)) return;
+    
     secondsRemaining = duration - currentTime;
 
-    // Only proceed if we have valid timing data
-    if (!duration || duration <= 0 || secondsRemaining <= 0) return;
+    // Only proceed if we have valid timing data and not at the very end
+    if (secondsRemaining <= 0 || currentTime >= duration) return;
 
     // Get next episode if we haven't already
     if (!nextEpisodeInfo && id) {
@@ -121,7 +126,7 @@ function checkPlayNextTiming() {
     }
 
     // Show Play Next prompt if within threshold and we have next episode
-    if (nextEpisodeInfo && secondsRemaining <= settings.playNextShowThreshold && !showPlayNext && !playNextDismissedForEpisode) {
+    if (nextEpisodeInfo && nextEpisodeInfo.id && secondsRemaining <= settings.playNextShowThreshold && !showPlayNext && !playNextDismissedForEpisode) {
         // Exit fullscreen to show PlayNext component
         if (art && art.fullscreen) {
             wasFullscreenBeforePlayNext = true;
@@ -134,7 +139,7 @@ function checkPlayNextTiming() {
 }
 
 function handlePlayNext() {
-    if (nextEpisodeInfo) {
+    if (nextEpisodeInfo && nextEpisodeInfo.id && nextEpisodeInfo.seriesId) {
         const watchUrl = `/watch?id=${nextEpisodeInfo.id}&type=Episode&seriesId=${nextEpisodeInfo.seriesId}`;
         
         // Store fullscreen preference for next episode
@@ -655,7 +660,7 @@ $: if (art && userSubtitleSize) {
     <WatchPlayerStats visible={showStatsModal} art={$artStore} onClose={closeStats} />
 {/if}
 
-{#if showPlayNext && nextEpisodeInfo}
+{#if showPlayNext && nextEpisodeInfo && nextEpisodeInfo.id}
     <PlayNext 
         visible={showPlayNext}
         {secondsRemaining}

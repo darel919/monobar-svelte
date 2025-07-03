@@ -4,7 +4,7 @@ PlayNext – Svelte component to prompt user to play the next episode
 
 Props:
 - visible: boolean – Whether the prompt is visible
-- secondsRemaining: number – Seconds left in current episode
+- secondsRemaining: number – Seconds left in current episode (initial value)
 - nextEpisodeInfo: object – Info about the next episode (id, title, seasonNumber, episodeNumber, seriesId)
 - onPlayNext: () => void – Callback to play next episode
 - onCancel: () => void – Callback to cancel prompt
@@ -27,17 +27,21 @@ Props:
 
   let progress = 0;
   let interval: any = null;
+  let currentSecondsRemaining = 0;
+  let startTime = 0;
+  let initialSecondsRemaining = 0;
+  let autoProgressTriggered = false;
 
   $: actualShowThreshold = showThreshold ?? settingsStore.get().playNextShowThreshold;
   $: actualAutoProgressThreshold = autoProgressThreshold ?? settingsStore.get().playNextAutoProgressThreshold;
 
-  $: if (visible && nextEpisodeInfo && secondsRemaining > 0) {
-    const timeIntoPrompt = actualShowThreshold - secondsRemaining;
+  $: if (visible && nextEpisodeInfo && currentSecondsRemaining > 0) {
+    const timeIntoPrompt = actualShowThreshold - currentSecondsRemaining;
     const totalPromptTime = actualShowThreshold - actualAutoProgressThreshold;
     progress = Math.min(100, Math.max(0, (timeIntoPrompt / totalPromptTime) * 100));
   }
 
-  $: if (visible && nextEpisodeInfo) {
+  $: if (visible && nextEpisodeInfo && nextEpisodeInfo.id && currentSecondsRemaining > 0) {
     if (!interval) {
       startProgressTracking();
     }
@@ -45,20 +49,38 @@ Props:
     stopProgressTracking();
   }
 
+  // Initialize timing when component becomes visible
+  $: if (visible && secondsRemaining > 0 && nextEpisodeInfo && nextEpisodeInfo.id) {
+    startTime = Date.now();
+    initialSecondsRemaining = secondsRemaining;
+    currentSecondsRemaining = secondsRemaining;
+    autoProgressTriggered = false;
+  } else if (!visible) {
+    // Reset when not visible
+    currentSecondsRemaining = 0;
+    progress = 0;
+    autoProgressTriggered = false;
+  }
+
   function startProgressTracking() {
     if (interval) clearInterval(interval);
     
     interval = setInterval(() => {
-      if (!visible) {
+      if (!visible || autoProgressTriggered) {
         stopProgressTracking();
         return;
       }
       
-      if (secondsRemaining <= actualAutoProgressThreshold) {
+      // Calculate real-time remaining seconds
+      const elapsed = (Date.now() - startTime) / 1000;
+      currentSecondsRemaining = Math.max(0, initialSecondsRemaining - elapsed);
+      
+      if (currentSecondsRemaining <= actualAutoProgressThreshold && nextEpisodeInfo && nextEpisodeInfo.id && !autoProgressTriggered) {
+        autoProgressTriggered = true;
         dispatch('playNext');
         stopProgressTracking();
       }
-    }, 500);
+    }, 100);
   }
 
   function stopProgressTracking() {
@@ -69,8 +91,11 @@ Props:
   }
 
   function handlePlayNext() {
-    dispatch('playNext');
-    stopProgressTracking();
+    if (!autoProgressTriggered) {
+      autoProgressTriggered = true;
+      dispatch('playNext');
+      stopProgressTracking();
+    }
   }
 
   function handleCancel() {
@@ -83,7 +108,7 @@ Props:
   });
 </script>
 
-{#if visible && nextEpisodeInfo}
+{#if visible && nextEpisodeInfo && nextEpisodeInfo.id}
   <div class="fixed bottom-8 right-8 z-50 bg-base-200/95 backdrop-blur-sm rounded-lg shadow-xl border border-base-300 w-80 overflow-hidden">
     <!-- Progress bar background -->
     <div class="absolute inset-0 bg-primary/20">
@@ -118,11 +143,12 @@ Props:
       
       <div class="flex items-center justify-between">
         <span class="text-sm text-base-content/60">
-          {secondsRemaining <= actualAutoProgressThreshold ? 'Loading next episode...' : `Playing next episode in ${Math.round(secondsRemaining)}s`}
+          {autoProgressTriggered ? 'Loading next episode...' : currentSecondsRemaining <= actualAutoProgressThreshold ? 'Loading next episode...' : `Playing next episode in ${Math.round(currentSecondsRemaining)}s`}
         </span>
         <button
           on:click={handlePlayNext}
           class="btn btn-primary btn-sm"
+          disabled={autoProgressTriggered}
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
