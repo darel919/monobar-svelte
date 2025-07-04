@@ -6,6 +6,7 @@
 	import ScrollToTop from '$lib/components/ScrollToTop.svelte';
 	import ReauthNotification from '$lib/components/Auth/ReauthNotification.svelte';
 	import JellyfinReauthNotification from '$lib/components/Auth/JellyfinReauthNotification.svelte';
+	import SignOutNotification from '$lib/components/Auth/SignOutNotification.svelte';
 	import { authStore } from '$lib/stores/authStore';
 	import { invalidateAll } from '$app/navigation';
 	import { onMount } from 'svelte';
@@ -37,3 +38,4 @@
 <ScrollToTop />
 <ReauthNotification />
 <JellyfinReauthNotification />
+<SignOutNotification />

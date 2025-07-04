@@ -414,6 +414,7 @@ function createAuthStore() {
 export const authStore = createAuthStore();
 
 if (browser) {
-  authStore.checkAuthStatus();
+  // Only initialize the store, don't auto-check auth status
+  // Auth status check is now handled by AppInitializer for better control
   authStore.initialize();
 }

@@ -3,37 +3,45 @@
     import { browser } from '$app/environment';
     import { hydrateSettingsStore, useSettingsStore } from '$lib/stores/settings';
     import { themeUtils } from '$lib/utils/themeUtils';
+    import { authStore } from '$lib/stores/authStore';
+    import Cookies from 'js-cookie';
 
     onMount(() => {
         if (!browser) return;
 
         const settingsStore = useSettingsStore();
-        
-        // console.log('Initializing app settings...');
-        hydrateSettingsStore();
 
-        themeUtils.cleanupOldThemeStorage();
-        
-        const initializeTheme = () => {
-            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            
-            settingsStore.subscribe((settings) => {
-                let themeToApply;
-                
-                if (settings.theme === 'light' || settings.theme === 'dark') {
-                    themeToApply = settings.theme;
-                } else {
-                    themeToApply = systemPrefersDark ? 'dark' : 'light';
-                }
-                
-                document.documentElement.setAttribute('data-theme', themeToApply);
-                document.body.className = themeToApply === 'dark' ? 'dark' : 'light';
-                
-                // console.log('App initialized with theme:', themeToApply, 'from setting:', settings.theme);
-            });
-        };
-        
-        initializeTheme();
+        // Run async initialization logic
+        (async () => {
+            // Initialize authentication first
+            await initializeAuthentication();
+
+            // console.log('Initializing app settings...');
+            hydrateSettingsStore();
+
+            themeUtils.cleanupOldThemeStorage();
+
+            const initializeTheme = () => {
+                const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+                settingsStore.subscribe((settings) => {
+                    let themeToApply;
+
+                    if (settings.theme === 'light' || settings.theme === 'dark') {
+                        themeToApply = settings.theme;
+                    } else {
+                        themeToApply = systemPrefersDark ? 'dark' : 'light';
+                    }
+
+                    document.documentElement.setAttribute('data-theme', themeToApply);
+                    document.body.className = themeToApply === 'dark' ? 'dark' : 'light';
+
+                    // console.log('App initialized with theme:', themeToApply, 'from setting:', settings.theme);
+                });
+            };
+
+            initializeTheme();
+        })();
 
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         const handleSystemThemeChange = (e: MediaQueryListEvent) => {
@@ -53,4 +61,153 @@
             mediaQuery.removeEventListener('change', handleSystemThemeChange);
         };
     });
+
+    async function initializeAuthentication() {
+        try {
+            // Check if we have any stored authentication data
+            const userSession = localStorage.getItem('user-session');
+            const jellyUserId = Cookies.get('jellyUserId');
+            const jellyAccessToken = Cookies.get('jellyAccessToken');
+
+            console.log('🔐 Initializing authentication check...', {
+                hasUserSession: !!userSession,
+                hasJellyUserId: !!jellyUserId,
+                hasJellyAccessToken: !!jellyAccessToken
+            });
+
+            // If no authentication data exists, skip auth check
+            if (!userSession && !jellyUserId && !jellyAccessToken) {
+                console.log('ℹ️ No authentication data found, skipping auth check');
+                return;
+            }
+
+            let dwsTokenValid = false;
+            let parsedSession = null;
+
+            // Check DWS token validity
+            if (userSession) {
+                try {
+                    parsedSession = JSON.parse(userSession);
+                    if (parsedSession.access_token) {
+                        const tokenPayload = JSON.parse(atob(parsedSession.access_token.split('.')[1]));
+                        const currentTime = Math.floor(Date.now() / 1000);
+                        dwsTokenValid = tokenPayload.exp && tokenPayload.exp > currentTime;
+                        
+                        console.log('🎫 DWS token check:', {
+                            valid: dwsTokenValid,
+                            expiresAt: new Date(tokenPayload.exp * 1000),
+                            currentTime: new Date(currentTime * 1000)
+                        });
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Failed to parse DWS token:', error);
+                    dwsTokenValid = false;
+                }
+            }
+
+            // Handle authentication scenarios based on token validity
+            if (!dwsTokenValid) {
+                console.log('❌ DWS token is invalid or expired - performing full sign out');
+                // DWS token is not valid - perform full sign out
+                await performFullSignOut();
+                return;
+            }
+
+            // DWS token is valid, check Jellyfin token
+            if (jellyUserId && jellyAccessToken && parsedSession) {
+                const providerId = parsedSession.user?.user_metadata?.provider_id;
+                if (providerId) {
+                    console.log('🎬 Validating Jellyfin credentials...');
+                    const validation = await authStore.validateJellyfinCredentials(providerId, jellyAccessToken);
+                    
+                    if (!validation.isValid) {
+                        console.log('🔄 Jellyfin token is invalid - attempting renewal');
+                        // Jellyfin token is invalid, try to renew it
+                        await renewJellyfinToken(parsedSession.user.id);
+                    } else {
+                        console.log('✅ Jellyfin token is valid');
+                    }
+                }
+            } else if (parsedSession?.user?.id) {
+                console.log('🔄 Missing Jellyfin credentials - attempting to obtain them');
+                // We have DWS auth but missing Jellyfin credentials, try to get them
+                await renewJellyfinToken(parsedSession.user.id);
+            }
+
+            // Trigger the standard auth check to update the store
+            console.log('🔄 Finalizing authentication state...');
+            await authStore.checkAuthStatus();
+            console.log('✅ Authentication initialization completed');
+            
+        } catch (error) {
+            console.error('💥 Authentication initialization failed:', error);
+            // On critical error, perform full sign out
+            await performFullSignOut();
+        }
+    }
+
+    async function renewJellyfinToken(userId: string) {
+        try {
+            console.log('🔄 Attempting to renew Jellyfin token for user:', userId);
+            await authStore.loginToJellyfin(userId);
+            
+            // Wait a bit for the operation to complete
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Check if renewal was successful
+            const currentState = authStore;
+            let renewalSuccessful = false;
+            
+            const unsubscribe = currentState.subscribe(state => {
+                renewalSuccessful = !state.jellyAuthFailed && !!state.jellyAccessToken;
+            });
+            unsubscribe();
+            
+            if (renewalSuccessful) {
+                console.log('✅ Jellyfin token renewal successful');
+            } else {
+                console.warn('⚠️ Jellyfin token renewal failed');
+            }
+            
+        } catch (error) {
+            console.error('💥 Failed to renew Jellyfin token:', error);
+        }
+    }
+
+    async function performFullSignOut() {
+        try {
+            console.log('🚪 Performing full sign out due to invalid DWS token');
+            
+            // Clear all authentication data
+            localStorage.removeItem('user-session');
+            localStorage.removeItem('redirectAfterAuth');
+            
+            // Clear all cookies
+            Cookies.remove('jellyUserId');
+            Cookies.remove('jellyAccessToken');
+            Cookies.remove('user-session');
+            Cookies.remove('DeviceId', { path: '/' });
+            
+            // Update auth store to reflect signed out state
+            authStore.update(state => ({
+                ...state,
+                isAuthenticated: false,
+                userSession: null,
+                jellyUserId: null,
+                jellyAccessToken: null,
+                needsReauth: true,
+                lastLogoutTime: Date.now(),
+                isLoading: false,
+                jellyAuthFailed: false,
+                jellyAuthError: null,
+                jellyAutoLoginAttempted: false,
+                retryCount: 0,
+            }));
+            
+            console.log('✅ Full sign out completed - user needs to sign in again');
+            
+        } catch (error) {
+            console.error('💥 Error during full sign out:', error);
+        }
+    }
 </script>

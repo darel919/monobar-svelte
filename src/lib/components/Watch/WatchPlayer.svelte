@@ -37,7 +37,7 @@ import Settings from '../Settings.svelte';
 import PlayNext from './WatchPlayNext.svelte';
 import { browser } from '$app/environment';
 import { useSettingsStore } from '$lib/stores/settings';
-import { findNextEpisode, getNextEpisodeInfo, type SeriesData } from '$lib/utils/episodeUtils';
+import { findNextEpisode, getNextEpisodeInfo, type SeriesData, isAtAbsoluteEnd } from '$lib/utils/episodeUtils';
 import Hls from 'hls.js';
 
 const isDev = import.meta.env && import.meta.env.DEV;
@@ -72,6 +72,7 @@ let timeUpdateInterval: ReturnType<typeof setInterval> | null = null;
 let secondsRemaining = 0;
 let wasFullscreenBeforePlayNext = false;
 let playNextDismissedForEpisode = false;
+let mediaEndHandled = false;
 
 function startPlaybackReporting() {
     if (playbackReportInterval) clearInterval(playbackReportInterval);
@@ -89,6 +90,7 @@ function startTimeTracking() {
     if (timeUpdateInterval) clearInterval(timeUpdateInterval);
     timeUpdateInterval = setInterval(() => {
         checkPlayNextTiming();
+        checkMediaEndTiming();
     }, 500);
 }
 
@@ -100,6 +102,7 @@ function stopTimeTracking() {
 }
 
 function checkPlayNextTiming() {
+    // Only handle Play Next functionality for Episodes with series data
     if (!art || !art.video || !seriesData || type !== 'Episode') return;
     
     const settings = settingsStore.get();
@@ -182,11 +185,18 @@ function handleArtEvents() {
         stopTimeTracking();
         reportPlaybackStatus('stop');
     });
+    art.on('ended', () => {
+        handleMediaEnd();
+    });
+    // Listen to the video element directly for ended event as backup
+    if (art.video) {
+        art.video.addEventListener('ended', handleMediaEnd);
+    }
     // Re-apply subtitle style on subtitle switch
     art.on('subtitleSwitch', () => {
         setTimeout(() => {
             applySubtitleStyle(userSubtitleSize);
-        }, 100);
+        }, 200);
     });
     // Start reporting if already playing (autoplay)
     if (!art.paused) {
@@ -302,8 +312,17 @@ async function initializePlayer() {
     }
     // --- End subtitle preference logic ---
     
-    const currentSubtitleSizePref = settingsStore.get().subtitleSize;
+    // Load subtitle size preference - prioritize localStorage, fall back to settings store
+    const localSubtitleSize = getUserPreference('subtitleSize', null);
+    const currentSubtitleSizePref = localSubtitleSize || settingsStore.get().subtitleSize;
     userSubtitleSize = currentSubtitleSizePref;
+    
+    // Ensure settings store is in sync with localStorage
+    if (localSubtitleSize && localSubtitleSize !== settingsStore.get().subtitleSize) {
+        settingsStore.setSubtitleSize(localSubtitleSize);
+    } else if (!localSubtitleSize) {
+        setUserPreference('subtitleSize', currentSubtitleSizePref);
+    }
     Artplayer.AUTO_PLAYBACK_TIMEOUT = 15000;
     Artplayer.RECONNECT_SLEEP_TIME  = 3000;
     Artplayer.RECONNECT_TIME_MAX  = 7;
@@ -329,7 +348,7 @@ async function initializePlayer() {
         subtitle: selectedSubtitle ? {
             url: selectedSubtitle.url,
             type: 'vtt',
-            escape: true,
+            escape: false,
             encoding: 'utf-8',
         } : {},
         settings: [
@@ -341,17 +360,11 @@ async function initializePlayer() {
                 onSelect: function (item: any) {
                     art.subtitle.switch(item.url, {
                         name: item.html,
-                        escape: true,
+                        escape: false,
                     });
                     setUserPreference('subtitlePref', item.name);
                     setTimeout(() => {
-                        const currentSubtitleSizePref = getUserPreference('subtitleSize', 'medium');
-                        const fontSize = getSubtitleFontSize(currentSubtitleSizePref);
-                        art.subtitle.style({
-                            fontSize: fontSize,
-                            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                            fontWeight: 'bold'
-                        });
+                        applySubtitleStyle(userSubtitleSize);
                     }, 100);
                     return item.html;
                 },                  
@@ -503,6 +516,7 @@ $: if (browser && typeof id !== 'undefined' && id && id !== lastPlayerId && isMo
     showPlayNext = false;
     nextEpisodeInfo = null;
     playNextDismissedForEpisode = false;
+    mediaEndHandled = false;
     lastPlayerId = id;
     initializePlayer();
 }
@@ -512,6 +526,8 @@ onMount(() => {
     settingsUnsubscribe = settingsStore.subscribe((settings: any) => {
         if (settings.subtitleSize !== userSubtitleSize) {
             userSubtitleSize = settings.subtitleSize;
+            // Sync with localStorage to maintain consistency
+            setUserPreference('subtitleSize', settings.subtitleSize);
             applySubtitleStyle(userSubtitleSize);
         }
     });
@@ -525,6 +541,9 @@ onMount(() => {
         stopTimeTracking();
         reportPlaybackStatus('stop');
         if (art) {
+            if (art.video) {
+                art.video.removeEventListener('ended', handleMediaEnd);
+            }
             art.destroy();
             art = null;
         }
@@ -538,6 +557,9 @@ onDestroy(() => {
     stopTimeTracking();
     reportPlaybackStatus('stop');
     if (art) {
+        if (art.video) {
+            art.video.removeEventListener('ended', handleMediaEnd);
+        }
         art.destroy();
         art = null;
     }
@@ -621,6 +643,36 @@ function closePlayerSettings() {
     showPlayerSettingsModal = false;
 }
 
+function handleMediaEnd() {
+    if (isDev) console.log('Media ended - type:', type, 'id:', id, 'seriesData:', !!seriesData, 'already handled:', mediaEndHandled);
+    
+    if (!browser || !id || mediaEndHandled) return;
+    
+    mediaEndHandled = true;
+    
+    try {
+        if (type === 'Episode' && seriesData && id) {
+            // Check if this is the absolute last episode of the series
+            const isLastEpisode = isAtAbsoluteEnd(id, seriesData);
+            if (isDev) console.log('Episode ended - isLastEpisode:', isLastEpisode);
+            if (isLastEpisode) {
+                // Redirect to series info page
+                const seriesId = seriesData.Id;
+                if (isDev) console.log('Redirecting to series info:', seriesId);
+                goto(`/info?id=${seriesId}&type=Series`, { replaceState: true });
+                return;
+            }
+            // If not the last episode, let normal play next logic handle it
+        } else if (type === 'Movie' && id) {
+            // For movies, redirect to movie info page when ended
+            if (isDev) console.log('Movie ended, redirecting to movie info:', id);
+            goto(`/info?id=${id}&type=Movie`, { replaceState: true });
+        }
+    } catch (error) {
+        if (isDev) console.warn('Error handling media end:', error);
+    }
+}
+
 function applySubtitleStyle(size: string) {
     if (art && art.subtitle) {
         const fontSize = getSubtitleFontSize(size);
@@ -635,6 +687,19 @@ function applySubtitleStyle(size: string) {
 // Reactively update subtitle font size when userSubtitleSize changes and art is initialized
 $: if (art && userSubtitleSize) {
     applySubtitleStyle(userSubtitleSize);
+}
+
+function checkMediaEndTiming() {
+    if (!art || !art.video || mediaEndHandled) return;
+    
+    const currentTime = art.currentTime;
+    const duration = art.duration;
+    
+    // Check if we're very close to the end (within 0.5 seconds)
+    if (duration && currentTime && (duration - currentTime) <= 0.5) {
+        if (isDev) console.log('Media near end detected via timing - currentTime:', currentTime, 'duration:', duration);
+        handleMediaEnd();
+    }
 }
 </script>
 
