@@ -129,7 +129,7 @@ function checkPlayNextTiming() {
     }
 
     // Show Play Next prompt if within threshold and we have next episode
-    if (nextEpisodeInfo && nextEpisodeInfo.id && secondsRemaining <= settings.playNextShowThreshold && !showPlayNext && !playNextDismissedForEpisode) {
+    if (nextEpisodeInfo && nextEpisodeInfo.id && secondsRemaining <= settings.playNextShowThreshold && secondsRemaining > 0 && !showPlayNext && !playNextDismissedForEpisode) {
         // Exit fullscreen to show PlayNext component
         if (art && art.fullscreen) {
             wasFullscreenBeforePlayNext = true;

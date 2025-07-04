@@ -13,7 +13,7 @@ Props:
 -->
 
 <script lang="ts">
-  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
+  import { createEventDispatcher } from 'svelte';
   import { useSettingsStore } from '$lib/stores/settings';
 
   export let visible: boolean = false;
@@ -26,86 +26,46 @@ Props:
   const settingsStore = useSettingsStore();
 
   let progress = 0;
-  let interval: any = null;
-  let currentSecondsRemaining = 0;
-  let startTime = 0;
-  let initialSecondsRemaining = 0;
   let autoProgressTriggered = false;
 
   $: actualShowThreshold = showThreshold ?? settingsStore.get().playNextShowThreshold;
   $: actualAutoProgressThreshold = autoProgressThreshold ?? settingsStore.get().playNextAutoProgressThreshold;
 
-  $: if (visible && nextEpisodeInfo && currentSecondsRemaining > 0) {
-    const timeIntoPrompt = actualShowThreshold - currentSecondsRemaining;
+  // Use the actual secondsRemaining from the player instead of maintaining our own timer
+  $: if (visible && nextEpisodeInfo && secondsRemaining > 0) {
+    const timeIntoPrompt = actualShowThreshold - secondsRemaining;
     const totalPromptTime = actualShowThreshold - actualAutoProgressThreshold;
     progress = Math.min(100, Math.max(0, (timeIntoPrompt / totalPromptTime) * 100));
   }
 
-  $: if (visible && nextEpisodeInfo && nextEpisodeInfo.id && currentSecondsRemaining > 0) {
-    if (!interval) {
-      startProgressTracking();
-    }
-  } else {
-    stopProgressTracking();
+  // Check for auto-progress based on player's remaining time
+  $: if (visible && nextEpisodeInfo && nextEpisodeInfo.id && secondsRemaining <= actualAutoProgressThreshold && secondsRemaining > 0 && !autoProgressTriggered) {
+    autoProgressTriggered = true;
+    dispatch('playNext');
   }
 
-  // Initialize timing when component becomes visible
-  $: if (visible && secondsRemaining > 0 && nextEpisodeInfo && nextEpisodeInfo.id) {
-    startTime = Date.now();
-    initialSecondsRemaining = secondsRemaining;
-    currentSecondsRemaining = secondsRemaining;
+  // Reset when component becomes visible or invisible
+  $: if (visible && nextEpisodeInfo && nextEpisodeInfo.id) {
     autoProgressTriggered = false;
   } else if (!visible) {
-    // Reset when not visible
-    currentSecondsRemaining = 0;
-    progress = 0;
     autoProgressTriggered = false;
-  }
-
-  function startProgressTracking() {
-    if (interval) clearInterval(interval);
-    
-    interval = setInterval(() => {
-      if (!visible || autoProgressTriggered) {
-        stopProgressTracking();
-        return;
-      }
-      
-      // Calculate real-time remaining seconds
-      const elapsed = (Date.now() - startTime) / 1000;
-      currentSecondsRemaining = Math.max(0, initialSecondsRemaining - elapsed);
-      
-      if (currentSecondsRemaining <= actualAutoProgressThreshold && nextEpisodeInfo && nextEpisodeInfo.id && !autoProgressTriggered) {
-        autoProgressTriggered = true;
-        dispatch('playNext');
-        stopProgressTracking();
-      }
-    }, 100);
+    progress = 0;
   }
 
   function stopProgressTracking() {
-    if (interval) {
-      clearInterval(interval);
-      interval = null;
-    }
+    // No longer needed - we don't maintain our own timer
   }
 
   function handlePlayNext() {
     if (!autoProgressTriggered) {
       autoProgressTriggered = true;
       dispatch('playNext');
-      stopProgressTracking();
     }
   }
 
   function handleCancel() {
     dispatch('cancel');
-    stopProgressTracking();
   }
-
-  onDestroy(() => {
-    stopProgressTracking();
-  });
 </script>
 
 {#if visible && nextEpisodeInfo && nextEpisodeInfo.id}
@@ -143,7 +103,7 @@ Props:
       
       <div class="flex items-center justify-between">
         <span class="text-sm text-base-content/60">
-          {autoProgressTriggered ? 'Loading next episode...' : currentSecondsRemaining <= actualAutoProgressThreshold ? 'Loading next episode...' : `Playing next episode in ${Math.round(currentSecondsRemaining)}s`}
+          {autoProgressTriggered ? 'Loading next episode...' : secondsRemaining <= actualAutoProgressThreshold ? 'Loading next episode...' : `Playing next episode in ${Math.round(secondsRemaining)}s`}
         </span>
         <button
           on:click={handlePlayNext}
