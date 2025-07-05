@@ -178,9 +178,16 @@
         try {
             console.log('🚪 Performing full sign out due to invalid DWS token');
             
+            // Store current path before clearing auth data if not already on auth pages
+            const currentPath = window.location.pathname;
+            const existingRedirect = localStorage.getItem('redirectAfterAuth');
+            
             // Clear all authentication data
             localStorage.removeItem('user-session');
-            localStorage.removeItem('redirectAfterAuth');
+            // Don't clear redirectAfterAuth if it's already set and we're not on auth pages
+            if (!existingRedirect && !currentPath.startsWith('/auth')) {
+                localStorage.setItem('redirectAfterAuth', currentPath + window.location.search);
+            }
             
             // Clear all cookies
             Cookies.remove('jellyUserId');
@@ -204,7 +211,13 @@
                 retryCount: 0,
             }));
             
-            console.log('✅ Full sign out completed - user needs to sign in again');
+            console.log('✅ Full sign out completed - redirecting to login');
+            
+            // Redirect to login page
+            if (browser) {
+                // Use replace to prevent back navigation to authenticated state
+                window.location.replace('/auth/login');
+            }
             
         } catch (error) {
             console.error('💥 Error during full sign out:', error);

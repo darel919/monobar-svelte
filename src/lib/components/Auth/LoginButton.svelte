@@ -14,7 +14,7 @@
     isLoading = true;
     error = null;
     
-    const currentPath = redirectPath || window.location.pathname;
+    const currentPath = redirectPath || (window.location.pathname + window.location.search);
     
     const popupOpened = openLoginWindow(currentPath, (errorMessage: string) => {
       error = errorMessage;

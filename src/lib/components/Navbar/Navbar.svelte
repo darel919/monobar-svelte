@@ -76,9 +76,17 @@
                     <label for="navbar-menu" aria-label="close sidebar" class="drawer-overlay"></label>              
                     <ul class="menu p-4 w-80 min-h-full bg-base-200">
                         <li>
-                            <a href="/" class="hidden sm:flex items-center {$page.url.pathname === '/' ? 'bg-base-300 font-bold' : ''}"  onclick={closeDrawer}>
-                                <img src="/assets/TRANSPARENT.png" alt="Logo" class="sm:h-10 h-20 w-full object-contain" />
-                            </a>                            
+                            <a 
+                                href="/" 
+                                class="text-lg {$page.url.pathname === '/' ? 'bg-base-300 font-bold' : ''}"
+                                onclick={closeDrawer}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                                </svg>
+
+                                Home
+                            </a>                         
                         </li>
                         {#each homeData as item}
                             <li>                                

@@ -7,6 +7,7 @@
 
   let isAuthenticated = false;
   let isLoading = true;
+  let hasRedirected = false;
 
   onMount(() => {
     if (!browser) return;
@@ -15,10 +16,20 @@
       isAuthenticated = state.isAuthenticated;
       isLoading = state.isLoading;
       
-      if (isAuthenticated) {
-        const redirectPath = localStorage.getItem('redirectAfterAuth') || '/';
-        localStorage.removeItem('redirectAfterAuth');
-        goto(redirectPath);
+      if (isAuthenticated && !hasRedirected) {
+        hasRedirected = true;
+        // Check if redirect is already being handled by popup logic
+        setTimeout(() => {
+          const redirectPath = localStorage.getItem('redirectAfterAuth') || '/';
+          if (redirectPath !== '/') {
+            console.log('🎯 Login page redirecting after auth to:', redirectPath);
+            localStorage.removeItem('redirectAfterAuth');
+            goto(redirectPath);
+          } else {
+            console.log('🎯 Login page redirecting to home');
+            goto('/');
+          }
+        }, 100); // Small delay to let popup handler run first if it exists
       }
     });
 
@@ -45,7 +56,6 @@
         
         <div class="card-actions justify-center">
           <LoginButton 
-            redirectPath={browser ? (new URLSearchParams(window.location.search).get('redirect') || '/') : '/'} 
             className="btn-wide"
           />
         </div>

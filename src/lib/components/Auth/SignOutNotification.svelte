@@ -42,7 +42,7 @@
 
   function handleSignIn() {
     showSignOutNotification = false;
-    const currentPath = browser ? window.location.pathname : '/';
+    const currentPath = browser ? (window.location.pathname + window.location.search) : '/';
     openLoginWindow(currentPath);
   }
 

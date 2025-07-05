@@ -54,10 +54,35 @@ export function getSessionHeaders(cookies: any = null) {
     return headers;
 }
 
+let isHandlingAuthRedirect = false;
+let isHandlingAuthSuccess = false;
+
+// Reset the flag after a timeout in case something goes wrong
+function resetAuthRedirectFlag() {
+  setTimeout(() => {
+    isHandlingAuthRedirect = false;
+    isHandlingAuthSuccess = false;
+  }, 5000);
+}
+
 export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: string) => void): boolean {
   if (!browser) return false;
   
-  localStorage.setItem("redirectAfterAuth", currentPath);
+  // Only set redirectAfterAuth if none exists, or if the new path is more specific
+  const existingRedirect = localStorage.getItem("redirectAfterAuth");
+  console.log('🔧 openLoginWindow - existing redirect:', existingRedirect, 'new path:', currentPath);
+  
+  const shouldUpdate = !existingRedirect || 
+                      (existingRedirect === '/' && currentPath !== '/') ||
+                      (!existingRedirect.includes('?') && currentPath.includes('?'));
+  
+  if (shouldUpdate) {
+    console.log('🔧 Setting redirectAfterAuth to:', currentPath);
+    console.trace('🔍 Call stack for redirectAfterAuth setting:');
+    localStorage.setItem("redirectAfterAuth", currentPath);
+  } else {
+    console.log('🔧 Preserving existing redirectAfterAuth:', existingRedirect);
+  }
   
   sessionStorage.removeItem("redirectionCompleted");
   sessionStorage.removeItem("authCancelled");
@@ -91,18 +116,26 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
         // console.log('Auth detected via store state');
         clearInterval(checkWindowClosed);
         authDetected = true;
-        const redirectPath = localStorage.getItem("redirectAfterAuth") || "/";
-        localStorage.removeItem("redirectAfterAuth");
-        // Wait for store to be fully updated before navigation
-        let tries = 0;
-        while (tries < 10) {
-          const state = get(authStore);
-          if (state.isAuthenticated) break;
-          await new Promise(res => setTimeout(res, 50));
-          tries++;
+        
+        if (!isHandlingAuthRedirect && !isHandlingAuthSuccess) {
+          isHandlingAuthRedirect = true;
+          isHandlingAuthSuccess = true;
+          resetAuthRedirectFlag();
+          const redirectPath = localStorage.getItem("redirectAfterAuth") || "/";
+          localStorage.removeItem("redirectAfterAuth");
+          console.log('🔧 Popup handler detected auth, redirecting to:', redirectPath);
+          
+          // Wait for store to be fully updated before navigation
+          let tries = 0;
+          while (tries < 10) {
+            const state = get(authStore);
+            if (state.isAuthenticated) break;
+            await new Promise(res => setTimeout(res, 50));
+            tries++;
+          }
+          await invalidateAll();
+          goto(redirectPath, { replaceState: true });
         }
-        await invalidateAll();
-        goto(redirectPath, { replaceState: true });
         return;
       }
       
@@ -112,19 +145,28 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
         clearInterval(checkWindowClosed);
         authDetected = true;
 
-        await authStore.checkAuthStatus();
-        // Wait for store to be fully updated before navigation
-        let tries = 0;
-        while (tries < 10) {
-          const state = get(authStore);
-          if (state.isAuthenticated) break;
-          await new Promise(res => setTimeout(res, 50));
-          tries++;
+        if (!isHandlingAuthRedirect && !isHandlingAuthSuccess) {
+          isHandlingAuthRedirect = true;
+          isHandlingAuthSuccess = true;
+          resetAuthRedirectFlag();
+          
+          await authStore.checkAuthStatus();
+          // Wait for store to be fully updated before navigation
+          let tries = 0;
+          while (tries < 10) {
+            const state = get(authStore);
+            if (state.isAuthenticated) break;
+            await new Promise(res => setTimeout(res, 50));
+            tries++;
+          }
+          
+          const redirectPath = localStorage.getItem("redirectAfterAuth") || "/";
+          localStorage.removeItem("redirectAfterAuth");
+          console.log('🔧 Popup handler (flag) detected auth, redirecting to:', redirectPath);
+          
+          await invalidateAll();
+          goto(redirectPath, { replaceState: true });
         }
-        const redirectPath = localStorage.getItem("redirectAfterAuth") || "/";
-        localStorage.removeItem("redirectAfterAuth");
-        await invalidateAll();
-        goto(redirectPath, { replaceState: true });
         return;
       }
       
@@ -144,20 +186,28 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
             localStorage.removeItem('authSuccess');
             authDetected = true;
 
-            await authStore.checkAuthStatus();
-            // Wait for store to be fully updated before navigation
-            let tries = 0;
-            while (tries < 10) {
-              const state = get(authStore);
-              if (state.isAuthenticated) break;
-              await new Promise(res => setTimeout(res, 50));
-              tries++;
-            }
+            if (!isHandlingAuthRedirect && !isHandlingAuthSuccess) {
+              isHandlingAuthRedirect = true;
+              isHandlingAuthSuccess = true;
+              resetAuthRedirectFlag();
+              
+              await authStore.checkAuthStatus();
+              // Wait for store to be fully updated before navigation
+              let tries = 0;
+              while (tries < 10) {
+                const state = get(authStore);
+                if (state.isAuthenticated) break;
+                await new Promise(res => setTimeout(res, 50));
+                tries++;
+              }
 
-            const redirectPath = localStorage.getItem("redirectAfterAuth") || "/";
-            localStorage.removeItem("redirectAfterAuth");
-            await invalidateAll();
-            goto(redirectPath, { replaceState: true });          
+              const redirectPath = localStorage.getItem("redirectAfterAuth") || "/";
+              localStorage.removeItem("redirectAfterAuth");
+              console.log('🔧 Popup handler (final check) detected auth, redirecting to:', redirectPath);
+              
+              await invalidateAll();
+              goto(redirectPath, { replaceState: true });
+            }          
           } else {
             sessionStorage.setItem("authCancelled", "true");
             if (onAuthCancelled) onAuthCancelled("Login window was closed");
@@ -175,7 +225,21 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
 export function redirectToLogin(currentPath: string): void {
   if (!browser) return;
   
-  localStorage.setItem("redirectAfterAuth", currentPath);
+  // Only set redirectAfterAuth if none exists, or if the new path is more specific
+  const existingRedirect = localStorage.getItem("redirectAfterAuth");
+  console.log('🔧 redirectToLogin - existing redirect:', existingRedirect, 'new path:', currentPath);
+  
+  const shouldUpdate = !existingRedirect || 
+                      (existingRedirect === '/' && currentPath !== '/') ||
+                      (!existingRedirect.includes('?') && currentPath.includes('?'));
+  
+  if (shouldUpdate) {
+    console.log('🔧 Setting redirectAfterAuth to:', currentPath);
+    console.trace('🔍 Call stack for redirectAfterAuth setting:');
+    localStorage.setItem("redirectAfterAuth", currentPath);
+  } else {
+    console.log('🔧 Preserving existing redirectAfterAuth:', existingRedirect);
+  }
   sessionStorage.removeItem("redirectionCompleted");
   const redirectUrl = encodeURIComponent(`${window.location.origin}/auth`);
   window.location.href = `https://darelisme.my.id/auth/login?redirectExternal=${redirectUrl}`;

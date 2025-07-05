@@ -76,7 +76,7 @@ let mediaEndHandled = false;
 
 function startPlaybackReporting() {
     if (playbackReportInterval) clearInterval(playbackReportInterval);
-    playbackReportInterval = setInterval(() => reportPlaybackStatus('timeupdate'), 7000);
+    playbackReportInterval = setInterval(() => reportPlaybackStatus('timeupdate'), 4000);
 }
 
 function stopPlaybackReporting() {
@@ -275,6 +275,9 @@ function reportPlaybackStatus(intent: string) {
     };
     const authHeader = getAuthorizationHeader && getAuthorizationHeader();
     if (authHeader) headers['Authorization'] = authHeader;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
     fetch(`${BASE_API_PATH}/status`, {
         method: 'POST',
         headers,
@@ -284,11 +287,30 @@ function reportPlaybackStatus(intent: string) {
             playbackUrl: fullData.playbackUrl,
             type,
             playSessionId: deviceId
-        })
+        }),
+        signal: controller.signal
+    }).then(response => {
+        if (!response.ok && (response.status === 401 || response.status === 403)) {
+            console.warn('Authentication failed during playback - redirecting to login');
+            // Stop playback before redirecting
+            if (art) {
+                art.pause();
+                stopPlaybackReporting();
+                stopTimeTracking();
+            }
+            // Authentication error during playback - redirect to login
+            if (browser) {
+                const currentPath = window.location.pathname + window.location.search;
+                localStorage.setItem('redirectAfterAuth', currentPath);
+                window.location.href = '/auth/login';
+            }
+        }
     }).catch(err => {
         if (import.meta.env && import.meta.env.DEV) {
             console.warn('Error reporting playback status:', err);
         }
+    }).finally(() => {
+        clearTimeout(timeoutId);
     });
 }
 

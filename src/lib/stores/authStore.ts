@@ -354,6 +354,9 @@ function createAuthStore() {
     logout: async () => {
       if (!browser) return;
       
+      console.log('🚪 authStore.logout() called');
+      console.trace('🔍 Call stack for logout:');
+      
       update(state => ({ ...state, isLoggingOut: true }));
       
       try {

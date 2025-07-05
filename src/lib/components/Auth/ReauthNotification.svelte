@@ -17,6 +17,15 @@
 
   function handleReauth() {
     authStore.clearReauthState();
+    if (browser) {
+      const currentPath = window.location.pathname + window.location.search;
+      const existingRedirect = localStorage.getItem('redirectAfterAuth');
+      
+      // Only set redirectAfterAuth if none exists or current path is more specific
+      if (!existingRedirect || (existingRedirect === '/' && currentPath !== '/')) {
+        localStorage.setItem('redirectAfterAuth', currentPath);
+      }
+    }
     window.location.href = '/auth/login';
   }
 

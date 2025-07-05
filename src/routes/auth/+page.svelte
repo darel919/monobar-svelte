@@ -7,6 +7,7 @@
 
   let status = 'Processing authentication...';
   let isSuccess = false;
+  let hasRedirected = false;
 
   onMount(() => {
     if (!browser) return;
@@ -60,8 +61,11 @@
             if (window.opener) {
               window.opener.postMessage({ type: 'AUTH_SUCCESS' }, window.location.origin);
               window.close();
-            } else {
+            } else if (!hasRedirected) {
+              hasRedirected = true;
+              // Direct navigation (not popup) - only redirect if no popup handler is active
               const redirectPath = localStorage.getItem('redirectAfterAuth') || '/';
+              console.log('🎯 Auth callback (direct) redirecting to:', redirectPath);
               localStorage.removeItem('redirectAfterAuth');
               await new Promise(resolve => setTimeout(resolve, 200));
               await invalidateAll();

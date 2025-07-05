@@ -5,8 +5,10 @@ import StopState from '$lib/components/StopState.svelte';
 import SeasonsEpisodesViewer from '$lib/components/SeasonsEpisodesViewer.svelte';
 import { page } from '$app/stores';
 import { browser } from '$app/environment';
-  import CastViewDisplay from '$lib/components/CastViewDisplay.svelte';
-  import { goto } from '$app/navigation';
+import CastViewDisplay from '$lib/components/CastViewDisplay.svelte';
+import { goto } from '$app/navigation';
+import { authStore } from '$lib/stores/authStore';
+
 export let data;
   
 $: watchData = data.serverData.data || null;
@@ -14,6 +16,22 @@ $: playUrl = watchData?.playbackUrl || null;
 $: seriesData = data.seriesData || null;
 $: id = $page.url.searchParams.get('id');
 $: type = $page.url.searchParams.get('type');
+$: serverError = data.serverData.error || null;
+$: requiresAuth = data.requiresAuth || false;
+
+// Check for authentication errors and handle redirect
+$: if (serverError && requiresAuth && browser) {
+  // Store current path for redirect after login
+  const currentPath = window.location.pathname + window.location.search;
+  const existing = localStorage.getItem('redirectAfterAuth');
+  console.log('🔄 Watch page - existing redirect:', existing, 'setting to:', currentPath);
+  localStorage.setItem('redirectAfterAuth', currentPath);
+  
+  // Small delay to ensure localStorage write is complete before navigation
+  setTimeout(() => {
+    goto('/auth/login');
+  }, 10);
+}
 
 // Document title logic
 $: documentTitle = (() => {
@@ -69,7 +87,26 @@ if (browser) {
 </svelte:head>
 
 {#if !id || !type}
-    <div class="error">Missing id or type</div>
+    <StopState
+        message="Missing required parameters."
+        actionDesc="ID and type parameters are required."
+        action="back"
+        actionText="Go back"
+    />
+{:else if serverError && requiresAuth}
+    <StopState
+        message="Authentication Required"
+        actionDesc={serverError}
+        action="/auth/login"
+        actionText="Sign In"
+    />
+{:else if serverError}
+    <StopState
+        message="Error loading content"
+        actionDesc={serverError}
+        action="back"
+        actionText="Go back"
+    />
 {:else if type === 'Episode' && watchData}
     <main class="min-h-screen pt-16 pb-12 px-4">
         <div class="max-w-7xl mx-auto">
