@@ -1,4 +1,5 @@
 <script lang="ts">
+  import LibraryLeftoversView from '$lib/components/LibraryLeftoversView.svelte';
     import LibraryViewDisplay from '$lib/components/LibraryViewDisplay.svelte';
     import StopState from '$lib/components/StopState.svelte';
     import { authStore } from '$lib/stores/authStore';
@@ -40,28 +41,37 @@
     <title>Home - moNobar</title>
 </svelte:head>
 
-{#await data.serverData}
-    <main class="flex flex-col min-h-screen p-8 pt-20">
-        <section class="mb-8">
-            <h1 class="text-4xl font-extralight">home</h1>
-        </section>
-        
+<main class="flex flex-col min-h-screen p-8 pt-20">
+    <section class="mb-8">
+        <h1 class="text-4xl font-extralight">home</h1>
+    </section>
+
+    {#await data.leftoversData}
+        <div class="flex items-center justify-center min-h-[20vh]">
+            <div class="loading loading-spinner loading-md"></div>
+            <p class="text-base opacity-70">Looking for leftovers...</p>
+        </div>
+    {:then leftovers}
+        {#if leftovers}
+            <!-- {console.log('Leftovers data:', leftovers.data)} -->
+            <section class="mb-8">
+                <h2 class="text-2xl mb-4" title="you've left these before. continue watching?">leftovers</h2>
+                <LibraryLeftoversView data={leftovers.data}></LibraryLeftoversView>
+            </section>
+        {/if}
+    {/await}
+
+    {#await data.serverData}
         <div class="flex items-center justify-center min-h-[60vh]">
             <div class="flex flex-col items-center gap-4">
                 <div class="loading loading-spinner loading-lg"></div>
                 <p class="text-lg opacity-70">Loading home content...</p>
             </div>
         </div>
-    </main>
-{:then serverData}
-    {@const libraryCategories = serverData?.data || []}
-    {@const libraryComingSoon = serverData?.data?.comingSoon || []}
-    {@const serverError = serverData?.error}
-
-    <main class="flex flex-col min-h-screen p-8 pt-20">
-        <section class="mb-8">
-            <h1 class="text-4xl font-extralight">home</h1>
-        </section>
+    {:then serverData}
+        {@const libraryCategories = serverData?.data || []}
+        {@const libraryComingSoon = serverData?.data?.comingSoon || []}
+        {@const serverError = serverData?.error}
 
         {#if serverError && typeof serverError === 'string'}
             {handleAuthError(serverError)}
@@ -78,14 +88,11 @@
             {#each libraryCategories as category}
                 {#if category.latest && category.latest.length > 0}
                     <section class="mb-8">
-                        
                         <div class="flex items-center mb-4">
-                            <span class="mr-2 text-xl">Latest</span>
                             <a href={`/library?id=${category.Id}`} class="hover:underline">
-                                <h2 class="text-2xl">{category.Name}</h2>
+                                <h2 class="text-2xl">latest <b>{category.Name.toLowerCase()}</b></h2>
                             </a>
                         </div>
-                        
                         <LibraryViewDisplay data={category.latest} viewMode="default_thumb_home" />
                     </section>
                 {/if}
@@ -98,18 +105,12 @@
                 </section>
             {/if}
         {/if}
-    </main>
-{:catch error}
-    <main class="flex flex-col min-h-screen p-8 pt-20">
-        <section class="mb-8">
-            <h1 class="text-4xl font-extralight">home</h1>
-        </section>
-        
+    {:catch error}
         <StopState
             action="reload"
             message="Failed to load home content"
             actionDesc="There was an error loading the home page. Please try again."
             actionText="Reload">
         </StopState>
-    </main>
-{/await}
+    {/await}
+</main>
