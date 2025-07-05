@@ -40,11 +40,29 @@ function getLatestGitCommit() {
 }
 
 async function fetchLatestChange() {
-  const res = await fetch('http://api.server.drl/monobar/v2/changes');
+  const res = await fetch('http://api.server.drl/monobar/v2/changes/latest');
   if (!res.ok) return null;
-  const data = await res.json();
-  if (!Array.isArray(data) || data.length === 0) return null;
-  return data[0];
+  let text;
+  try {
+    text = await res.text();
+    let latest;
+    try {
+      latest = JSON.parse(text);
+    } catch (err) {
+      console.error('❌ Failed to parse backend JSON. Raw response:', text);
+      throw new Error('Failed to parse backend JSON');
+    }
+    if (!latest || !latest.version || !latest.sha_id) return null;
+    // Normalize backend date to ISO if possible
+    if (latest.date && !latest.date.includes('T')) {
+      const parsed = new Date(latest.date);
+      if (!isNaN(parsed)) latest.date = parsed.toISOString();
+    }
+    return latest;
+  } catch (err) {
+    console.error('❌ Error reading backend response:', err);
+    throw err;
+  }
 }
 
 async function postChange(change) {
@@ -58,27 +76,40 @@ async function postChange(change) {
 (async () => {
   const commit = getLatestGitCommit();
   if (!commit) return;
-  const latestChange = await fetchLatestChange();
-  const commitDate = new Date(commit.date);
-  const apiDate = latestChange ? new Date(latestChange.date) : null;
-  const apiSha = latestChange ? latestChange.sha_id : null;
-  const apiVersion = latestChange ? latestChange.version : null;
+  try {
+    const latestChange = await fetchLatestChange();
+    const commitDate = new Date(commit.date);
+    const apiDate = latestChange ? new Date(latestChange.date) : null;
+    const apiSha = latestChange ? latestChange.sha_id : null;
+    const apiVersion = latestChange ? latestChange.version : null;
 
-  const shouldSend =
-    // 1. Git commit is newer than backend
-    (!apiDate || commitDate > apiDate) ||
-    // 2. Version matches but date is different
-    (apiVersion === version && commit.date !== latestChange.date);
+    // Debug logging for comparison
+    console.log('[DEBUG] Local version:', version, 'Local date:', commit.date, 'Local sha:', commit.sha);
+    if (latestChange) {
+      console.log('[DEBUG] Backend version:', apiVersion, 'Backend date:', latestChange.date, 'Backend sha:', apiSha);
+    } else {
+      console.log('[DEBUG] No backend change found');
+    }
 
-  if (shouldSend) {
-    const change = {
-      date: commit.date,
-      sha_id: commit.sha,
-      version: version,
-      changes: commit.message.replace(/\n/g, ';')
-    };
-    await postChange(change);
-    console.log(`✅ New change sent to backend: ${change.changes}`);
+    const shouldSend =
+      (!apiDate || commitDate > apiDate) ||
+      (apiVersion === version && commit.date !== latestChange.date) ||
+      (apiVersion !== version); // Always send if version is different
+
+    if (shouldSend) {
+      const change = {
+        date: commit.date,
+        sha_id: commit.sha,
+        version: version,
+        changes: commit.message.replace(/\n/g, ';')
+      };
+      await postChange(change);
+      console.log(`✅ New change sent to backend: ${change.changes}`);
+    } else {
+      console.log('ℹ️ No new changes to send to backend.');
+    }
+  } catch (err) {
+    console.error('❌ Error in changelog sync:', err);
   }
 })();
 
