@@ -299,3 +299,53 @@ export async function searchData(query, type, includeExternal, fetch, url, cooki
         };
     }
 }
+export async function getRecommendationData(id, fetch, url, cookies) {
+    if(!id) {
+        return {
+            data: null,
+            error: 'ID is required'
+        };
+    }
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url),
+            'X-Origin-Id': id,
+            ...getSessionHeaders(cookies)
+        };
+        
+        const response = await fetch(`${BASE_API_PATH}/recommendation`, {
+            method: 'GET',
+            headers
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+        }
+        
+        const data = await response.json();
+
+        return {
+            data
+        };
+    } catch (error) {
+        console.error('Failed to fetch recommendation data:', error);
+        
+        let errorMessage = 'Unknown error';
+        if (error instanceof Error) {
+            try {
+                const parsedError = JSON.parse(error.message);
+                errorMessage = parsedError.error || parsedError.message || parsedError.error || error.message;
+            } catch {
+                errorMessage = error.message;
+            }
+        }
+        
+        return {
+            data: null,
+            error: errorMessage
+        };
+    }
+}

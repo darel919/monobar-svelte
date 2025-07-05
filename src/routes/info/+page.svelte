@@ -190,14 +190,28 @@
                 
             {/if}
             <!-- Recommendation/Similar Items -->
-            {#if serverData.recommendation && serverData.recommendation.length > 0}
+            {#await data.recommendationData}
                 <section class="mb-8">
                     <div class="mb-4 text-md">just like <b>{serverData.Name.toLowerCase()}</b>:</div>
-                    <div class="flex flex-wrap gap-2">
-                        <LibraryViewDisplay data={serverData.recommendation} viewMode="default_thumb_recommendation" />
+                    <div class="flex items-center gap-2">
+                        <div class="loading loading-spinner loading-sm"></div>
+                        <span class="text-sm opacity-70">Loading recommendations...</span>
                     </div>
                 </section>
-            {/if}
+            {:then recommendationDataResult}
+                {@const recommendationData = recommendationDataResult.data || null}
+                {#if recommendationData && recommendationData.length > 0}
+                    <section class="mb-8">
+                        <div class="mb-4 text-md">just like <b>{serverData.Name.toLowerCase()}</b>:</div>
+                        <div class="flex flex-wrap gap-2">
+                            <LibraryViewDisplay data={recommendationData} viewMode="default_thumb_recommendation" />
+                        </div>
+                    </section>
+                {/if}
+            {:catch}
+                    <p>Unable to load recommendation for {serverData.Name.toLowerCase()}</p>
+                <!-- Silently fail recommendation loading -->
+            {/await}
         {:else if serverDataResult.error}
         <StopState
             action="back"
