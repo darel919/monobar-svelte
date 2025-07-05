@@ -52,7 +52,7 @@
             <p class="text-base opacity-70">Looking for leftovers...</p>
         </div>
     {:then leftovers}
-        {#if leftovers}
+        {#if leftovers.data && leftovers.data.length > 0}
             <!-- {console.log('Leftovers data:', leftovers.data)} -->
             <section class="mb-8">
                 <h2 class="text-2xl mb-4" title="you've left these before. continue watching?">leftovers</h2>

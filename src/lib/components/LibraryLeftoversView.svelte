@@ -62,69 +62,65 @@ Props:
     }
 </script>
 
-{#if !data?.length}
-    <section>
-        <h1>No data available.</h1>
-    </section>
-{:else}
-        <section class="flex overflow-x-auto gap-0 pb-4 scrollbar-hide">        
-        {#each data as item}
-            {@const itemId = item.Id || item.id || item.Name || ''}              
-            <a
-                href={`/watch?id=${item.Id}&type=${item.Type}&seriesId=${item.SeriesId}`}
-                class={`flex flex-col items-center min-w-[280px] max-w-[280px] ${itemHoverClass} flex-shrink-0`}
-                title={item.Overview}
-                data-item-id={itemId}
-            >
-                <div class="relative w-full aspect-[16/9]">                    
-                    {#if (item.ImageTags?.Primary || item.ImageTags?.Thumb)}                        
-                        <ImageComponent 
-                            src={item.ImageTags?.Primary || item.ImageTags?.Thumb}
-                            alt={item.Name || 'Image'}
-                            aspectRatio="16/9"
-                            borderRadius="rounded-none"
-                            fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
-                        />
-                        
-                        <!-- Logo overlay in top-left corner -->
-                        {#if item.ImageTags?.Logo}
-                            <div class="absolute bottom-12 left-2 max-w-[40%] max-h-[40%] z-10">
-                                <img 
-                                    src={item.ImageTags.Logo} 
-                                    alt={`${item.SeriesName || item.Name} logo`} 
-                                    class="w-auto h-auto max-w-full max-h-full object-contain drop-shadow-lg"
-                                />
-                            </div>
-                        {/if}
-                        
-                        <!-- Episode title overlay -->
-                        <div class="absolute bottom-0 left-0 right-0 bg-black/40  backdrop-blur-3xl text-sm px-2 py-2">
-                            <p class="text-lg text-white" >{formatEpisodeTitle(item)}</p>
-                        </div>
-                        
-                        <!-- Progress bar -->
-                        {#if hasWatchProgress(item)}
-                            <div class="absolute bottom-0 left-0 right-0 bg-black/20 h-1">
-                                <div
-                                    class="h-full bg-green-500 transition-all duration-300"
-                                    style="width: {getWatchProgress(item) * 100}%;"
-                                ></div>
-                            </div>
-                        {/if}
-                    {:else}
-                        <div class="flex flex-col items-center justify-center w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center">
-                            {#if item.ImageTags?.Logo}
-                                <img src={item.ImageTags.Logo} alt={item.Name} class="w-fit max-h-16 object-contain mb-2" />
-                            {:else}
-                                <div class="font-bold text-2xl my-2">{item.OriginalTitle || item.Name}</div>
-                            {/if}
-                            {#if item.ProductionYear}
-                                <div>{item.ProductionYear}</div>
-                            {/if}
+{#if data?.length}
+<section class="flex overflow-x-auto gap-0 pb-4 scrollbar-hide">        
+    {#each data as item}
+        {@const itemId = item.Id || item.id || item.Name || ''}              
+        <a
+            href={`/watch?id=${item.Id}&type=${item.Type}&seriesId=${item.SeriesId}`}
+            class={`flex flex-col items-center min-w-[280px] max-w-[280px] ${itemHoverClass} flex-shrink-0`}
+            title={item.Overview}
+            data-item-id={itemId}
+        >
+            <div class="relative w-full aspect-[16/9]">                    
+                {#if (item.ImageTags?.Primary || item.ImageTags?.Thumb)}                        
+                    <ImageComponent 
+                        src={item.ImageTags?.Primary || item.ImageTags?.Thumb}
+                        alt={item.Name || 'Image'}
+                        aspectRatio="16/9"
+                        borderRadius="rounded-none"
+                        fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
+                    />
+                    
+                    <!-- Logo overlay in top-left corner -->
+                    {#if item.ImageTags?.Logo}
+                        <div class="absolute bottom-12 left-2 max-w-[40%] max-h-[40%] z-10">
+                            <img 
+                                src={item.ImageTags.Logo} 
+                                alt={`${item.SeriesName || item.Name} logo`} 
+                                class="w-auto h-auto max-w-full max-h-full object-contain drop-shadow-lg"
+                            />
                         </div>
                     {/if}
-                </div>
-            </a>
-        {/each}
-    </section>
+                    
+                    <!-- Episode title overlay -->
+                    <div class="absolute bottom-0 left-0 right-0 bg-black/40  backdrop-blur-3xl text-sm px-2 py-2">
+                        <p class="text-lg text-white" >{formatEpisodeTitle(item)}</p>
+                    </div>
+                    
+                    <!-- Progress bar -->
+                    {#if hasWatchProgress(item)}
+                        <div class="absolute bottom-0 left-0 right-0 bg-black/20 h-1">
+                            <div
+                                class="h-full bg-green-500 transition-all duration-300"
+                                style="width: {getWatchProgress(item) * 100}%;"
+                            ></div>
+                        </div>
+                    {/if}
+                {:else}
+                    <div class="flex flex-col items-center justify-center w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center">
+                        {#if item.ImageTags?.Logo}
+                            <img src={item.ImageTags.Logo} alt={item.Name} class="w-fit max-h-16 object-contain mb-2" />
+                        {:else}
+                            <div class="font-bold text-2xl my-2">{item.OriginalTitle || item.Name}</div>
+                        {/if}
+                        {#if item.ProductionYear}
+                            <div>{item.ProductionYear}</div>
+                        {/if}
+                    </div>
+                {/if}
+            </div>
+        </a>
+    {/each}
+</section>
 {/if}
