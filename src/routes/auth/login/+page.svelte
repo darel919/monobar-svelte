@@ -48,7 +48,8 @@
   <div class="flex flex-col items-center justify-center min-h-screen p-8">
     <div class="card bg-base-200 shadow-xl max-w-md w-full">
       <div class="card-body text-center">
-        <h1 class="card-title justify-center text-3xl mb-6">Sign in to moNobar</h1>
+        <h1 class="card-title font-light justify-center text-3xl mb-4">sign in to moNobar</h1>
+        <!-- <h3 class="mb-6 font-light">to enjoy moNobar's full library experience, you need to sign in. it's free!</h3> -->
         <!-- <p class="text-lg mb-8">Please log in to continue</p> -->
         
         <div class="card-actions justify-center">
@@ -69,6 +70,6 @@
 {:else}
   <div class="flex justify-center items-center min-h-screen">
     <div class="loading loading-spinner loading-lg"></div>
-    <span class="ml-2">Redirecting...</span>
+    <span class="ml-2">wait a moment...</span>
   </div>
 {/if}

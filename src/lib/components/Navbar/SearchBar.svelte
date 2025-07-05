@@ -47,7 +47,7 @@
         }
     }
 
-    $: placeholder = activePrefix ? SEARCH_TYPES[activePrefix]?.placeholder || 'Search' : 'Search';    
+    $: placeholder = activePrefix ? SEARCH_TYPES[activePrefix]?.placeholder || 'search' : 'search';    
     onMount(() => {
         /**
          * @param {MouseEvent} event
@@ -184,7 +184,7 @@
                 on:input={handleSearchChange}
                 on:keydown={handleKeyDown}
                 on:focus={handleInputFocus}
-                class="input input-sm h-10 w-full {activePrefix ? 'pl-20' : 'pl-3'} pr-8 rounded-xl"
+                class="input input-sm h-10 w-full text-lg font-light {activePrefix ? 'pl-20' : 'pl-3'} pr-8 rounded-md"
                 {placeholder}
                 autocomplete="off"
             />

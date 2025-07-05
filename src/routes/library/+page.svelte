@@ -116,7 +116,7 @@
           {#if serverData.library && serverData.library.Name} 
               <section class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                   <section class="mb-8">
-                      <h1 class="text-4xl mb-4 font-extralight">{serverData.library.Name}</h1>
+                      <h1 class="text-4xl mb-4 font-extralight">{serverData.library.Name.toLowerCase()}</h1>
                       <p>{serverData.content.length} items.</p>
                   </section>
                   {#if id}

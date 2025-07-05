@@ -383,3 +383,27 @@ export async function getRecommendationData(id, fetch, url, cookies) {
         };
     }
 }
+export async function getChangelog(fetch) {
+    try {
+        const response = await fetch(`${BASE_API_PATH}/changes`);
+        if (!response.ok) {
+            const errorData = await response.text();
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, error: errorData }));
+        }
+        const data = await response.json();
+        if (Array.isArray(data)) {
+            return { data };
+        } else {
+            return {
+                data: [],
+                error: 'Malformed changelog data: expected an array.'
+            };
+        }
+    } catch (error) {
+        console.error('Failed to fetch changelog:', error);
+        return {
+            data: [],
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
