@@ -93,11 +93,11 @@
 />
 
 <main class="flex flex-col min-h-screen p-8 pt-20">
-    <section class="mb-8">
-        <section class="mb-6">
+    <section class="mb-4">
+        <h1 class="mb-6 text-5xl font-light">home</h1>
+        <section class="">
             <HomeGreeting></HomeGreeting>
         </section>
-        <h1 class="text-4xl font-extralight">home</h1>
     </section>
 
 

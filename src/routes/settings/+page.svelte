@@ -8,7 +8,7 @@
 </svelte:head>
 
 <div class="w-full max-w-5xl mx-auto mt-16 px-8 py-8 min-h-screen">
-    <h1 class="text-4xl font-extralight mb-8 text-white">settings</h1>
+    <h1 class="text-5xl font-light mb-8 text-white">settings</h1>
     
     <Settings />
     <VersionInfo/>

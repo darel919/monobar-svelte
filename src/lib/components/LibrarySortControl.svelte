@@ -29,6 +29,7 @@ Props:
     { value: "ProductionYear", label: "Production Year" },
     { value: "CommunityRating", label: "Community Rating" },
     { value: "Runtime", label: "Runtime" },
+    // { value: "Random", label: "Random" },
   ];
 
   let currentSortBy = sortBy;
