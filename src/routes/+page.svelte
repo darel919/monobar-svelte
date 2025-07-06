@@ -12,6 +12,7 @@
     export let data;
 
     let leftoversPromise = data.leftoversData;
+    let recommendationsPromise = data.recommendationData;
 
     onMount(() => {
         if (!browser) return;
@@ -100,6 +101,18 @@
             <section class="mb-8">
                 <h2 class="text-2xl mb-4" title="you've left these before. continue watching?">leftovers</h2>
                 <LibraryLeftoversView data={leftovers.data} onDataRefresh={refreshLeftovers}></LibraryLeftoversView>
+            </section>
+        {/if}
+    {/await}
+
+    {#await recommendationsPromise}
+        <!-- Display nothing -->
+    {:then recommendations}
+        {#if recommendations.data && recommendations.data.length > 0}
+            <section class="mb-8">
+                <h2 class="text-2xl mb-4" title="maybe these ones?">something to watch</h2>
+                {console.log('Recommendations data:', recommendations.data)}
+                <LibraryViewDisplay data={recommendations.data} viewMode="default_thumb_home"></LibraryViewDisplay>
             </section>
         {/if}
     {/await}

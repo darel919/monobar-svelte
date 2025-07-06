@@ -252,9 +252,9 @@ Props:
                 on:mouseleave={handleItemLeave}
             >
                 <div class="relative w-full aspect-[16/9]">                    
-                    {#if (item.thumbPath || item.ImageTags?.Primary)}                        
+                    {#if (item.thumbPath || item.ImageTags?.Thumb || item.ImageTags?.Primary)}                        
                         <ImageComponent 
-                            src={item.thumbPath || item.ImageTags?.Primary || ''}
+                            src={item.thumbPath || item.ImageTags?.Thumb || item.ImageTags?.Primary || ''}
                             alt={item.Name || 'Image'}
                             aspectRatio="16/9"
                             borderRadius="rounded-none"

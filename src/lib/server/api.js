@@ -44,6 +44,41 @@ export async function getHomeData(fetch, url, cookies) {
         };
     }
 }
+export async function getHomeRecommendationData(fetch, url, cookies) {
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Origin-Id': 'home',
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
+        };
+        
+        const response = await fetch(`${BASE_API_PATH}/recommendation`, {
+            method: 'GET',
+            headers
+        });
+
+        // console.log(headers)
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+        }
+        
+        const data = await response.json();
+        
+        return {
+            data
+        };
+    } catch (error) {
+        console.error('Failed to fetch data:', error);
+        return {
+            data: null,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
 export async function getLeftoversData(fetch, url, cookies) {
     try {
         const headers = {
