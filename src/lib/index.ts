@@ -7,6 +7,7 @@ export { default as ScrollToTop } from './components/ScrollToTop.svelte';
 export { default as Settings } from './components/Settings.svelte';
 export { default as AppInitializer } from './components/AppInitializer.svelte';
 export { default as VersionDisplay } from './components/VersionDisplay.svelte';
+export { default as HomeHeroCarousel } from './components/HomeHeroCarousel.svelte';
 
 // Export Auth components
 export { default as AuthSession } from './components/Auth/AuthSession.svelte';

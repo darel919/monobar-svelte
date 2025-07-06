@@ -3,6 +3,7 @@
   import LibraryLeftoversView from '$lib/components/LibraryLeftoversView.svelte';
     import LibraryViewDisplay from '$lib/components/LibraryViewDisplay.svelte';
     import StopState from '$lib/components/StopState.svelte';
+    import HomeHeroCarousel from '$lib/components/HomeHeroCarousel.svelte';
     import { authStore } from '$lib/stores/authStore';
     import { get } from 'svelte/store';
     import { onMount } from 'svelte';
@@ -84,6 +85,12 @@
 <svelte:head>
     <title>Home - moNobar</title>
 </svelte:head>
+
+<!-- Hero Carousel -->
+<HomeHeroCarousel 
+    leftoversData={leftoversPromise} 
+    recommendationsData={recommendationsPromise} 
+/>
 
 <main class="flex flex-col min-h-screen p-8 pt-20">
     <section class="mb-8">

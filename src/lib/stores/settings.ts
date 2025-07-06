@@ -12,6 +12,7 @@ interface SettingsState {
   librarySortBy: string;
   librarySortOrder: string;
   disableHoverPopup: boolean;
+  showHomeHeroCarousel: boolean;
 }
 
 const defaultSettings: SettingsState = {
@@ -24,7 +25,8 @@ const defaultSettings: SettingsState = {
   homeViewMode: 'posterView',
   librarySortBy: "ProductionYear",
   librarySortOrder: "desc",
-  disableHoverPopup: false
+  disableHoverPopup: false,
+  showHomeHeroCarousel: true
 };
 
 const STORAGE_KEY = 'monobar-settings';
@@ -176,6 +178,14 @@ function createSettingsStore() {
     setDisableHoverPopup: (value: boolean) => {
       update(state => {
         const newState = { ...state, disableHoverPopup: value };
+        saveToStorage(newState);
+        return newState;
+      });
+    },
+    
+    setShowHomeHeroCarousel: (value: boolean) => {
+      update(state => {
+        const newState = { ...state, showHomeHeroCarousel: value };
         saveToStorage(newState);
         return newState;
       });

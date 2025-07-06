@@ -78,6 +78,15 @@
             settingsStore.setDisableHoverPopup(!currentValue);
         }
     }
+
+    function handleShowHomeHeroCarouselToggle() {
+        if (settingsStore) {
+            let currentValue = true;
+            const unsubscribe = settingsStore.subscribe(s => currentValue = s.showHomeHeroCarousel);
+            unsubscribe();
+            settingsStore.setShowHomeHeroCarousel(!currentValue);
+        }
+    }
 </script>
 
 {#if !isLoaded}
@@ -266,6 +275,8 @@
                         </div>
                     </label>
                 </div>
+
+                
             </div>
         </div>
 
@@ -278,6 +289,23 @@
                     </svg>
                     Home
                 </h2>
+                <!-- Show Home Hero Carousel -->
+                <div class="form-control w-full">
+                    <label class="label cursor-pointer justify-start gap-4 flex flex-row flex-wrap items-start px-1">
+                        <input 
+                            type="checkbox" 
+                            class="toggle toggle-primary mt-1" 
+                            checked={settingsStore ? $settingsStore!.showHomeHeroCarousel : true}
+                            onclick={handleShowHomeHeroCarouselToggle}
+                        />
+                        <div class="flex flex-col flex-1">
+                            <span class="label-text text-lg font-medium break-normal">Show Featured Content</span>
+                            <p class="text-sm text-base-content/60 mt-1 whitespace-normal leading-snug">
+                                When enabled, displays the featured content carousel on the home page.
+                            </p>
+                        </div>
+                    </label>
+                </div>
 
                 <!-- Home View Mode Selection -->
                 <!-- <div class="form-control">
