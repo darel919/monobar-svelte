@@ -8,6 +8,8 @@ Props:
 
 <script lang="ts">    
     import ImageComponent from './ImageComponent.svelte';
+    import { page } from '$app/stores';
+    import { get } from 'svelte/store';
 
     interface LibraryItem {
         [x: string]: any;
@@ -39,6 +41,7 @@ Props:
     }
 
     export let data: LibraryItem[] = [];
+    export let onDataRefresh: (() => void) | undefined = undefined;
 
     const itemHoverClass = "transition-transform duration-200 ease-in-out hover:-translate-y-1 p-1";
 
@@ -60,19 +63,73 @@ Props:
         }
         return item.Name;
     }
+
+    let marking = {};
+    let markError = {};
+
+    async function handleMarkPlayed(item) {
+        const id = item.Id || item.id;
+        if (!id) return;
+        marking = { ...marking, [id]: true };
+        markError = { ...markError, [id]: undefined };
+        try {
+            const res = await fetch('/api/markPlayed', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            const { success, error } = await res.json();
+            if (!success) {
+                markError = { ...markError, [id]: error || 'Failed' };
+            } else {
+                if (onDataRefresh) {
+                    onDataRefresh();
+                }
+            }
+        } finally {
+            marking = { ...marking, [id]: false };
+        }
+    }
 </script>
 
 {#if data?.length}
 <section class="flex overflow-x-auto gap-0 pb-4 scrollbar-hide">        
     {#each data as item}
         {@const itemId = item.Id || item.id || item.Name || ''}              
-        <a
-            href={`/watch?id=${item.Id}&type=${item.Type}&seriesId=${item.SeriesId}`}
-            class={`flex flex-col items-center min-w-[280px] max-w-[280px] ${itemHoverClass} flex-shrink-0`}
+        <div
+            class={`flex flex-col items-center min-w-[280px] max-w-[280px] ${itemHoverClass} flex-shrink-0 cursor-pointer`}
             title={item.Overview}
             data-item-id={itemId}
+            tabindex="0"
+            role="button"
+            on:click={() => {
+                window.location.href = `/watch?id=${item.Id}&type=${item.Type}&seriesId=${item.SeriesId}`;
+            }}
+            on:keydown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    window.location.href = `/watch?id=${item.Id}&type=${item.Type}&seriesId=${item.SeriesId}`;
+                }
+            }}
         >
-            <div class="relative w-full aspect-[16/9]">                    
+            <div class="relative w-full aspect-[16/9]">
+                <!-- Mark as Watched Icon -->
+                <button
+                    type="button"
+                    class="absolute top-2 right-2 z-20 bg-white/80 rounded-full p-1 transition hover:bg-green-200 group"
+                    aria-label="Mark as Watched"
+                    on:click|stopPropagation={() => handleMarkPlayed(item)}
+                    disabled={marking[item.Id || item.id]}
+                    style="--icon-color: black; --icon-hover-color: #16a34a;"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--icon-color)" class="w-6 h-6 transition-colors duration-200 group-hover:stroke-[var(--icon-hover-color)]">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                </button>
+                {#if markError[item.Id || item.id]}
+                    <div class="absolute top-10 right-2 bg-red-500 text-white text-xs rounded px-2 py-1 z-30">
+                        {markError[item.Id || item.id]}
+                    </div>
+                {/if}
                 {#if (item.ImageTags?.Primary || item.ImageTags?.Thumb)}                        
                     <ImageComponent 
                         src={item.ImageTags?.Primary || item.ImageTags?.Thumb}
@@ -120,7 +177,7 @@ Props:
                     </div>
                 {/if}
             </div>
-        </a>
+        </div>
     {/each}
 </section>
 {/if}

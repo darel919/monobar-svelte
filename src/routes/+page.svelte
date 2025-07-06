@@ -7,6 +7,14 @@
     
     export let data;
 
+    let leftoversPromise = data.leftoversData;
+
+    async function refreshLeftovers() {
+        const response = await fetch('/api/leftovers');
+        const newData = await response.json();
+        leftoversPromise = Promise.resolve(newData);
+    }
+
     // Automatically handle expired/invalid JWT: try reauth, then sign out if fails
     const handleAuthError = async (serverError: string) => {
         const isAuthError =
@@ -46,17 +54,13 @@
         <h1 class="text-4xl font-extralight">home</h1>
     </section>
 
-    {#await data.leftoversData}
-        <div class="flex items-center justify-center min-h-[20vh]">
-            <div class="loading loading-spinner loading-md"></div>
-            <p class="text-base opacity-70">Looking for leftovers...</p>
-        </div>
+    {#await leftoversPromise}
+        <!-- Display nothing -->
     {:then leftovers}
         {#if leftovers.data && leftovers.data.length > 0}
-            <!-- {console.log('Leftovers data:', leftovers.data)} -->
             <section class="mb-8">
                 <h2 class="text-2xl mb-4" title="you've left these before. continue watching?">leftovers</h2>
-                <LibraryLeftoversView data={leftovers.data}></LibraryLeftoversView>
+                <LibraryLeftoversView data={leftovers.data} onDataRefresh={refreshLeftovers}></LibraryLeftoversView>
             </section>
         {/if}
     {/await}

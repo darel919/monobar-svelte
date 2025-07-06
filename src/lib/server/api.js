@@ -407,3 +407,28 @@ export async function getChangelog(fetch) {
         };
     }
 }
+export async function markPlayed(id, fetch, url, cookies) {
+    if (!id) {
+        return { success: false, error: 'ID is required' };
+    }
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
+        };
+        const response = await fetch(`${BASE_API_PATH}/markPlayed?id=${encodeURIComponent(id)}`, {
+            method: 'POST',
+            headers
+        });
+        if (response.status === 200) {
+            return { success: true };
+        } else {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            return { success: false, error: errorData.message || 'Failed to mark as watched' };
+        }
+    } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+}

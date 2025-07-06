@@ -237,7 +237,7 @@ Props:
         {/each}
     </section>
 {:else if responsiveViewMode === "default_thumb_home"}
-    <section class="flex overflow-x-auto gap-0 pb-4 scrollbar-hide">        
+    <section class="flex overflow-x-auto gap-0 py-4">        
         {#each data as item}
             {@const itemId = item.Id || item.id || item.Name || ''}              
             <a
