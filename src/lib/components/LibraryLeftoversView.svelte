@@ -32,6 +32,7 @@ Props:
         UserData?: {
             PlaybackPositionTicks?: number;
             Played?: boolean;
+            PlayedPercentage?: number;
         };
         ImageTags?: {
             Thumb: string | null | undefined;
@@ -46,9 +47,9 @@ Props:
     const itemHoverClass = "transition-transform duration-200 ease-in-out hover:-translate-y-1 p-1";
 
     function getWatchProgress(item: LibraryItem) {
-        if (item.UserData?.Played) return 1;
-        if (typeof item.UserData?.PlaybackPositionTicks === 'number' && item.RunTimeTicks) {
-            return Math.min(1, item.UserData.PlaybackPositionTicks / item.RunTimeTicks);
+        // if (item.UserData?.Played) return 1;
+        if (typeof item.UserData?.PlayedPercentage === 'number') {
+            return Math.min(1, item.UserData.PlayedPercentage / 100);
         }
         return 0;
     }
@@ -157,7 +158,7 @@ Props:
                     
                     <!-- Progress bar -->
                     {#if hasWatchProgress(item)}
-                        <div class="absolute bottom-0 left-0 right-0 bg-black/20 h-1">
+                        <div class="absolute bottom-0 left-0 right-0 bg-black/20 h-1 z-10">
                             <div
                                 class="h-full bg-green-500 transition-all duration-300"
                                 style="width: {getWatchProgress(item) * 100}%;"

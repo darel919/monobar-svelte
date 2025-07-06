@@ -95,7 +95,7 @@
                                     class="text-lg {$page.url.pathname === '/library' && $page.url.searchParams.get('id') === item.Id ? 'bg-base-300 font-bold' : ''}"
                                     onclick={closeDrawer}
                                 >
-                                    {item.Name.toLowerCase()}
+                                    {item.Name?.toLowerCase() || ''}
                                 </a>
                             </li>
                         {/each}
@@ -232,7 +232,7 @@
                     href="/library?id={item.Id}" 
                     class="text-lg {$page.url.pathname === '/library' && $page.url.searchParams.get('id') === item.Id ? 'border-b-2 transition-opacity duration-500 font-bold' : ''}"
                 >
-                    {item.Name.toLowerCase()}
+                    {item.Name?.toLowerCase() || ''}
                 </a>
             {/each}
         </section>

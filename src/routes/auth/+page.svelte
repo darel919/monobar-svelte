@@ -67,8 +67,12 @@
               const redirectPath = localStorage.getItem('redirectAfterAuth') || '/';
               console.log('🎯 Auth callback (direct) redirecting to:', redirectPath);
               localStorage.removeItem('redirectAfterAuth');
-              await new Promise(resolve => setTimeout(resolve, 200));
+              
+              // Ensure proper data refresh
+              console.log('🔄 Direct auth complete, refreshing data...');
+              await new Promise(resolve => setTimeout(resolve, 300));
               await invalidateAll();
+              
               goto(redirectPath, { replaceState: true });
             }
           }, 1500);

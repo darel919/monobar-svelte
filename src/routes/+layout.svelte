@@ -16,17 +16,61 @@
 
 	onMount(() => {
 		let previousAuthState: boolean | null = null;
+		let lastInvalidation = 0;
+		let isHandlingAuthSuccess = false;
 		
 		const unsubscribe = authStore.subscribe(state => {
-			if (previousAuthState !== null && previousAuthState !== state.isAuthenticated) {
+			const currentTime = Date.now();
+			const hasAuthStateChanged = previousAuthState !== null && previousAuthState !== state.isAuthenticated;
+			const timeSinceLastInvalidation = currentTime - lastInvalidation;
+			
+			// Only handle auth state changes if we're not in the middle of handling auth success
+			if (hasAuthStateChanged && timeSinceLastInvalidation > 500 && !isHandlingAuthSuccess) {
+				console.log('🔄 Auth state changed, refreshing data...', { 
+					from: previousAuthState, 
+					to: state.isAuthenticated 
+				});
+				
+				lastInvalidation = currentTime;
+				
 				setTimeout(() => {
 					invalidateAll();
-				}, 100);
+				}, 150);
 			}
+			
 			previousAuthState = state.isAuthenticated;
 		});
 
-		return unsubscribe;
+		// Handle auth success messages from popup
+		const handleAuthMessage = async (event: MessageEvent) => {
+			if (event.origin !== window.location.origin) return;
+			
+			if (event.data.type === 'AUTH_SUCCESS') {
+				console.log('🎯 Received AUTH_SUCCESS message, refreshing auth status...');
+				isHandlingAuthSuccess = true;
+				
+				// Force auth status check and data refresh
+				await authStore.checkAuthStatus();
+				
+				// Give some time for auth state to propagate, then allow normal auth handling
+				setTimeout(() => {
+					console.log('🔄 Post-auth message data refresh');
+					invalidateAll();
+					
+					// Reset flag after processing
+					setTimeout(() => {
+						isHandlingAuthSuccess = false;
+					}, 1000);
+				}, 300);
+			}
+		};
+
+		window.addEventListener('message', handleAuthMessage);
+
+		return () => {
+			unsubscribe();
+			window.removeEventListener('message', handleAuthMessage);
+		};
 	});
 </script>
 

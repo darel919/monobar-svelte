@@ -1,13 +1,48 @@
 <script lang="ts">
+  import HomeGreeting from '$lib/components/HomeGreeting.svelte';
   import LibraryLeftoversView from '$lib/components/LibraryLeftoversView.svelte';
     import LibraryViewDisplay from '$lib/components/LibraryViewDisplay.svelte';
     import StopState from '$lib/components/StopState.svelte';
     import { authStore } from '$lib/stores/authStore';
     import { get } from 'svelte/store';
+    import { onMount } from 'svelte';
+    import { invalidateAll } from '$app/navigation';
+    import { browser } from '$app/environment';
     
     export let data;
 
     let leftoversPromise = data.leftoversData;
+
+    onMount(() => {
+        if (!browser) return;
+        
+        // Check if user just completed authentication and force refresh if needed
+        const checkPostAuthRefresh = () => {
+            const authSuccess = localStorage.getItem('authSuccess');
+            const userSession = localStorage.getItem('user-session');
+            const currentState = get(authStore);
+            
+            if ((authSuccess === 'true' || userSession) && currentState.isAuthenticated) {
+                console.log('🏠 Home page detected recent auth completion, forcing data refresh...');
+                localStorage.removeItem('authSuccess');
+                
+                setTimeout(() => {
+                    invalidateAll();
+                }, 100);
+            }
+        };
+        
+        // Check immediately and also subscribe to auth changes
+        checkPostAuthRefresh();
+        
+        const unsubscribe = authStore.subscribe(state => {
+            if (state.isAuthenticated) {
+                checkPostAuthRefresh();
+            }
+        });
+        
+        return unsubscribe;
+    });
 
     async function refreshLeftovers() {
         const response = await fetch('/api/leftovers');
@@ -51,8 +86,12 @@
 
 <main class="flex flex-col min-h-screen p-8 pt-20">
     <section class="mb-8">
+        <section class="mb-6">
+            <HomeGreeting></HomeGreeting>
+        </section>
         <h1 class="text-4xl font-extralight">home</h1>
     </section>
+
 
     {#await leftoversPromise}
         <!-- Display nothing -->

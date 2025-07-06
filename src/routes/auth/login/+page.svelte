@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
   import { authStore } from '$lib/stores/authStore';
-  import { goto } from '$app/navigation';
+  import { goto, invalidateAll } from '$app/navigation';
   import LoginButton from '$lib/components/Auth/LoginButton.svelte';
 
   let isAuthenticated = false;
@@ -17,16 +17,27 @@
       isLoading = state.isLoading;
       
       if (isAuthenticated && !hasRedirected) {
+        console.log('🎯 Login page detected authentication, handling redirect...');
         hasRedirected = true;
         const redirectPath = localStorage.getItem('redirectAfterAuth');
-        if (redirectPath && redirectPath !== '/') {
-          console.log('🎯 Login page redirecting after auth to:', redirectPath);
-          localStorage.removeItem('redirectAfterAuth');
-          goto(redirectPath, { replaceState: true });
-        } else {
-          console.log('🎯 Login page redirecting authenticated user to home');
-          goto('/', { replaceState: true });
-        }
+        
+        // Small delay to allow popup handlers to detect we're on login page
+        setTimeout(async () => {
+          if (redirectPath && redirectPath !== '/') {
+            console.log('🎯 Login page redirecting after auth to:', redirectPath);
+            localStorage.removeItem('redirectAfterAuth');
+            
+            // Force data refresh before redirect
+            await invalidateAll();
+            goto(redirectPath, { replaceState: true });
+          } else {
+            console.log('🎯 Login page redirecting authenticated user to home');
+            
+            // Force data refresh before redirect
+            await invalidateAll();
+            goto('/', { replaceState: true });
+          }
+        }, 200);
       }
     });
 
