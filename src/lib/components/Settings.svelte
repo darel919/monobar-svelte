@@ -69,6 +69,15 @@
             settingsStore.resetSettings();
         }
     }
+
+    function handleDisableHoverPopupToggle() {
+        if (settingsStore) {
+            let currentValue = false;
+            const unsubscribe = settingsStore.subscribe(s => currentValue = s.disableHoverPopup);
+            unsubscribe();
+            settingsStore.setDisableHoverPopup(!currentValue);
+        }
+    }
 </script>
 
 {#if !isLoaded}
@@ -85,95 +94,15 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
                     </svg>
                     Playback
-                </h2>                
-                <!-- Play Trailers Automatically -->
-                {#if context !== 'player'}
-                    <div class="form-control w-full">
-                        <label class="label cursor-pointer justify-start gap-4 flex flex-row flex-wrap items-start px-1">                            <input 
-                                type="checkbox" 
-                                class="toggle toggle-primary mt-1" 
-                                checked={settingsStore ? $settingsStore!.playTrailersAutomatically : false}
-                                onclick={handleTrailerToggle}
-                            />
-                            <div class="flex flex-col flex-1">
-                                <span class="label-text text-lg font-medium break-normal">Play Trailers Automatically</span>
-                                <p class="text-sm text-base-content/60 mt-1 whitespace-normal leading-snug">
-                                    When enabled, trailers will automatically play on movie's info page.
-                                </p>
-                            </div>
-                        </label>
-                    </div>
-                {/if}
-
-                <!-- Play Next for TV Series -->
-                <div class="form-control w-full">
-                    <label class="label cursor-pointer justify-start gap-4 flex flex-row flex-wrap items-start px-1">
-                        <input 
-                            type="checkbox" 
-                            class="toggle toggle-primary mt-1" 
-                            checked={settingsStore ? $settingsStore!.playNextEnabled : false}
-                            onclick={handlePlayNextToggle}
-                        />
-                        <div class="flex flex-col flex-1">
-                            <span class="label-text text-lg font-medium break-normal">Show "Play Next" for TV Series</span>
-                            <p class="text-sm text-base-content/60 mt-1 whitespace-normal leading-snug">
-                                When enabled, shows a "Play Next" prompt before an episode ends.
-                            </p>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Play Next Timing Settings -->
-                {#if settingsStore && $settingsStore!.playNextEnabled}
-                    <div class="form-control w-full">
-                        <div class="label">
-                            <span class="label-text text-lg font-medium">Play Next Timing</span>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="form-control">
-                                <label class="label" for="playNextShowThreshold">
-                                    <span class="label-text">Show prompt at (seconds from end)</span>
-                                </label>
-                                <input 
-                                    id="playNextShowThreshold"
-                                    type="number" 
-                                    class="input input-bordered w-full" 
-                                    min="10" 
-                                    max="120" 
-                                    value={settingsStore ? $settingsStore!.playNextShowThreshold : 40}
-                                    oninput={handleShowThresholdChange}
-                                />
-                                <div class="label">
-                                    <span class="label-text-alt">Default: 40 seconds</span>
-                                </div>
-                            </div>
-                            <div class="form-control">
-                                <label class="label" for="playNextAutoProgressThreshold">
-                                    <span class="label-text">Auto-play at (seconds from end)</span>
-                                </label>
-                                <input 
-                                    id="playNextAutoProgressThreshold"
-                                    type="number" 
-                                    class="input input-bordered w-full" 
-                                    min="5" 
-                                    max="60" 
-                                    value={settingsStore ? $settingsStore!.playNextAutoProgressThreshold : 12}
-                                    oninput={handleAutoProgressThresholdChange}
-                                />
-                                <div class="label">
-                                    <span class="label-text-alt">Default: 12 seconds</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {/if}
-
+                </h2>            
+                
                 <!-- Subtitle Size Selection -->
-                <div class="form-control">
+                <div class="form-control my-2">
                     <div class="label">
                         <span class="label-text text-lg font-medium">Subtitle Size</span>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">                        <label class="label cursor-pointer justify-start gap-3 p-4 rounded-lg border border-base-300 hover:bg-base-300 transition-colors flex flex-row items-start">                            <input 
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">                        
+                        <label class="label cursor-pointer justify-start gap-3 p-4 rounded-lg border border-base-300 hover:bg-base-300 transition-colors flex flex-row items-start">                            <input 
                                 type="radio" 
                                 name="subtitleSize" 
                                 class="radio radio-primary mt-1" 
@@ -222,6 +151,120 @@
                             </div>
                         </label>
                     </div>
+                </div>
+
+                <!-- Play Next for TV Series -->
+                <div class="form-control w-full my-2">
+                    <label class="label cursor-pointer justify-start gap-4 flex flex-row flex-wrap items-start px-1">
+                        <input 
+                            type="checkbox" 
+                            class="toggle toggle-primary mt-1" 
+                            checked={settingsStore ? $settingsStore!.playNextEnabled : false}
+                            onclick={handlePlayNextToggle}
+                        />
+                        <div class="flex flex-col flex-1">
+                            <span class="label-text text-lg font-medium break-normal">Show "Play Next" for TV Series</span>
+                            <p class="text-sm text-base-content/60 mt-1 whitespace-normal leading-snug">
+                                When enabled, shows a "Play Next" prompt before an episode ends.
+                            </p>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Play Next Timing Settings -->
+                {#if settingsStore && $settingsStore!.playNextEnabled}
+                    <div class="form-control w-full my-2">
+                        <div class="label">
+                            <span class="label-text text-lg font-medium">Play Next Timing</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label" for="playNextShowThreshold">
+                                    <span class="label-text">Show prompt at (seconds from end)</span>
+                                </label>
+                                <input 
+                                    id="playNextShowThreshold"
+                                    type="number" 
+                                    class="input input-bordered w-full" 
+                                    min="10" 
+                                    max="120" 
+                                    value={settingsStore ? $settingsStore!.playNextShowThreshold : 40}
+                                    oninput={handleShowThresholdChange}
+                                />
+                                <div class="label">
+                                    <span class="label-text-alt">Default: 40 seconds</span>
+                                </div>
+                            </div>
+                            <div class="form-control">
+                                <label class="label" for="playNextAutoProgressThreshold">
+                                    <span class="label-text">Auto-play at (seconds from end)</span>
+                                </label>
+                                <input 
+                                    id="playNextAutoProgressThreshold"
+                                    type="number" 
+                                    class="input input-bordered w-full" 
+                                    min="5" 
+                                    max="60" 
+                                    value={settingsStore ? $settingsStore!.playNextAutoProgressThreshold : 12}
+                                    oninput={handleAutoProgressThresholdChange}
+                                />
+                                <div class="label">
+                                    <span class="label-text-alt">Default: 12 seconds</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {/if}
+
+
+            </div>
+        </div>
+
+        <!-- App Settings -->
+        <div class="card bg-base-200 shadow-xl">
+            <div class="card-body overflow-x-hidden">
+                <h2 class="card-title text-2xl mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672Zm-7.518-.267A8.25 8.25 0 1 1 20.25 10.5M8.288 14.212A5.25 5.25 0 1 1 17.25 10.5" />
+                    </svg>
+
+                    Behaviour
+                </h2>                
+                <!-- Play Trailers Automatically -->
+                {#if context !== 'player'}
+                    <div class="form-control w-full">
+                        <label class="label cursor-pointer justify-start gap-4 flex flex-row flex-wrap items-start px-1">                            <input 
+                                type="checkbox" 
+                                class="toggle toggle-primary mt-1" 
+                                checked={settingsStore ? $settingsStore!.playTrailersAutomatically : false}
+                                onclick={handleTrailerToggle}
+                            />
+                            <div class="flex flex-col flex-1">
+                                <span class="label-text text-lg font-medium break-normal">Play Trailers Automatically</span>
+                                <p class="text-sm text-base-content/60 mt-1 whitespace-normal leading-snug">
+                                    When enabled, trailers will automatically play on movie's info page.
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+                {/if}
+
+                <!-- Disable Popup on Hover -->
+                <div class="form-control w-full">
+                    <label class="label cursor-pointer justify-start gap-4 flex flex-row flex-wrap items-start px-1">
+                        <input 
+                            type="checkbox" 
+                            class="toggle toggle-primary mt-1" 
+                            checked={settingsStore ? $settingsStore!.disableHoverPopup : false}
+                            onclick={handleDisableHoverPopupToggle}
+                        />
+                        <div class="flex flex-col flex-1">
+                            <span class="label-text text-lg font-medium break-normal">Disable popup on hover</span>
+                            <p class="text-sm text-base-content/60 mt-1 whitespace-normal leading-snug">
+                                When enabled, disables the hover popup modal in library views.
+                            </p>
+                        </div>
+                    </label>
                 </div>
             </div>
         </div>

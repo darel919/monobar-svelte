@@ -13,6 +13,7 @@ Props:
     import { browser } from '$app/environment';
     import HoverModalView from './HoverModalView.svelte';
     import ImageComponent from './ImageComponent.svelte';
+    import { useSettingsStore } from '$lib/stores/settings';
 
 
 
@@ -49,6 +50,7 @@ Props:
     let mousePosition = { x: 0, y: 0 };
     let isScrolling: boolean = false;
     let scrollTimeout: number | null = null;    
+    let settingsStore = useSettingsStore();
     onMount(() => {
         const checkWidth = () => {
             if (window.innerWidth < 540) {
@@ -118,7 +120,7 @@ Props:
         modalOpen = true;
     }    
     function handleItemHover(item: LibraryItem, event: MouseEvent): void {
-        if (disableClick || isScrolling) return;
+        if (disableClick || isScrolling || settingsStore.get().disableHoverPopup) return;
         
         if (hoverTimeout) {
             clearTimeout(hoverTimeout);
@@ -426,7 +428,7 @@ Props:
     </section>
 {/if}
 
-{#if modalOpen && modalItem}
+{#if modalOpen && modalItem && !settingsStore.get().disableHoverPopup}
     <HoverModalView 
         isOpen={modalOpen} 
         on:close={() => modalOpen = false}

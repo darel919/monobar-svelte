@@ -23,7 +23,7 @@
             const currentState = get(authStore);
             
             if ((authSuccess === 'true' || userSession) && currentState.isAuthenticated) {
-                console.log('🏠 Home page detected recent auth completion, forcing data refresh...');
+                // console.log('🏠 Home page detected recent auth completion, forcing data refresh...');
                 localStorage.removeItem('authSuccess');
                 
                 setTimeout(() => {

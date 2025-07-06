@@ -11,6 +11,7 @@ interface SettingsState {
   homeViewMode: string;
   librarySortBy: string;
   librarySortOrder: string;
+  disableHoverPopup: boolean;
 }
 
 const defaultSettings: SettingsState = {
@@ -22,7 +23,8 @@ const defaultSettings: SettingsState = {
   subtitleSize: 'medium',
   homeViewMode: 'posterView',
   librarySortBy: "ProductionYear",
-  librarySortOrder: "desc"
+  librarySortOrder: "desc",
+  disableHoverPopup: false
 };
 
 const STORAGE_KEY = 'monobar-settings';
@@ -166,6 +168,14 @@ function createSettingsStore() {
     setPlayNextAutoProgressThreshold: (value: number) => {
       update(state => {
         const newState = { ...state, playNextAutoProgressThreshold: value };
+        saveToStorage(newState);
+        return newState;
+      });
+    },
+    
+    setDisableHoverPopup: (value: boolean) => {
+      update(state => {
+        const newState = { ...state, disableHoverPopup: value };
         saveToStorage(newState);
         return newState;
       });
