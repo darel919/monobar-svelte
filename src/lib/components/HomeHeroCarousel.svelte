@@ -18,6 +18,7 @@ Props:
     export let recommendationsData: Promise<any>;
 
     interface CarouselItem {
+        Taglines: any;
         Id?: string;
         id?: string;
         Name: string;
@@ -193,6 +194,7 @@ Props:
         role="button"
         tabindex="0"
     >
+    <!-- {console.log('Current Item:', currentItem)} -->
         <!-- Background with YtPlayer -->
         <div class="absolute inset-0 transition-opacity duration-500 {fadeClass}">
             <YtPlayer 
@@ -206,7 +208,7 @@ Props:
         </div>
         
         <!-- Dark Overlay -->
-        <div class="absolute inset-0 bg-black/50"></div>
+        <div class="absolute inset-0 bg-black/40"></div>
 
         <!-- Gradient Overlay for smooth transition to content below -->
         <div class="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-base-100"></div>
@@ -214,7 +216,7 @@ Props:
         <!-- Content -->
         <div class="relative z-10 h-full flex items-center pt-16">
             <div class="container mx-auto px-8">
-                <div class="max-w-3xl">
+                <div class="max-w-md">
                     <!-- Category Badge -->
                     {#if currentItem.category}
                         <div class="mb-4">
@@ -242,7 +244,7 @@ Props:
                             <img 
                                 src={currentItem.ImageTags.Logo} 
                                 alt={currentItem.Name}
-                                class="h-16 w-auto max-w-full object-contain"
+                                class="h-24 w-auto max-w-full object-contain"
                             />
                         </div>
                     {:else}
@@ -259,8 +261,12 @@ Props:
                     {/if}
 
                     <!-- Overview -->
-                    {#if currentItem.Overview}
-                        <p class="text-white/90 text-lg leading-relaxed line-clamp-4 max-w-3xl drop-shadow-lg">
+                    {#if currentItem.Taglines && currentItem.Taglines[0]}
+                        <p class="text-white/90 text-lg leading-relaxed line-clamp-2 drop-shadow-lg">
+                            "<b>{currentItem.Taglines[0]}</b>"
+                        </p>
+                        {:else if currentItem.Overview}
+                        <p class="text-white/90 text-md leading-relaxed line-clamp-2 drop-shadow-lg">
                             {currentItem.Overview}
                         </p>
                     {/if}

@@ -118,7 +118,6 @@
         {#if recommendations.data && recommendations.data.length > 0}
             <section class="mb-8">
                 <h2 class="text-2xl mb-4" title="maybe these ones?">something to watch</h2>
-                {console.log('Recommendations data:', recommendations.data)}
                 <LibraryViewDisplay data={recommendations.data} viewMode="default_thumb_home"></LibraryViewDisplay>
             </section>
         {/if}
