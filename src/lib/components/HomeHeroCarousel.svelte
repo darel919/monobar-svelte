@@ -16,6 +16,7 @@ Props:
 
     export let leftoversData: Promise<any>;
     export let recommendationsData: Promise<any>;
+    export let nextUpData: Promise<any>;
 
     interface CarouselItem {
         Taglines: any;
@@ -36,7 +37,7 @@ Props:
             Name: string;
             Url: string;
         }>;
-        category?: 'leftovers' | 'movies' | 'tv-series';
+        category?: 'leftovers' | 'movies' | 'tv-series' | 'nextup';
         SeriesName?: string;
         IndexNumber?: number;
         ParentIndexNumber?: number;
@@ -56,9 +57,10 @@ Props:
 
     async function loadCarouselData() {
         try {
-            const [leftovers, recommendations] = await Promise.all([
+            const [leftovers, recommendations, nextUp] = await Promise.all([
                 leftoversData,
-                recommendationsData
+                recommendationsData,
+                nextUpData
             ]);
 
             const items: CarouselItem[] = [];
@@ -70,6 +72,15 @@ Props:
                     category: 'leftovers' as const
                 }));
                 items.push(...leftoverItems);
+            }
+
+            // Add next up with category marking
+            if (nextUp?.data?.length > 0) {
+                const nextUpItems = nextUp.data.map((item: any) => ({
+                    ...item,
+                    category: 'nextup' as const
+                }));
+                items.push(...nextUpItems);
             }
 
             // Add recommendations with category marking
@@ -152,6 +163,8 @@ Props:
         switch (category) {
             case 'leftovers':
                 return 'Continue Watching';
+            case 'nextup':
+                return 'Next Up';
             case 'tv-series':
                 return 'TV Series';
             case 'movies':
@@ -166,6 +179,12 @@ Props:
             const season = item.ParentIndexNumber || 1;
             const episode = item.IndexNumber || 1;
             return `${item.SeriesName} • S${season}E${episode}`;
+        }
+        if (item.category === 'nextup' && item.SeriesName) {
+            const season = item.ParentIndexNumber || 1;
+            const episode = item.IndexNumber || 1;
+            const pad = (n: number) => n.toString().padStart(2, '0');
+            return `${item.SeriesName} S${pad(season)}E${pad(episode)} is next to watch`;
         }
         return '';
     }

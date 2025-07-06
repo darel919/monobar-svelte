@@ -13,6 +13,7 @@
     export let data;
 
     let leftoversPromise = data.leftoversData;
+    let nextEpisodesPromise = data.nextEpisodesData;
     let recommendationsPromise = data.recommendationData;
 
     onMount(() => {
@@ -90,6 +91,7 @@
 <HomeHeroCarousel 
     leftoversData={leftoversPromise} 
     recommendationsData={recommendationsPromise} 
+    nextUpData={nextEpisodesPromise}
 />
 
 <main class="flex flex-col min-h-screen p-8 pt-20">
@@ -106,8 +108,19 @@
     {:then leftovers}
         {#if leftovers.data && leftovers.data.length > 0}
             <section class="mb-8">
-                <h2 class="text-2xl mb-4" title="you've left these before. continue watching?">leftovers</h2>
+                <h2 class="text-2xl mb-4" title="you've left these before. resume watching?">leftovers</h2>
                 <LibraryLeftoversView data={leftovers.data} onDataRefresh={refreshLeftovers}></LibraryLeftoversView>
+            </section>
+        {/if}
+    {/await}
+
+    {#await nextEpisodesPromise}
+        <!-- Display nothing -->
+    {:then playNext}
+        {#if playNext.data && playNext.data.length > 0}
+            <section class="mb-8">
+                <h2 class="text-2xl mb-4" title="watch next episode?">next up</h2>
+                <LibraryLeftoversView data={playNext.data} onDataRefresh={refreshLeftovers}></LibraryLeftoversView>
             </section>
         {/if}
     {/await}
