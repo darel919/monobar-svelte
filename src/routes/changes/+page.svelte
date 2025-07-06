@@ -18,8 +18,8 @@ onMount(async () => {
 });
 </script>
 
-<section class="max-w-3xl mx-auto pt-24 min-h-screen sm:px-0 px-4">
-  <h1 class="text-4xl font-light mb-6">changelog</h1>
+<section class="max-w-5xl mx-auto pt-24 min-h-screen px-8 pb-8">
+  <h1 class="text-5xl font-light mb-6">changelog</h1>
   {#if error}
     <div class="text-red-500 mb-4">{error}</div>
   {/if}
@@ -36,7 +36,7 @@ onMount(async () => {
                 <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Newest</span>
               {/if}
               {#if change.version === currentVersion}
-                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">Current Version</span>
+                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">Current</span>
               {/if}
             </div>
             <span class="text-xs text-gray-400">{new Date(change.date).toLocaleString()}</span>

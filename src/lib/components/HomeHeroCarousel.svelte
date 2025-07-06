@@ -185,7 +185,7 @@ Props:
 
 {#if showCarousel && carouselItems.length > 0 && currentItem}
     <section 
-        class="relative w-full h-[70vh] min-h-[520px] overflow-hidden cursor-pointer group"
+        class="relative w-full h-[70vh] min-h-[550px] overflow-hidden cursor-pointer group -mb-8"
         on:click={handleItemClick}
         on:keydown={(e) => e.key === 'Enter' && handleItemClick()}
         on:mouseenter={stopCarousel}

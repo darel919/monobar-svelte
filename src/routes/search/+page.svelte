@@ -158,8 +158,8 @@
     <title>{documentTitle}</title>
 </svelte:head>
 
-<main class="min-h-screen pt-16 px-4">
-<div class="w-full max-w-4xl mx-auto mt-24 px-8 min-h-screen">
+<main class="min-h-screen pt-24 px-4">
+<div class="w-full max-w-5xl mx-auto px-8 min-h-screen">
     <h1 class="text-4xl font-extralight mb-8 text-white">search</h1>
     
     <form class="w-full flex flex-col gap-4" on:submit={handleSubmit}>        

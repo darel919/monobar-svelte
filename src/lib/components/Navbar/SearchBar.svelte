@@ -159,7 +159,7 @@
         }    }
 </script>
 
-<div class="relative w-full max-w-md " bind:this={searchContainerRef}>
+<div class="relative w-full max-w-md" bind:this={searchContainerRef}>
     <!-- Input field -->
     <form on:submit={handleSubmit} class="relative">
         <div class="relative flex items-center">
