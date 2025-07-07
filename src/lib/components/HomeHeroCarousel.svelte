@@ -139,19 +139,35 @@ Props:
         
         const itemId = currentItem.Id || currentItem.id;
         const itemType = currentItem.Type || '';
+        const seriesId = currentItem.SeriesId;
+        const watchId = currentItem.watchId || itemId;
         
         if (itemId) {
             if (currentItem.category === 'leftovers') {
                 if (currentItem.Type === 'Series') {
-                    const watchIdParam = currentItem.watchId || itemId;
-                    const seriesIdParam = currentItem.SeriesId || itemId;
+                    const watchIdParam = watchId;
+                    const seriesIdParam = seriesId || itemId;
                     goto(`/watch?id=${watchIdParam}&type=${itemType}&seriesId=${seriesIdParam}`);
+                } else if (currentItem.Type === 'Episode') {
+                    // Pass seriesId for episodes
+                    if (seriesId) {
+                        goto(`/watch?id=${itemId}&type=${itemType}&seriesId=${seriesId}`);
+                    } else {
+                        goto(`/watch?id=${itemId}&type=${itemType}`);
+                    }
                 } else {
                     goto(`/watch?id=${itemId}&type=${itemType}`);
                 }
             } else {
                 if (currentItem.Type === 'Series') {
                     goto(`/info?id=${itemId}&type=${itemType}`);
+                } else if (currentItem.Type === 'Episode') {
+                    // Pass seriesId for episodes
+                    if (seriesId) {
+                        goto(`/watch?id=${itemId}&type=${itemType}&seriesId=${seriesId}`);
+                    } else {
+                        goto(`/watch?id=${itemId}&type=${itemType}`);
+                    }
                 } else {
                     goto(`/info?id=${itemId}&type=${itemType}`);
                 }
