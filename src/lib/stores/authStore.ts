@@ -13,8 +13,15 @@ export interface UserSession {
     user_metadata?: {
       role?: string;
       avatar_url?: string;
+      avatar?: string;
       full_name?: string;
-      provider_id?: string;
+      name?: string;
+      collectionId?: string;
+      collectionName?: string;
+      created?: string;
+      updated?: string;
+      emailVisibility?: boolean;
+      verified?: boolean;
       [key: string]: any;
     };
     app_metadata?: {
@@ -89,13 +96,13 @@ function createAuthStore() {
         return '';
       }
     },
-    validateJellyfinCredentials: async (providerId: string, jellyAccessToken: string) => {
+    validateJellyfinCredentials: async (userEmail: string, jellyAccessToken: string) => {
       if (!browser) return { isValid: false, error: 'Not in browser environment' };
 
       try {
         const headers: { [key: string]: string } = {
           'Content-Type': 'application/json',
-          'Authorization': `monobar_user=${providerId},monobar_token=${jellyAccessToken}`,
+          'Authorization': `monobar_user=${userEmail},monobar_token=${jellyAccessToken}`,
           'X-Device-Profile': await store.calculateDeviceProfile()
         };
   
@@ -121,6 +128,41 @@ function createAuthStore() {
       } catch (error: any) {
         console.error('Jellyfin validation error:', error);
         return { isValid: false, error: error?.message || 'Validation failed' };
+      }
+    },
+    
+    verifyDWSProfile: async (accessToken: string) => {
+      if (!browser) return { isValid: false, error: 'Not in browser environment' };
+
+      try {
+        const url = new URL('https://api.darelisme.my.id/auth/v2/verify');
+        url.searchParams.append('at', accessToken);
+        
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const responseData = await response.json();
+          
+          if (responseData.status === 'valid' && responseData.user?.user_metadata) {
+            return { 
+              isValid: true, 
+              data: responseData,
+              user: responseData.user.user_metadata 
+            };
+          } else {
+            return { isValid: false, error: 'Invalid response format or token not valid' };
+          }
+        } else {
+          return { isValid: false, error: `Verification failed with status: ${response.status}` };
+        }
+      } catch (error: any) {
+        console.error('DWS profile verification error:', error);
+        return { isValid: false, error: error?.message || 'Profile verification failed' };
       }
     },
     
@@ -151,13 +193,48 @@ function createAuthStore() {
               const currentTime = Math.floor(Date.now() / 1000);
 
               if (tokenPayload.exp && tokenPayload.exp > currentTime) {
-                isAuthenticated = true;
+                // Verify the token with the new DWS profile endpoint
+                const verification = await store.verifyDWSProfile(parsedSession.access_token);
+                if (verification.isValid) {
+                  isAuthenticated = true;
+                  
+                  // Update the session with fresh profile data if available
+                  if (verification.user) {
+                    const updatedSession = {
+                      ...parsedSession,
+                      user: {
+                        ...parsedSession.user,
+                        id: verification.user.id || parsedSession.user?.id,
+                        email: verification.user.email || parsedSession.user?.email,
+                        user_metadata: {
+                          ...parsedSession.user?.user_metadata,
+                          ...verification.user,
+                          full_name: verification.user.name || parsedSession.user?.user_metadata?.full_name,
+                          avatar_url: verification.user.avatar || parsedSession.user?.user_metadata?.avatar_url
+                        }
+                      }
+                    };
+                    parsedSession = updatedSession;
+                    
+                    // Update localStorage with fresh data
+                    localStorage.setItem('user-session', JSON.stringify(updatedSession));
+                    Cookies.set('user-session', JSON.stringify(updatedSession), { expires: 30 });
+                  }
+                } else {
+                  console.warn('DWS token verification failed:', verification.error);
+                  localStorage.removeItem('user-session');
+                  Cookies.remove('DeviceId', { path: '/' });
+                  Cookies.remove('user-session');
+                  Cookies.remove('jellyUserId');
+                  Cookies.remove('jellyAccessToken');
+                  parsedSession = null;
+                  needsReauth = true;
+                }
               } else {
                 console.warn('JWT token expired');
                 localStorage.removeItem('user-session');
                 Cookies.remove('DeviceId', { path: '/' });
                 Cookies.remove('user-session');
-                // Clear Jellyfin cookies when DWS token expires
                 Cookies.remove('jellyUserId');
                 Cookies.remove('jellyAccessToken');
                 parsedSession = null;
@@ -176,9 +253,9 @@ function createAuthStore() {
         }
 
         if (isAuthenticated && parsedSession && jellyUserId && jellyAccessToken) {
-          const providerId = parsedSession.user?.user_metadata?.provider_id;
-          if (providerId) {
-            const validation = await store.validateJellyfinCredentials(providerId, jellyAccessToken);
+          const userEmail = parsedSession.user?.email;
+          if (userEmail) {
+            const validation = await store.validateJellyfinCredentials(userEmail, jellyAccessToken);
             if (!validation.isValid) {
               console.warn('Jellyfin credentials are invalid, clearing cookies');
               Cookies.remove('DeviceId', { path: '/' });
@@ -281,11 +358,11 @@ function createAuthStore() {
       update(state => ({ ...state, isJellyLoading: true, jellyAuthFailed: false, jellyAuthError: null, retryCount: (state.retryCount ?? 0) + 1 }));
 
       try {
-        const providerId = currentState?.userSession?.user?.user_metadata?.provider_id || '';
+        const userEmail = currentState?.userSession?.user?.email || '';
         
         const headers: { [key: string]: string } = {
           'Content-Type': 'application/json',
-          'Authorization': providerId,
+          'Authorization': userEmail,
         };
         
         const response = await fetch(`${BASE_API_PATH}/jellyfin/login`, {
@@ -301,7 +378,7 @@ function createAuthStore() {
         Cookies.set('jellyUserId', data.userId);
         Cookies.set('jellyAccessToken', data.access_token);
 
-        const validation = await store.validateJellyfinCredentials(providerId, data.access_token);
+        const validation = await store.validateJellyfinCredentials(userEmail, data.access_token);
         if (!validation.isValid) {
           throw new Error('Failed to validate Jellyfin credentials after login');
         }

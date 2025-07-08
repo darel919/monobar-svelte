@@ -91,13 +91,24 @@
                     if (parsedSession.access_token) {
                         const tokenPayload = JSON.parse(atob(parsedSession.access_token.split('.')[1]));
                         const currentTime = Math.floor(Date.now() / 1000);
-                        dwsTokenValid = tokenPayload.exp && tokenPayload.exp > currentTime;
+                        const tokenNotExpired = tokenPayload.exp && tokenPayload.exp > currentTime;
                         
                         console.log('🎫 DWS token check:', {
-                            valid: dwsTokenValid,
+                            tokenNotExpired,
                             expiresAt: new Date(tokenPayload.exp * 1000),
                             currentTime: new Date(currentTime * 1000)
                         });
+
+                        // Verify token with the new DWS profile endpoint
+                        if (tokenNotExpired) {
+                            const verification = await authStore.verifyDWSProfile(parsedSession.access_token);
+                            dwsTokenValid = verification.isValid;
+                            if (!verification.isValid) {
+                                console.warn('🎫 DWS profile verification failed:', verification.error);
+                            }
+                        } else {
+                            dwsTokenValid = false;
+                        }
                     }
                 } catch (error) {
                     console.warn('⚠️ Failed to parse DWS token:', error);
@@ -115,10 +126,10 @@
 
             // DWS token is valid, check Jellyfin token
             if (jellyUserId && jellyAccessToken && parsedSession) {
-                const providerId = parsedSession.user?.user_metadata?.provider_id;
-                if (providerId) {
+                const userEmail = parsedSession.user?.email;
+                if (userEmail) {
                     console.log('🎬 Validating Jellyfin credentials...');
-                    const validation = await authStore.validateJellyfinCredentials(providerId, jellyAccessToken);
+                    const validation = await authStore.validateJellyfinCredentials(userEmail, jellyAccessToken);
                     
                     if (!validation.isValid) {
                         console.log('🔄 Jellyfin token is invalid - attempting renewal');

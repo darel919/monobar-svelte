@@ -36,13 +36,25 @@
             throw new Error('Token has expired');
           }
           
+          // Verify the token with the new DWS profile endpoint
+          const verification = await authStore.verifyDWSProfile(accessToken);
+          if (!verification.isValid) {
+            throw new Error('Token verification failed');
+          }
+          
+          const verifiedUserData = verification.user;
           const userSessionData = {
             access_token: accessToken,
             refresh_token: refreshToken || null,
             user: {
-              id: tokenPayload.sub,
-              email: tokenPayload.email,
-              user_metadata: tokenPayload.user_metadata || {},
+              id: verifiedUserData?.id || tokenPayload.sub,
+              email: verifiedUserData?.email || tokenPayload.email,
+              user_metadata: {
+                ...tokenPayload.user_metadata,
+                ...verifiedUserData,
+                full_name: verifiedUserData?.name || tokenPayload.user_metadata?.full_name,
+                avatar_url: verifiedUserData?.avatar || tokenPayload.user_metadata?.avatar_url
+              },
               app_metadata: tokenPayload.app_metadata || {}
             }
           };

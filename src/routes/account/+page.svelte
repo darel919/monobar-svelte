@@ -17,11 +17,11 @@ function handleSignOut() {
 
     {#if $authStore.isAuthenticated && $authStore.userSession?.user}
         <div class="flex items-center gap-6 mb-8">
-            {#if $authStore.userSession.user.user_metadata.avatar_url}
-                <img src={$authStore.userSession.user.user_metadata.avatar_url} alt="Avatar" class="h-20 w-20 rounded-full object-cover border border-base-300 shadow" referrerpolicy="no-referrer" />
+            {#if $authStore.userSession.user.user_metadata?.avatar_url || $authStore.userSession.user.user_metadata?.avatar}
+                <img src={$authStore.userSession.user.user_metadata?.avatar_url || $authStore.userSession.user.user_metadata?.avatar} alt="Avatar" class="h-20 w-20 rounded-full object-cover border border-base-300 shadow" referrerpolicy="no-referrer" />
             {/if}
             <div>
-                <div class="text-xl font-semibold">{$authStore.userSession.user.user_metadata.full_name || $authStore.userSession.user.email}</div>
+                <div class="text-xl font-semibold">{$authStore.userSession.user.user_metadata?.full_name || $authStore.userSession.user.user_metadata?.name || $authStore.userSession.user.email}</div>
                 <div class="text-base text-base-content/70">{$authStore.userSession.user.email}</div>
             </div>
         </div>

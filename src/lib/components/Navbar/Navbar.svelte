@@ -1,14 +1,14 @@
-<script>    
+<script lang="ts">    
     import { onMount } from 'svelte';
     import { browser } from '$app/environment';
     import { page } from '$app/stores';
-    import { authStore } from '$lib/stores/authStore';
+    import { authStore, type UserSession } from '$lib/stores/authStore';
     import SearchBar from './SearchBar.svelte';
     
     let { homeData = [] } = $props();
     let isScrolled = $state(false);
     let isAuthenticated = $state(false);
-    let userSession = $state(null);
+    let userSession = $state<UserSession | null>(null);
 
     onMount(() => {
         const handleScroll = () => {
@@ -245,9 +245,9 @@
         <!-- Right section - User avatar (always visible, anchored right) -->
         <div class="flex items-center gap-2 min-w-[40px] justify-end ml-auto flex-shrink-0">
             <a href={ isAuthenticated ? "/account" : "/auth/login"} class="focus:outline-none ml-4">
-                {#if isAuthenticated && userSession?.user.user_metadata.avatar_url}
+                {#if isAuthenticated && (userSession?.user?.user_metadata?.avatar_url || userSession?.user?.user_metadata?.avatar)}
                     <img
-                        src={userSession?.user.user_metadata.avatar_url}
+                        src={userSession?.user?.user_metadata?.avatar_url || userSession?.user?.user_metadata?.avatar}
                         alt="User Avatar"
                         class="h-10 w-10 rounded-full object-cover border border-base-300 shadow-sm hover:opacity-80 transition-opacity duration-150"
                         referrerpolicy="no-referrer"

@@ -97,10 +97,10 @@ export function openLoginWindow(currentPath: string, onAuthCancelled?: (error: s
   sessionStorage.removeItem("authCancelled");
   localStorage.removeItem("authSuccess");
   
-  const redirectUrl = encodeURIComponent(`${window.location.origin}/auth`);
-  const authUrl = `https://darelisme.my.id/auth/login?redirectExternal=${redirectUrl}`;
+  const clientUrl = encodeURIComponent(window.location.origin);
+  const authUrl = `https://account.darelisme.my.id/start?rUrl=${clientUrl}/auth`;
   
-  const loginWindow = window.open(authUrl, 'darelismeLogin', 'width=600,height=700');
+  const loginWindow = window.open(authUrl, 'dwsAccountLogin', 'width=600,height=700');
   
   if (!loginWindow) {
     alert("Please allow popups for this site to enable login");
@@ -288,8 +288,8 @@ export function redirectToLogin(currentPath: string): void {
     console.log('🔧 Preserving existing redirectAfterAuth:', existingRedirect);
   }
   sessionStorage.removeItem("redirectionCompleted");
-  const redirectUrl = encodeURIComponent(`${window.location.origin}/auth`);
-  window.location.href = `https://darelisme.my.id/auth/login?redirectExternal=${redirectUrl}`;
+  const clientUrl = encodeURIComponent(window.location.origin);
+  window.location.href = `https://account.darelisme.my.id/start?rUrl=${clientUrl}/auth`;
 }
 
 export function useRequireAuth() {
