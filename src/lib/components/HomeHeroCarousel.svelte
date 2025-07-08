@@ -12,6 +12,7 @@ Props:
     import { browser } from '$app/environment';
     import { goto } from '$app/navigation';
     import YtPlayer from './TrailerPlayer.svelte';
+    import ImageComponent from './ImageComponent.svelte';
     import { useSettingsStore } from '$lib/stores/settings';
 
     export let leftoversData: Promise<any>;
@@ -43,13 +44,23 @@ Props:
         ParentIndexNumber?: number;
         SeriesId?: string;
         watchId?: string;
+        People?: {
+            Actors?: {
+                content: Array<{
+                    image?: string;
+                    Name: string;
+                }>;
+            };
+        };
     }
 
     let carouselItems: CarouselItem[] = [];
     let currentIndex = 0;
     let fadeClass = 'opacity-100';
     let intervalId: ReturnType<typeof setInterval> | null = null;
+    let resumeTimeoutId: ReturnType<typeof setTimeout> | null = null;
     let settingsStore: ReturnType<typeof useSettingsStore> | null = null;
+    let isTransitioning = false;
 
     $: totalItems = carouselItems.length;
     $: currentItem = carouselItems[currentIndex] || null;
@@ -101,7 +112,7 @@ Props:
 
     function startCarousel() {
         if (totalItems <= 1 || !browser) return;
-        
+        if (intervalId) return; // Prevent multiple intervals
         intervalId = setInterval(() => {
             nextSlide();
         }, 8000);
@@ -114,23 +125,42 @@ Props:
         }
     }
 
+    function resetResumeTimeout() {
+        if (resumeTimeoutId) {
+            clearTimeout(resumeTimeoutId);
+            resumeTimeoutId = null;
+        }
+    }
+
+    function scheduleResumeCarousel() {
+        resetResumeTimeout();
+        resumeTimeoutId = setTimeout(() => {
+            startCarousel();
+        }, 5000);
+    }
+
     function nextSlide() {
-        if (totalItems <= 1) return;
-        
+        if (totalItems <= 1 || isTransitioning) return;
+        isTransitioning = true;
         fadeClass = 'opacity-0';
         setTimeout(() => {
             currentIndex = (currentIndex + 1) % totalItems;
             fadeClass = 'opacity-100';
+            isTransitioning = false;
         }, 200);
     }
 
     function goToSlide(index: number) {
-        if (index === currentIndex || index >= totalItems) return;
-        
+        if (index === currentIndex || index >= totalItems || isTransitioning) return;
+        stopCarousel();
+        resetResumeTimeout();
+        isTransitioning = true;
         fadeClass = 'opacity-0';
         setTimeout(() => {
             currentIndex = index;
             fadeClass = 'opacity-100';
+            isTransitioning = false;
+            scheduleResumeCarousel();
         }, 200);
     }
 
@@ -216,6 +246,7 @@ Props:
 
     onDestroy(() => {
         stopCarousel();
+        resetResumeTimeout();
     });
 </script>
 
@@ -229,7 +260,7 @@ Props:
         role="button"
         tabindex="0"
     >
-    <!-- {console.log('Current Item:', currentItem)} -->
+    {console.log('Current Item:', currentItem)}
         <!-- Background with YtPlayer -->
         <div class="absolute inset-0 transition-opacity duration-500 {fadeClass}">
             <YtPlayer 
@@ -249,7 +280,7 @@ Props:
         <div class="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-base-100"></div>
 
         <!-- Content -->
-        <div class="relative z-10 h-full flex items-center pt-16">
+        <div class="relative z-10 h-full flex items-center">
             <div class="container mx-auto px-8">
                 <div class="max-w-md">
                     <!-- Category Badge -->
@@ -261,18 +292,51 @@ Props:
                         </div>
                     {/if}
 
-                    <!-- Rating -->
-                    {#if currentItem.CommunityRating}
-                        <div class="flex items-center gap-2 mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="w-6 h-6 text-yellow-400">
-                                <path d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
-                            </svg>
-                            <span class="text-white text-lg font-medium">
-                                {currentItem.CommunityRating.toFixed(1)}
-                            </span>
-                        </div>
-                    {/if}
+                    <section class="flex flex-row gap-4 my-4 items-center">
+                        <!-- Rating -->
+                        {#if currentItem.CommunityRating}
+                            <div class="flex items-center gap-2 mr-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="w-6 h-6 text-yellow-400">
+                                    <path d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+                                </svg>
+                                <span class="text-white text-lg font-medium">
+                                    {currentItem.CommunityRating.toFixed(1)}
+                                </span>
+                            </div>
+                        {/if}
+                        {#if currentItem.CommunityRating && currentItem.People?.Actors?.content && currentItem.People.Actors.content.length > 0}
+                            <span class="flex items-center justify-center h-6"><span class="bg-white/100 rounded-full w-2 h-2 block"></span></span>
+                        {/if}
+                        <!-- Actors -->
+                        {#if currentItem.People?.Actors?.content && currentItem.People.Actors.content.length > 0}
+                            <div class="flex items-center gap-3">
+                                <span class="text-white/70 text-sm font-medium">Starring:</span>
+                                <div class="flex items-center gap-3">
+                                    {#each currentItem.People.Actors.content.slice(0, 3) as actor}
+                                        <div class="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-3 py-2 min-w-0 max-w-32 h-12 overflow-hidden">
+                                            {#if actor.image}
+                                                <section class="w-8 h-8 flex-shrink-0 overflow-hidden">
+                                                    <ImageComponent 
+                                                    src={actor.image} 
+                                                    alt={actor.Name}
+                                                    aspectRatio="1/1"
+                                                    borderRadius="rounded-full"
+                                                    imageClass="w-8 h-8 object-cover"
+                                                    showSkeleton={true}
+                                                    displayFallbackName={false}
+                                                    fallbackName={actor.Name || 'Actor'}
+                                                />
+                                                </section>
+                                            {/if}
+                                            <span class="text-white text-xs font-medium truncate flex-1 min-w-0">{actor.Name}</span>
+                                        </div>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/if}
+                    </section>
 
+                
                     <!-- Title -->
                     {#if currentItem.ImageTags?.Logo}
                         <div class="mb-6">
@@ -294,6 +358,8 @@ Props:
                             {getEpisodeInfo(currentItem)}
                         </p>
                     {/if}
+
+                   
 
                     <!-- Overview -->
                     {#if currentItem.Taglines && currentItem.Taglines[0]}

@@ -17,6 +17,7 @@ Props:
 - headers: Custom HTTP headers for the request (defaults to {})
 - showSkeleton: Show loading skeleton animation (defaults to true)
 - fallbackName: Name to display when image fails to load (defaults to '')
+- displayFallbackName: Show fallback name text vs user icon (defaults to true)
 - onload: Callback function called when image loads successfully
 - onerror: Callback function called when image fails to load
 -->
@@ -37,6 +38,7 @@ Props:
     export let headers: { [key: string]: string } = {};
     export let showSkeleton: boolean = true;
     export let fallbackName: string = '';
+    export let displayFallbackName: boolean = true;
     export let onload: (() => void) | undefined = undefined;
     export let onerror: (() => void) | undefined = undefined;
     
@@ -131,10 +133,18 @@ Props:
             on:load={handleLoad}
             on:error={handleError}
         />
-    {:else if hasError && fallbackName}
-        <div class="flex items-center justify-center w-full h-full bg-gray-200 rounded-lg text-xs text-gray-500 {borderRadius}">
-            <div class="font-bold text-center p-2">{fallbackName}</div>
-        </div>
+    {:else if hasError}
+        {#if displayFallbackName && fallbackName}
+            <div class="flex items-center justify-center w-full h-full bg-gray-200 rounded-lg text-xs text-gray-500 {borderRadius}">
+                <div class="font-bold text-center p-2">{fallbackName}</div>
+            </div>
+        {:else}
+            <div class="flex items-center justify-center w-full h-full text-gray-500 {borderRadius}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                </svg>
+            </div>
+        {/if}
     {/if}
 </div>
 
@@ -154,9 +164,17 @@ Props:
                 class="w-full h-full object-cover {borderRadius}"
             />
         {:else if fallbackName}
-            <div class="flex items-center justify-center w-full h-full bg-gray-200 rounded-lg text-xs text-gray-500 {borderRadius}">
-                <div class="font-bold text-center p-2">{fallbackName}</div>
-            </div>
+            {#if displayFallbackName}
+                <div class="flex items-center justify-center w-full h-full bg-gray-200 rounded-lg text-xs text-gray-500 {borderRadius}">
+                    <div class="font-bold text-center p-2">{fallbackName}</div>
+                </div>
+            {:else}
+                <div class="flex items-center justify-center w-full h-full bg-gray-200 text-gray-500 {borderRadius}">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    </svg>
+                </div>
+            {/if}
         {/if}
     </div>
 </noscript>
