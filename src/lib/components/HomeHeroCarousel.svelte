@@ -292,10 +292,10 @@ Props:
                         </div>
                     {/if}
 
-                    <section class="flex flex-row gap-4 my-4 items-center">
+                    <section class="flex flex-col md:flex-row gap-2 md:gap-4 my-4 items-start md:items-center">
                         <!-- Rating -->
                         {#if currentItem.CommunityRating}
-                            <div class="flex items-center gap-2 mr-2">
+                            <div class="flex items-center gap-2 mr-0 md:mr-2 mb-1 md:mb-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="w-6 h-6 text-yellow-400">
                                     <path d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
                                 </svg>
@@ -305,30 +305,16 @@ Props:
                             </div>
                         {/if}
                         {#if currentItem.CommunityRating && currentItem.People?.Actors?.content && currentItem.People.Actors.content.length > 0}
-                            <span class="flex items-center justify-center h-6"><span class="bg-white/100 rounded-full w-2 h-2 block"></span></span>
+                            <span class="hidden md:flex items-center justify-center h-6"><span class="bg-white/100 rounded-full w-2 h-2 block"></span></span>
                         {/if}
                         <!-- Actors -->
                         {#if currentItem.People?.Actors?.content && currentItem.People.Actors.content.length > 0}
-                            <div class="flex items-center gap-3">
-                                <span class="text-white/70 text-sm font-medium">Starring:</span>
-                                <div class="flex items-center gap-3">
+                            <div class="flex flex-col md:flex-row items-start md:items-center gap-1 md:gap-3 w-full">
+                                <span class="text-white/70 text-sm font-medium mb-1 md:mb-0">Starring:</span>
+                                <div class="flex flex-wrap md:flex-nowrap items-center gap-2 md:gap-3 w-full">
                                     {#each currentItem.People.Actors.content.slice(0, 3) as actor}
-                                        <div class="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-3 py-2 min-w-0 max-w-32 h-12 overflow-hidden">
-                                            {#if actor.image}
-                                                <section class="w-8 h-8 flex-shrink-0 overflow-hidden">
-                                                    <ImageComponent 
-                                                    src={actor.image} 
-                                                    alt={actor.Name}
-                                                    aspectRatio="1/1"
-                                                    borderRadius="rounded-full"
-                                                    imageClass="w-8 h-8 object-cover"
-                                                    showSkeleton={true}
-                                                    displayFallbackName={false}
-                                                    fallbackName={actor.Name || 'Actor'}
-                                                />
-                                                </section>
-                                            {/if}
-                                            <span class="text-white text-xs font-medium truncate flex-1 min-w-0">{actor.Name}</span>
+                                        <div class="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-3 py-2 min-w-0 max-w-32 h-8 overflow-hidden text-white text-sm font-medium whitespace-nowrap">
+                                            {actor.Name}
                                         </div>
                                     {/each}
                                 </div>

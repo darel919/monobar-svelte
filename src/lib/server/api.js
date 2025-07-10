@@ -501,3 +501,138 @@ export async function markPlayed(id, fetch, url, cookies) {
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
 }
+
+
+// REQUESTS
+// MOVIES
+export async function getMovieRequestData(fetch, url, cookies) {
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
+        };
+        
+        const response = await fetch(`${BASE_API_PATH}/request/movies`, {
+            method: 'GET',
+            headers
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+        }
+        
+        const data = await response.json();
+        
+        return {
+            data
+        };
+    } catch (error) {
+        console.error('Failed to fetch movie request data:', error);
+        return {
+            data: null,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+export async function getMovieRequestWaitingListData(fetch, url, cookies) {
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
+        };
+        
+        const response = await fetch(`${BASE_API_PATH}/request/movies/waitingList`, {
+            method: 'GET',
+            headers
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+        }
+        
+        const data = await response.json();
+        
+        return {
+            data
+        };
+    } catch (error) {
+        console.error('Failed to fetch movie request data:', error);
+        return {
+            data: null,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+
+
+// SHOWS
+export async function getShowsRequestData(fetch, url, cookies) {
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
+        };
+        
+        const response = await fetch(`${BASE_API_PATH}/request/shows`, {
+            method: 'GET',
+            headers
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+        }
+        
+        const data = await response.json();
+        
+        return {
+            data
+        };
+    } catch (error) {
+        console.error('Failed to fetch shows request data:', error);
+        return {
+            data: null,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+export async function getShowsRequestWaitingListData(fetch, url, cookies) {
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
+        };
+        
+        const response = await fetch(`${BASE_API_PATH}/request/shows/waitingList`, {
+            method: 'GET',
+            headers
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+        }
+        
+        const data = await response.json();
+        
+        return {
+            data
+        };
+    } catch (error) {
+        console.error('Failed to fetch shows request data:', error);
+        return {
+            data: null,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
