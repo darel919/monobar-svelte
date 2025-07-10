@@ -1,5 +1,9 @@
 <script lang="ts">
     import AutoRefreshRequestData from '$lib/components/AutoRefreshRequestData.svelte';
+    import { onMount } from 'svelte';
+    onMount(() => {
+        document.title = 'Media Requests - Monobar';
+    });
 </script>
 
 <main class="min-h-screen p-8 pt-20">

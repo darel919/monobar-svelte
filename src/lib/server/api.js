@@ -209,7 +209,7 @@ export async function getItemWatchData(id, fetch, url, cookies) {
             'Content-Type': 'application/json',
             'User-Agent': 'dp-Monobar',
             'X-Environment': getBaseEnvironment(url),
-            ...await getSessionHeaders(cookies)
+            ...getSessionHeaders(cookies)
         };
         
         const response = await fetch(`${BASE_API_PATH}/watch?intent=play&id=${id}`, {
@@ -367,7 +367,7 @@ export async function searchData(query, type, includeExternal, fetch, url, cooki
     try {
         let searchUrl = `${BASE_API_PATH}/search?q=${encodeURIComponent(query.trim())}`;
         if (includeExternal) {
-            searchUrl += `&includeExternal=true`;
+            searchUrl += `&includeRequest=true`;
         }
         if (type) {
             searchUrl += `&type=${encodeURIComponent(type)}`;

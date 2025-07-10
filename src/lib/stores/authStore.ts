@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import Cookies from 'js-cookie';
-import { BASE_API_PATH } from '$lib/config/api';
+import { BASE_API_PATH, BASE_API_AUTH_PATH } from '$lib/config/api';
 import { getDeviceProfileHeader, getDeviceIdentification } from '$lib/utils/deviceUtils';
 
 export interface UserSession {
@@ -87,10 +87,16 @@ function createAuthStore() {
       }
     },
     
-    getDeviceId() {
+    async getDeviceId() {
       if (!browser) return '';
       try {
-        return Cookies.get('DeviceId') || '';
+        const deviceId = Cookies.get('DeviceId');
+        if (deviceId) return deviceId;
+        
+        // Generate new device ID if none exists
+        const { sessionId } = await getDeviceIdentification();
+        Cookies.set('DeviceId', sessionId, { path: '/' });
+        return sessionId;
       } catch (error) {
         console.error('Failed to get device ID:', error);
         return '';
@@ -100,6 +106,9 @@ function createAuthStore() {
       if (!browser) return { isValid: false, error: 'Not in browser environment' };
 
       try {
+        // Ensure we have a device ID set
+        await store.getDeviceId();
+        
         const headers: { [key: string]: string } = {
           'Content-Type': 'application/json',
           'Authorization': `monobar_user=${userEmail},monobar_token=${jellyAccessToken}`,
@@ -116,10 +125,6 @@ function createAuthStore() {
         if (response.ok) {
           const data = await response.json();
           if (data.name && data.id && data.last_login && data.last_activity) {
-            if (data.deviceId) {
-              Cookies.set('DeviceId', data.deviceId, { path: '/', sameSite: 'lax' });
-              // console.log('Device ID set from Jellyfin profile:', data.deviceId);
-            }
             return { isValid: true, data };
           }
         }
@@ -135,7 +140,7 @@ function createAuthStore() {
       if (!browser) return { isValid: false, error: 'Not in browser environment' };
 
       try {
-        const url = new URL('https://api.darelisme.my.id/auth/v2/verify');
+        const url = new URL(`${BASE_API_AUTH_PATH}/verify`);
         url.searchParams.append('at', accessToken);
         
         const response = await fetch(url.toString(), {

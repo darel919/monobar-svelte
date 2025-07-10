@@ -84,10 +84,16 @@ export async function getDeviceProfileHeader(): Promise<string> {
   }
 }
 
-export function getDeviceIdentification(): { name: string; id: string } {
+export async function getDeviceIdentification(): Promise<{ name: string; id: string; sessionId: string }> {
   const browserInfo = getBrowserInfo();
+  const versionInfo = await getVersionInfo();
+
+  const deviceIdString = `monobar-device-Client: ${browserInfo.name} ${browserInfo.version}, Device: ${browserInfo.os}, ClientVersion: ${versionInfo.version}, Session: ${Math.floor(Date.now() / 1000)}`;
+  const sessionId = btoa(deviceIdString);
+
   return {
     name: `Monobar (${browserInfo.name})`,
-    id: `monobar-${Math.random().toString(36).substr(2, 9)}`
+    id: deviceIdString,
+    sessionId
   };
 }

@@ -173,12 +173,6 @@
                 {/if}
             {/each}
 
-            {#if libraryComingSoon && libraryComingSoon.length > 0}
-                <section class="mb-8">
-                    <h2 class="text-2xl mb-4">Coming Soon</h2>
-                    <LibraryViewDisplay data={libraryComingSoon} viewMode="default_thumb_home" />
-                </section>
-            {/if}
         {/if}
     {:catch error}
         <StopState

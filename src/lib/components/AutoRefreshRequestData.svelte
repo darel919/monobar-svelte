@@ -20,6 +20,7 @@
   export let title: string;
 
   let data: { data?: any[] } | null = null;
+  let lastGoodData: { data?: any[] } | null = null;
   let loading = true;
   let error: string | null = null;
   let refreshInterval: ReturnType<typeof setInterval> | null = null;
@@ -45,10 +46,14 @@
 
       const result = await response.json();
       data = { data: result };
+      if (result && result.length > 0) {
+        lastGoodData = data;
+      }
       error = null;
     } catch (err) {
       error = err instanceof Error ? err.message : 'Failed to fetch data';
       console.error(`Failed to fetch ${type} request data:`, err);
+      // Do not update data, keep lastGoodData
     } finally {
       loading = false;
     }
@@ -91,15 +96,21 @@
     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
   </div>
 {:else if error}
-  <div class="text-red-500 text-center py-8">
-    <p>Error loading {title}: {error}</p>
-    <button 
-      on:click={fetchRequestData}
-      class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-    >
-      Retry
-    </button>
-  </div>
+  {#if lastGoodData && lastGoodData.data && lastGoodData.data.length > 0}
+    <section class="my-4">
+      <RequestViewDisplay data={lastGoodData} {title} />
+    </section>
+  {:else}
+    <div class="text-red-500 text-center py-8">
+      <p>Error loading {title}: {error}</p>
+      <button 
+        on:click={fetchRequestData}
+        class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Retry
+      </button>
+    </div>
+  {/if}
 {:else if data}
  {#if data.data.length > 0}
     <section class="my-4">

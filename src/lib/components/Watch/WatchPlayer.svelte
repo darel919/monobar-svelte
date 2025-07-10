@@ -183,7 +183,7 @@ function handleArtEvents() {
     art.on('destroy', () => {
         stopPlaybackReporting();
         stopTimeTracking();
-        reportPlaybackStatus('stop');
+        reportPlaybackStatus('stop', true);
     });
     art.on('ended', () => {
         handleMediaEnd();
@@ -263,7 +263,7 @@ const adaptSubtitleFormat = () => {
     }
 };    
 
-function reportPlaybackStatus(intent: string) {
+function reportPlaybackStatus(intent: string, skipTimeout: boolean = false) {
     if (!art || !fullData?.playbackUrl) return;
     const status = getStatusData();
     if (!status) return;
@@ -275,8 +275,13 @@ function reportPlaybackStatus(intent: string) {
     };
     const authHeader = getAuthorizationHeader && getAuthorizationHeader();
     if (authHeader) headers['Authorization'] = authHeader;
+    
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    
+    if (!skipTimeout) {
+        timeoutId = setTimeout(() => controller.abort(), 3000);
+    }
 
     fetch(`${BASE_API_PATH}/status`, {
         method: 'POST',
@@ -310,7 +315,9 @@ function reportPlaybackStatus(intent: string) {
             console.warn('Error reporting playback status:', err);
         }
     }).finally(() => {
-        clearTimeout(timeoutId);
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
     });
 }
 

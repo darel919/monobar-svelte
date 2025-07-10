@@ -23,14 +23,15 @@ export function getAuthorizationHeader(cookies: any = null) {
     return null;
 }
 
-export function getSessionId(cookies: any = null) {
+export function getSessionId(cookies: any = null): string {
     if (browser) {
-        try {
-            return Cookies.get('DeviceId') || '';
-        } catch (error) {
-            console.error('Failed to get session ID:', error);
-            return '';
-        }
+        const deviceId = Cookies.get('DeviceId');
+        if (deviceId) return deviceId;
+        
+        // Generate a simple device ID if none exists
+        const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        Cookies.set('DeviceId', sessionId, { path: '/' });
+        return sessionId;
     } else if (cookies && typeof cookies.get === 'function') {
         // Server-side: get DeviceId from cookies
         return cookies.get('DeviceId') || '';
