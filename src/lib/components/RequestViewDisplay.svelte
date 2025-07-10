@@ -18,6 +18,7 @@
   function getImageSrc(images: any[] = []) {
     if (!images || images.length === 0) return null;
     const poster = images.find((img) => img.coverType === 'poster') || images[0];
+    console.log('Poster:', poster);
     return poster.dwsUrl || poster.remoteUrl || null;
   }
 
@@ -34,7 +35,7 @@
 </script>
 
 {#if data?.data && data.data.length > 0}
-  <h1 class="text-3xl font-light mb-4">{title}</h1>
+  <h1 class="text-2xl font-light mb-4">{title}</h1>
   <section class="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-8">
     {#each data.data as item (item.id)}
       <div class="flex flex-col items-center">
@@ -48,15 +49,22 @@
               borderRadius="rounded-lg"
               fallbackName={item.title}
             />
+            {#if item.downloadInfo?.percentage != null || item.percentage != null}
+              <div class="absolute bottom-0 left-0 w-full">
+                <div class="w-full h-2 bg-black/40">
+                  <div class="h-full bg-blue-500 transition-all" style="width: {(item.downloadInfo?.percentage ?? item.percentage)}%"></div>
+                </div>
+                <div class="w-full bg-black/20 text-white text-xs font-semibold text-center py-1 rounded-b-lg">
+                  {(item.downloadInfo?.percentage ?? item.percentage).toFixed(1)}%
+                </div>
+              </div>
+            {/if}
           {:else}
             <div class="flex items-center justify-center w-full h-full bg-gray-200 rounded-lg text-xs text-gray-500">Not available</div>
           {/if}
         </div>
         <section class="flex flex-col text-center items-center w-full">
           <h2 class="w-full text-lg font-bold truncate">{item.title}</h2>
-          {#if item.releaseDate}
-            <p class="text-xs opacity-50">{formatDate(item.releaseDate)}</p>
-          {/if}
         </section>
       </div>
     {/each}

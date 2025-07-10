@@ -8,7 +8,7 @@ Props:
 -->
 
 <script lang="ts">
-    import { onMount, onDestroy } from 'svelte';
+    import { onMount, onDestroy, afterUpdate } from 'svelte';
     import { browser } from '$app/environment';
     import { goto } from '$app/navigation';
     import YtPlayer from './TrailerPlayer.svelte';
@@ -65,6 +65,10 @@ Props:
     $: totalItems = carouselItems.length;
     $: currentItem = carouselItems[currentIndex] || null;
     $: showCarousel = settingsStore ? $settingsStore.showHomeHeroCarousel : true;
+
+    let prevLeftoversData: Promise<any> | null = null;
+    let prevRecommendationsData: Promise<any> | null = null;
+    let prevNextUpData: Promise<any> | null = null;
 
     async function loadCarouselData() {
         try {
@@ -247,6 +251,24 @@ Props:
     onDestroy(() => {
         stopCarousel();
         resetResumeTimeout();
+    });
+
+    afterUpdate(() => {
+        if (
+            leftoversData !== prevLeftoversData ||
+            recommendationsData !== prevRecommendationsData ||
+            nextUpData !== prevNextUpData
+        ) {
+            prevLeftoversData = leftoversData;
+            prevRecommendationsData = recommendationsData;
+            prevNextUpData = nextUpData;
+            loadCarouselData();
+            currentIndex = 0;
+            fadeClass = 'opacity-100';
+            stopCarousel();
+            resetResumeTimeout();
+            startCarousel();
+        }
     });
 </script>
 

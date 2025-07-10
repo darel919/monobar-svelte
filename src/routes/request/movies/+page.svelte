@@ -1,22 +1,18 @@
 <script lang="ts">
     import RequestViewDisplay from '$lib/components/RequestViewDisplay.svelte';
+    import AutoRefreshRequestData from '$lib/components/AutoRefreshRequestData.svelte';
 
     export let data;
 
-    let movieRequestDataPromise = data.movieRequestData;
     let movieRequestWaitingListDataPromise = data.movieRequestWaitingListData;
 </script>
 
 <main class="min-h-screen p-8 pt-20">
-    <h1 class="text-5xl font-light mb-8">Movie Requests</h1>
+    <h1 class="text-4xl font-light mb-8">Movie Requests</h1>
 
-    {#await movieRequestDataPromise}
-        <!-- Display nothing -->
-    {:then movieRequestData}
-        <section class="my-4">
-            <RequestViewDisplay data={movieRequestData} title="coming soon"/>
-        </section>
-    {/await}
+    <section class="my-4">
+        <AutoRefreshRequestData type="movies" title="coming soon" />
+    </section>
 
     {#await movieRequestWaitingListDataPromise}
         <!-- Display nothing -->
