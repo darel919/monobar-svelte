@@ -49,7 +49,7 @@
     <ul class="list bg-base-100 rounded-box shadow-md">
       {#each data.data as item (item.id)}
         <li class="list-row">
-          <!-- {console.log('Item:', item)} -->
+          {console.log('Item:', item)}
           <div>
             {#if getImageSrc(item)}
               <img class="h-24 w-16 rounded-sm" src={getImageSrc(item)} alt={item.title || 'Thumbnail'} />
@@ -64,17 +64,19 @@
               <h2 class="text-2xl font-light">{item.title}</h2>
               <div class="text-sm uppercase font-semibold opacity-60">{getSeasonInfo(item)}</div>
             </section>
-            <section>
-              <div class="list-col-wrap">
-                <div class="w-full">
-                  <div class="flex justify-between text-xs mb-1">
-                    <span>Download Progress</span>
-                    <span>{getDownloadPercentage(item).toFixed(1)}%</span>
+            {#if item.downloadInfo}
+              <section>
+                <div class="list-col-wrap">
+                  <div class="w-full">
+                    <div class="flex justify-between text-xs mb-1">
+                      <span>Download Progress</span>
+                      <span>{getDownloadPercentage(item).toFixed(1)}%</span>
+                    </div>
+                    <progress class="progress progress-primary w-full h-2" value={getDownloadPercentage(item)} max="100"></progress>
                   </div>
-                  <progress class="progress progress-primary w-full h-2" value={getDownloadPercentage(item)} max="100"></progress>
                 </div>
-              </div>
-            </section>
+              </section>
+            {/if}
           
             
           </div>
