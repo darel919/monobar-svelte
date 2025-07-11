@@ -282,7 +282,7 @@ Props:
         role="button"
         tabindex="0"
     >
-    {console.log('Current Item:', currentItem)}
+    <!-- {console.log('Current Item:', currentItem)} -->
         <!-- Background with YtPlayer -->
         <div class="absolute inset-0 transition-opacity duration-500 {fadeClass}">
             <YtPlayer 

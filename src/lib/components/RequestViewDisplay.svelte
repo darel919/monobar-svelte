@@ -1,13 +1,14 @@
 <!--
   RequestViewDisplay.svelte
-  Displays a titled section for request data in a responsive poster grid, matching LibraryViewDisplay's "poster grid" mode.
+  Displays a titled section for request data using DaisyUI's list component.
   Props:
     - data: { data?: any[] } — The request data object, expects a 'data' array property.
     - title: string — The section title to display and use in fallback message.
   Renders:
     - For each item in data.data:
-        - ImageComponent for the first available image (dwsUrl > remoteUrl > fallback)
-        - Title and release date (formatted)
+        - thumbPath image on the left
+        - Series title and season information
+        - Progress bar with download percentage
     - Fallback message if no data is available
 -->
 <script lang="ts">
@@ -15,60 +16,73 @@
   export let data: { data?: any[] };
   export let title: string;
 
-  function getImageSrc(images: any[] = []) {
-    if (!images || images.length === 0) return null;
-    const poster = images.find((img) => img.coverType === 'poster') || images[0];
-    console.log('Poster:', poster);
+  function getSeasonInfo(item: any): string {
+    if (item.episodes && item.episodes.length > 0) {
+      const seasons = [...new Set(item.episodes.map((ep: any) => ep.seasonNumber))];
+      if (seasons.length === 1) {
+        return `Season ${seasons[0]}`;
+      } else if (seasons.length > 1) {
+        return `Seasons ${Math.min(...seasons)}-${Math.max(...seasons)}`;
+      }
+    }
+    if (item.seasons && item.seasons.length > 0) {
+      return `${item.seasons.length} Season${item.seasons.length > 1 ? 's' : ''}`;
+    }
+    return '';
+  }
+
+  function getDownloadPercentage(item: any): number {
+    return item.downloadInfo?.percentage ?? item.percentage ?? 0;
+  }
+
+  function getImageSrc(item: any): string | null {
+    if (!item.images || item.images.length === 0) return null;
+    const poster = item.images.find((img: any) => img.coverType === 'poster');
+    if (!poster) return null;
     return poster.dwsUrl || poster.remoteUrl || null;
-  }
-
-  function getImageAlt(item: any) {
-    return item.title || title || 'Image';
-  }
-
-  function formatDate(dateString: string | undefined): string {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '';
-    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
   }
 </script>
 
 {#if data?.data && data.data.length > 0}
-  <h1 class="text-2xl font-light mb-4">{title}</h1>
-  <section class="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-8">
-    {#each data.data as item (item.id)}
-      <div class="flex flex-col items-center">
-        <div class="relative w-full mb-4 aspect-[2/3]">
-          {#if getImageSrc(item.images)}
-            <ImageComponent
-              src={getImageSrc(item.images)}
-              alt={getImageAlt(item)}
-              showSkeleton={true}
-              aspectRatio="2/3"
-              borderRadius="rounded-lg"
-              fallbackName={item.title}
-            />
-            {#if item.downloadInfo?.percentage != null || item.percentage != null}
-              <div class="absolute bottom-0 left-0 w-full">
-                <div class="w-full h-2 bg-black/40">
-                  <div class="h-full bg-blue-500 transition-all" style="width: {(item.downloadInfo?.percentage ?? item.percentage)}%"></div>
-                </div>
-                <div class="w-full bg-black/20 text-white text-xs font-semibold text-center py-1 rounded-b-lg">
-                  {(item.downloadInfo?.percentage ?? item.percentage).toFixed(1)}%
-                </div>
+  <main class="mx-auto">
+    <h1 class="text-2xl font-light mb-4">{title}</h1>
+    <ul class="list bg-base-100 rounded-box shadow-md">
+      {#each data.data as item (item.id)}
+        <li class="list-row">
+          <!-- {console.log('Item:', item)} -->
+          <div>
+            {#if getImageSrc(item)}
+              <img class="h-24 w-16 rounded-sm" src={getImageSrc(item)} alt={item.title || 'Thumbnail'} />
+            {:else}
+              <div class="size-10 rounded-box bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+                No Image
               </div>
             {/if}
-          {:else}
-            <div class="flex items-center justify-center w-full h-full bg-gray-200 rounded-lg text-xs text-gray-500">Not available</div>
-          {/if}
-        </div>
-        <section class="flex flex-col text-center items-center w-full">
-          <h2 class="w-full text-lg font-bold truncate">{item.title}</h2>
-        </section>
-      </div>
-    {/each}
-  </section>
+          </div>
+          <div class="flex flex-col justify-between">
+            <section>
+              <h2 class="text-2xl font-light">{item.title}</h2>
+              <div class="text-sm uppercase font-semibold opacity-60">{getSeasonInfo(item)}</div>
+            </section>
+            <section>
+              <div class="list-col-wrap">
+                <div class="w-full">
+                  <div class="flex justify-between text-xs mb-1">
+                    <span>Download Progress</span>
+                    <span>{getDownloadPercentage(item).toFixed(1)}%</span>
+                  </div>
+                  <progress class="progress progress-primary w-full h-2" value={getDownloadPercentage(item)} max="100"></progress>
+                </div>
+              </div>
+            </section>
+          
+            
+          </div>
+          
+        </li>
+      {/each}
+    </ul>
+  </main>
 {:else}
   <p>No {title} data available.</p>
 {/if}

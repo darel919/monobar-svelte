@@ -177,17 +177,20 @@
                     </div>
                 </div>
             {/if}
-              <input
-                bind:this={searchInputRef}
-                type="text"
-                value={searchQuery}
-                on:input={handleSearchChange}
-                on:keydown={handleKeyDown}
-                on:focus={handleInputFocus}
-                class="input input-sm h-10 w-full text-lg font-light {activePrefix ? 'pl-20' : 'pl-3'} pr-8 rounded-md"
-                {placeholder}
-                autocomplete="off"
-            />
+              
+            <label class="input">
+                <input
+                    bind:this={searchInputRef}
+                    type="search"
+                    value={searchQuery}
+                    on:input={handleSearchChange}
+                    on:keydown={handleKeyDown}
+                    on:focus={handleInputFocus}
+                    class="h-10 w-full text-lg font-light {activePrefix ? 'pl-13' : 'pl-0'} pr-8 rounded-md"
+                    {placeholder}
+                    autocomplete="off"
+                />
+            </label>
             
             {#if isLoading}
                 <div class="absolute right-3 top-1/2 -translate-y-1/2">
