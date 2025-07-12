@@ -43,12 +43,11 @@ onMount(async () => {
           </div>
           <ul class="list-disc ml-6 text-sm">
             {#each change.changes as entry}
-              <li>{entry.message}</li>
+              <li>{@html entry.message}</li>
             {/each}
           </ul>
           <a href={`https://github.com/darel919/monobar-svelte/commit/${change.sha_id}`} target="_blank" class="mt-2 text-xs text-gray-400">
             Commit: <span class="font-mono">{change.sha_id}
-
             </span>
         </a>
         </li>
