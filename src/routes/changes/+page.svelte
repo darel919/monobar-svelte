@@ -12,6 +12,7 @@ onMount(async () => {
   try {
     const versionInfo = await getVersionInfo();
     currentVersion = versionInfo.version.replace(/^[a-zA-Z]+-/, '');
+    document.title = `Changelog (${currentVersion})`;
   } catch (error) {
     console.error('Failed to load version info:', error);
   }

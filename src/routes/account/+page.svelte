@@ -11,10 +11,8 @@ function handleSignOut() {
     <title>your account - moNobar</title>
 </svelte:head>
 
-<section class="mx-auto px-8 min-h-screen mt-20">
+<section class=" max-w-5xl mx-auto px-8 my-24">
     <h1 class="text-4xl font-extralight mb-6">your account</h1>
-    <!-- {console.log('Auth Store:', $authStore)} -->
-
     {#if $authStore.isAuthenticated && $authStore.userSession?.user}
         <div class="flex items-center gap-6 mb-8">
             {#if $authStore.userSession.user.user_metadata?.avatar_url || $authStore.userSession.user.user_metadata?.avatar}

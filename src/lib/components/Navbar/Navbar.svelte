@@ -159,16 +159,19 @@
                         <!-- Authentication Section -->
                         {#if isAuthenticated}
                             <li>
-                                <div class="flex flex-col gap-2 p-2">
-                                    <a href="/account" 
-                                        class="text-lg {$page.url.pathname === '/account' ? 'bg-base-300 font-bold' : ''}"
-                                        onclick={closeDrawer}
-                                    >
-                                    <div class="text-sm opacity-70">
-                                        Logged in as: {userSession?.user?.email || userSession?.user?.user_metadata?.email || 'User'}
-                                    </div>
-                                    </a>
-                                </div>
+                                <a 
+                                    href="/account" 
+                                    class="text-lg overflow-hidden flex flex-row {$page.url.pathname === '/account' ? 'bg-base-300 font-bold' : ''}"
+                                    onclick={closeDrawer}
+                                >
+                                    <img
+                                        src={userSession?.user?.user_metadata?.avatar_url || userSession?.user?.user_metadata?.avatar}
+                                        alt="User Avatar"
+                                        class="h-5 w-5 rounded-full object-cover border border-base-300 shadow-sm hover:opacity-80 transition-opacity duration-150"
+                                        referrerpolicy="no-referrer"
+                                    />
+                                    <p class=" line-clamp-1 w-full">{userSession?.user?.user_metadata.name || userSession?.user?.email || userSession?.user?.user_metadata?.email || 'User'}</p>
+                                </a>
                             </li>
                         {:else}
                             <li>
@@ -258,6 +261,7 @@
                                  
                             </ul>
                         </li>
+                        <div class="divider"></div>
                         <!-- Settings -->
                         <li>
                             <a 
@@ -275,16 +279,19 @@
                         <!-- Profile Section -->
                         {#if isAuthenticated}
                             <li>
-                                <div class="flex flex-col gap-2 p-2">
-                                    <a href="/account" 
-                                        class="text-lg {$page.url.pathname === '/account' ? 'bg-base-300 font-bold' : ''}"
-                                        onclick={closeDrawer}
-                                    >
-                                    <div class="text-sm opacity-70">
-                                        Logged in as: {userSession?.user?.email || userSession?.user?.user_metadata?.email || 'User'}
-                                    </div>
-                                    </a>
-                                </div>
+                                <a 
+                                    href="/account" 
+                                    class="text-lg overflow-hidden flex flex-row {$page.url.pathname === '/account' ? 'bg-base-300 font-bold' : ''}"
+                                    onclick={closeDrawer}
+                                >
+                                    <img
+                                        src={userSession?.user?.user_metadata?.avatar_url || userSession?.user?.user_metadata?.avatar}
+                                        alt="User Avatar"
+                                        class="h-5 w-5 rounded-full object-cover border border-base-300 shadow-sm hover:opacity-80 transition-opacity duration-150"
+                                        referrerpolicy="no-referrer"
+                                    />
+                                    <p class=" line-clamp-1 w-full">{userSession?.user?.user_metadata.name || userSession?.user?.email || userSession?.user?.user_metadata?.email || 'User'}</p>
+                                </a>
                             </li>
                         {:else}
                             <li>
