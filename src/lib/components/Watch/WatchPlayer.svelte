@@ -691,7 +691,26 @@ function handleMediaEnd() {
                 goto(`/info?id=${seriesId}&type=Series`, { replaceState: true });
                 return;
             }
-            // If not the last episode, let normal play next logic handle it
+            
+            // Check if auto-progress should happen when media ends
+            const settings = settingsStore.get();
+            if (settings.playNextEnabled && !playNextDismissedForEpisode) {
+                // Get next episode info if we don't have it
+                if (!nextEpisodeInfo) {
+                    const nextEpisode = findNextEpisode(id, seriesData);
+                    if (nextEpisode) {
+                        nextEpisodeInfo = getNextEpisodeInfo(nextEpisode, seriesData);
+                    }
+                }
+                
+                // If we have a next episode and auto-progress threshold is 0 or higher than remaining time,
+                // auto-progress immediately
+                if (nextEpisodeInfo && nextEpisodeInfo.id && settings.playNextAutoProgressThreshold >= 0) {
+                    if (isDev) console.log('Auto-progressing to next episode on media end');
+                    handlePlayNext();
+                    return;
+                }
+            }
         } else if (type === 'Movie' && id) {
             // For movies, redirect to movie info page when ended
             if (isDev) console.log('Movie ended, redirecting to movie info:', id);

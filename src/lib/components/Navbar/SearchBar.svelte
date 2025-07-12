@@ -178,7 +178,7 @@
                 </div>
             {/if}
               
-            <label class="input">
+            <label class="input bg-transparent">
                 <input
                     bind:this={searchInputRef}
                     type="search"
@@ -209,7 +209,7 @@
     {#if showResults && searchQuery.trim() !== ''}
         <div class="absolute top-full w-full">
             <div class="relative mt-2">
-                <div class="absolute w-full bg-base-200 rounded-2xl shadow-xl overflow-hidden">
+                <div class="absolute w-full bg-black rounded-md shadow-xl overflow-hidden">
                     {#if isLoading}
                         <div class="p-4 text-sm opacity-50 flex items-center gap-2">
                             <div class="loading loading-spinner loading-xs"></div>

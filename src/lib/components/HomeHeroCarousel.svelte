@@ -326,22 +326,22 @@ Props:
                                 </span>
                             </div>
                         {/if}
-                        {#if currentItem.CommunityRating && currentItem.People?.Actors?.content && currentItem.People.Actors.content.length > 0}
+                        <!-- {#if currentItem.CommunityRating && currentItem.People?.Actors?.content && currentItem.People.Actors.content.length > 0}
                             <span class="hidden md:flex items-center justify-center h-6"><span class="bg-white/100 rounded-full w-2 h-2 block"></span></span>
-                        {/if}
+                        {/if} -->
                         <!-- Actors -->
-                        {#if currentItem.People?.Actors?.content && currentItem.People.Actors.content.length > 0}
+                        <!-- {#if currentItem.People?.Actors?.content && currentItem.People.Actors.content.length > 0}
                             <div class="flex flex-col md:flex-row items-start md:items-center gap-1 md:gap-3 w-full">
                                 <span class="text-white/70 text-sm font-medium mb-1 md:mb-0">Starring:</span>
-                                <div class="flex flex-wrap md:flex-nowrap items-center gap-2 md:gap-3 w-full">
+                                <div class="flex flex-wrap md:flex-nowrap items-center gap-2 md:gap-3 w-full line-clamp-1">
                                     {#each currentItem.People.Actors.content.slice(0, 3) as actor}
-                                        <div class="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-3 py-2 min-w-0 max-w-32 h-8 overflow-hidden text-white text-sm font-medium whitespace-nowrap">
+                                        <div class="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-3 py-2 min-w-0 max-w-32 h-8 overflow-hidden text-white text-sm font-medium ">
                                             {actor.Name}
                                         </div>
                                     {/each}
                                 </div>
                             </div>
-                        {/if}
+                        {/if} -->
                     </section>
 
                 

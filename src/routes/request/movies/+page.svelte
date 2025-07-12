@@ -7,7 +7,7 @@
     let movieRequestWaitingListDataPromise = data.movieRequestWaitingListData;
 </script>
 
-<main class="min-h-screen max-w-4xl mx-auto p-8 pt-20">
+<main class="min-h-screen max-w-5xl mx-auto p-8 pt-24">
     <h1 class="text-4xl font-light mb-8">Movie Requests</h1>
 
     <section class="my-4">

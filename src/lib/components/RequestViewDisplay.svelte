@@ -48,24 +48,24 @@
     <h1 class="text-2xl font-light mb-4">{title}</h1>
     <ul class="list bg-base-100 rounded-box shadow-md">
       {#each data.data as item (item.id)}
-        <li class="list-row">
+        <li class="list-row items-center">
           {console.log('Item:', item)}
           <div>
             {#if getImageSrc(item)}
-              <img class="h-24 w-16 rounded-sm" src={getImageSrc(item)} alt={item.title || 'Thumbnail'} />
+              <img class="h-28 w-18 rounded-sm" src={getImageSrc(item)} alt={item.title || 'Thumbnail'} />
             {:else}
-              <div class="size-10 rounded-box bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+              <div class="h-28 w-18 rounded-sm bg-gray-200 flex items-center justify-center text-xs text-gray-500">
                 No Image
               </div>
             {/if}
           </div>
           <div class="flex flex-col justify-between">
-            <section>
-              <h2 class="text-2xl font-light">{item.title}</h2>
+            <section class="">
+              <p class="text-2xl font-light">{item.title}</p>
               <div class="text-sm uppercase font-semibold opacity-60">{getSeasonInfo(item)}</div>
             </section>
             {#if item.downloadInfo}
-              <section>
+              <section class="my-4">
                 <div class="list-col-wrap">
                   <div class="w-full">
                     <div class="flex justify-between text-xs mb-1">

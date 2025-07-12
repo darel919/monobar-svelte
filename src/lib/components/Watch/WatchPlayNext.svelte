@@ -32,14 +32,14 @@ Props:
   $: actualAutoProgressThreshold = autoProgressThreshold ?? settingsStore.get().playNextAutoProgressThreshold;
 
   // Use the actual secondsRemaining from the player instead of maintaining our own timer
-  $: if (visible && nextEpisodeInfo && secondsRemaining > 0) {
+  $: if (visible && nextEpisodeInfo && secondsRemaining >= 0) {
     const timeIntoPrompt = actualShowThreshold - secondsRemaining;
     const totalPromptTime = actualShowThreshold - actualAutoProgressThreshold;
     progress = Math.min(100, Math.max(0, (timeIntoPrompt / totalPromptTime) * 100));
   }
 
   // Check for auto-progress based on player's remaining time
-  $: if (visible && nextEpisodeInfo && nextEpisodeInfo.id && secondsRemaining <= actualAutoProgressThreshold && secondsRemaining > 0 && !autoProgressTriggered) {
+  $: if (visible && nextEpisodeInfo && nextEpisodeInfo.id && secondsRemaining <= actualAutoProgressThreshold && secondsRemaining >= 0 && !autoProgressTriggered) {
     autoProgressTriggered = true;
     dispatch('playNext');
   }
@@ -103,7 +103,7 @@ Props:
       
       <div class="flex items-center justify-between">
         <span class="text-sm text-base-content/60">
-          {autoProgressTriggered ? 'Loading next episode...' : secondsRemaining <= actualAutoProgressThreshold ? 'Loading next episode...' : `Playing next episode in ${Math.round(secondsRemaining)}s`}
+          {autoProgressTriggered ? 'Loading next episode...' : secondsRemaining <= actualAutoProgressThreshold ? 'Loading next episode...' : `Playing next episode in ${Math.max(0, Math.round(secondsRemaining))}s`}
         </span>
         <button
           on:click={handlePlayNext}
