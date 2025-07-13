@@ -1,12 +1,10 @@
 <script>
     import { onMount } from 'svelte';
-    import { page } from '$app/stores';
     import { goto } from '$app/navigation';
     import { browser } from '$app/environment';
     import { LibraryViewDisplay } from '$lib';
     import StopState from '$lib/components/StopState.svelte';
-    import ImageComponent from '$lib/components/ImageComponent.svelte';    
-    import { parseSearchInput, getSearchPlaceholder, buildSearchUrl, buildFullQuery, SEARCH_TYPES } from '$lib/utils/searchUtils.js';    
+    import { getSearchPlaceholder, buildSearchUrl, SEARCH_TYPES, getSearchInputPaddingLeft } from '$lib/utils/searchUtils.js';    
     export let data;    
     $: ({ query: initialQuery, type, includeExternal: initialIncludeExternal, results, error, onlineLookupError, searchTypeDisplay } = data);    
     
@@ -86,7 +84,8 @@
         isPending = true;
         goto(searchUrl).finally(() => {
             isPending = false;
-            showLoading = false;        });
+            showLoading = false;        
+        });
     }
 
     /**
@@ -105,15 +104,16 @@
                     activePrefix = possiblePrefix;
                     const newQuery = inputValue.substring(colonIndex + 1);
                     query = newQuery;
-                    
+
+                    // Do NOT navigate here. Only update state. Navigation happens on submit/Enter.
                     if (searchInputRef) {
                         searchInputRef.value = newQuery;
                         searchInputRef.focus();
                         searchInputRef.setSelectionRange(newQuery.length, newQuery.length);
                     }
-                    
                     return;
-                }            }
+                }            
+            }
             
             query = inputValue;
         }
@@ -127,15 +127,17 @@
         performSearch();
     }    function performSearch() {
         if (!query.trim() && !activePrefix) return;
-        
+        isPending = true;
         let searchUrl;
         if (activePrefix) {
             searchUrl = buildSearchUrl(query, { type: activePrefix, includeExternal });
         } else {
             searchUrl = buildSearchUrl(query, { includeExternal });
         }
-        
-        goto(searchUrl);    }
+        goto(searchUrl).finally(() => {
+            isPending = false;
+        });    
+    }
 
     /**
      * @param {KeyboardEvent} e
@@ -146,12 +148,15 @@
             activePrefix = null;
             query = '';
         }
-    }    function handlePrefixRemove() {
+    }    
+    function handlePrefixRemove() {
         activePrefix = null;
         if (searchInputRef) {
             searchInputRef.focus();
         }
     }
+
+    $: activePrefixDisplay = activePrefix && SEARCH_TYPES[activePrefix]?.displayName ? SEARCH_TYPES[activePrefix].displayName : activePrefix;
 </script>
 
 <svelte:head>
@@ -167,7 +172,7 @@
             {#if activePrefix}
                 <div class="absolute left-2 flex items-center gap-1 z-10">
                     <div class="bg-base-200 px-4 py-1 rounded-none text-sm flex items-center gap-2 shadow-sm">
-                        {activePrefix}
+                        {activePrefixDisplay}
                         <button
                             type="button"
                             class="ml-2 text-gray-500 hover:text-gray-700"
@@ -185,7 +190,7 @@
                 value={query}
                 on:input={handleInput}
                 on:keydown={handleKeyDown}
-                class="input input-bordered w-full {activePrefix ? 'pl-28' : ''}"
+                class={`input input-bordered w-full ${getSearchInputPaddingLeft(activePrefix)}`}
                 placeholder={placeholder}
                 autocomplete="off"
             />            
@@ -200,28 +205,11 @@
             <input type="hidden" name="q" value={query} />
         {/if}
         
-        {#if !activePrefix}
-            <label class="flex items-center gap-2 cursor-pointer">
-                <input
-                    type="checkbox"
-                    name="includeExternal"
-                    value="true"
-                    checked={includeExternal}
-                    on:change={handleCheckbox}
-                    class="checkbox"
-                />
-                <span class="label-text text-white">Online Lookup</span>
-            </label>
-        {/if}
-        
         <button type="submit" class="btn btn-primary w-full text-inherit" disabled={isPending}>
             {#if isPending}
                 <span class="flex items-center justify-center gap-2">
-                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                    </svg>
-                    Loading
+                    <span class="loading loading-spinner loading-sm"></span>
+                    Searching
                 </span>
             {:else}
                 Search
@@ -252,6 +240,11 @@
                     <LibraryViewDisplay 
                         viewMode="default_search_genre"
                         data={results} 
+                    />
+                    {:else if type === 'request_movies' || type === 'request_shows'}
+                    <LibraryViewDisplay 
+                        viewMode="default_search"
+                        data={results}
                     />
                     {:else}
                      <LibraryViewDisplay 

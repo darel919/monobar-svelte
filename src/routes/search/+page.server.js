@@ -1,4 +1,4 @@
-import { searchData, getLibraryData, getGenreData } from '$lib/server/api.js';
+import { searchData, getLibraryData, getGenreData, searchMovieRequests, searchShowsRequests } from '$lib/server/api.js';
 import { getSearchTypeDisplayName, parseSearchInput } from '$lib/utils/searchUtils.js';
 
 export async function load({ url, fetch, cookies }) {
@@ -31,8 +31,17 @@ export async function load({ url, fetch, cookies }) {
         onlineLookupError = true;
     } else if (query.trim()) {
         try {
-            // Try using the dedicated search API first
-            const searchResult = await searchData(parsedQuery || query, type, includeExternal, fetch, url, cookies);
+            let searchResult;
+            
+            // Handle request search types
+            if (type === 'request_movies') {
+                searchResult = await searchMovieRequests(parsedQuery || query, fetch, url, cookies);
+            } else if (type === 'request_shows') {
+                searchResult = await searchShowsRequests(parsedQuery || query, fetch, url, cookies);
+            } else {
+                // Try using the dedicated search API first
+                searchResult = await searchData(parsedQuery || query, type, includeExternal, fetch, url, cookies);
+            }
             
             if (searchResult.data && searchResult.data.length > 0) {
                 results = searchResult.data;
@@ -46,8 +55,8 @@ export async function load({ url, fetch, cookies }) {
                         (genre.SortName?.toLowerCase().includes(searchTerm.toLowerCase()))
                     );
                 }
-            } else {
-                // Fallback for other search types
+            } else if (!type || (type !== 'request_movies' && type !== 'request_shows')) {
+                // Fallback for other search types (excluding request types)
                 const searchTerm = parsedQuery || query;
                 const libraryData = await getLibraryData(null, fetch, url, {}, cookies);
                 if (libraryData.data && Array.isArray(libraryData.data)) {
@@ -60,7 +69,7 @@ export async function load({ url, fetch, cookies }) {
                 }
             }
             
-            if (searchResult.error) {
+            if (searchResult && searchResult.error) {
                 error = searchResult.error;
             }
         } catch (err) {

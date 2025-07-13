@@ -8,14 +8,22 @@
 
 <main class="min-h-screen max-w-5xl mx-auto p-8 pt-24">
     <h1 class="text-4xl font-light mb-8">media requests</h1>
+    <a href="/search?type=request_movies" class="btn btn-primary mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+</svg>
 
+        Search Movies</a>
     <section class="my-8">
-        <h2 class="text-2xl font-light mb-8">coming soon movies</h2>
-        <AutoRefreshRequestData type="movies"/>
+        <AutoRefreshRequestData type="movies" title="coming soon movies"/>
     </section>
+        <a href="/search?type=request_shows" class="btn btn-primary mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
 
+            Search TV series</a>
     <section class="my-8">
-        <h2 class="text-2xl font-light mb-8">coming soon tv series</h2>
-        <AutoRefreshRequestData type="shows" />
+        <AutoRefreshRequestData type="shows" title="coming soon tv shows"/>
     </section>
 </main>

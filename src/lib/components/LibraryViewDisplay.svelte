@@ -11,6 +11,7 @@ Props:
 <script lang="ts">    
     import { onMount } from 'svelte';
     import { browser } from '$app/environment';
+    import { page } from '$app/stores';
     import HoverModalView from './HoverModalView.svelte';
     import ImageComponent from './ImageComponent.svelte';
     import { useSettingsStore } from '$lib/stores/settings';
@@ -18,6 +19,8 @@ Props:
 
 
     interface LibraryItem {
+        type: string | undefined;
+        images: any;
         Id?: string;
         id?: string;
         Name: string;
@@ -359,22 +362,59 @@ Props:
     <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
         {#each data as item}
             {@const itemId = item.Id || item.id || item.Name || ''}
-              <a
-                href={disableClick ? undefined : `/info?id=${item.id}&type=${item.type}`}
+            <a
+                href={disableClick ? undefined : (item.status === 'ready' ? `/info?id=${item.id}&type=${item.type}` : (item.status === 'requested' ? ($page.url.searchParams.get('type') === 'request_movies' ? '/request/movies' : '/request/shows') : undefined))}
                 class={`flex flex-col items-center ${itemHoverClass}`}
                 title={item.Overview}
-                style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
+                style={disableClick ? 'cursor: default; pointer-events: none;' : (item.status !== 'ready' && item.status !== 'requested' ? 'cursor: default; pointer-events: none;' : '')}
             >
-                <div class="relative w-full mb-2 aspect-[2/1]">                    
-                    {#if item.thumbPath || item.posterPath}                        
-                        <ImageComponent 
-                            src={item.thumbPath || item.posterPath}
-                            alt={item.Name || 'Image'}
-                            aspectRatio="2/1"
-                            fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
-                        />
+                <div class="relative w-full mb-2 aspect-[2/1]">
+                    {#if item.status === 'ready'}
+                        {#if item.thumbPath || item.posterPath}
+                            <ImageComponent 
+                                src={item.thumbPath || item.posterPath}
+                                alt={item.Name || 'Image'}
+                                aspectRatio="2/1"
+                                fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
+                            />
+                        {:else if Array.isArray(item.images) && item.images.length}
+                            {@const posterImg = item.images.find(imgObj => imgObj.coverType === 'poster' && (imgObj.dwsUrl || imgObj.remoteUrl))}
+                            {#if posterImg}
+                                <ImageComponent 
+                                    src={posterImg.dwsUrl || posterImg.remoteUrl}
+                                    alt={item.Name || 'Image'}
+                                    aspectRatio="2/1"
+                                    fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
+                                />
+                            {:else}
+                                <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
+                            {/if}
+                        {:else}
+                            <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
+                        {/if}
                     {:else}
-                        <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
+                        {#if Array.isArray(item.images) && item.images.length}
+                            {@const posterImg = item.images.find(imgObj => imgObj.coverType === 'poster' && (imgObj.dwsUrl || imgObj.remoteUrl))}
+                            {#if posterImg}
+                                <ImageComponent 
+                                    src={posterImg.dwsUrl || posterImg.remoteUrl}
+                                    alt={item.Name || 'Image'}
+                                    aspectRatio="2/1"
+                                    fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
+                                />
+                            {:else}
+                                <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
+                            {/if}
+                        {:else if item.images?.dwsUrl || item.images?.remoteUrl}
+                            <ImageComponent 
+                                src={item.images.dwsUrl || item.images.remoteUrl}
+                                alt={item.Name || 'Image'}
+                                aspectRatio="2/1"
+                                fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
+                            />
+                        {:else}
+                            <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
+                        {/if}
                     {/if}
                 </div>
                 <section class="flex flex-col text-center items-center w-full">

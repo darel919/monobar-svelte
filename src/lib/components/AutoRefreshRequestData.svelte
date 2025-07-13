@@ -65,7 +65,7 @@
     }
     
     if (data?.data && data.data.length > 0) {
-      refreshInterval = setInterval(fetchRequestData, 10000);
+      refreshInterval = setInterval(fetchRequestData, 7000);
     }
   }
 
@@ -113,8 +113,9 @@
   {/if}
 {:else if data}
  {#if data.data.length > 0}
+    <h2 class="text-2xl font-light mb-8"> {title}</h2>
     <section class="my-4">
-      <RequestViewDisplay {data} {title} />
+      <RequestViewDisplay {data} />
     </section>
   {:else}
     <p class="text-center text-gray-500">No {title} request data.</p>

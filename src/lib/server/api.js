@@ -569,6 +569,31 @@ export async function getMovieRequestWaitingListData(fetch, url, cookies) {
         };
     }
 }
+export async function searchMovieRequests(query, fetch, url, cookies) {
+    if (!query || !query.trim()) {
+        return { data: [], error: null };
+    }
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
+        };
+        const response = await fetch(`${BASE_API_PATH}/request/movies/search?q=${encodeURIComponent(query.trim())}`, {
+            method: 'GET',
+            headers
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+        }
+        const data = await response.json();
+        return { data };
+    } catch (error) {
+        return { data: [], error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+}
 
 
 
@@ -635,5 +660,30 @@ export async function getShowsRequestWaitingListData(fetch, url, cookies) {
             data: null,
             error: error instanceof Error ? error.message : 'Unknown error'
         };
+    }
+}
+export async function searchShowsRequests(query, fetch, url, cookies) {
+    if (!query || !query.trim()) {
+        return { data: [], error: null };
+    }
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
+        };
+        const response = await fetch(`${BASE_API_PATH}/request/shows/search?q=${encodeURIComponent(query.trim())}`, {
+            method: 'GET',
+            headers
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+        }
+        const data = await response.json();
+        return { data };
+    } catch (error) {
+        return { data: [], error: error instanceof Error ? error.message : 'Unknown error' };
     }
 }

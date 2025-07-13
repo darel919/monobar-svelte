@@ -2,7 +2,7 @@
     import { goto } from '$app/navigation';
     import { onMount } from 'svelte';
     import { browser } from '$app/environment';
-    import { parseSearchInput, getSearchPlaceholder, buildSearchUrl, SEARCH_TYPES } from '$lib/utils/searchUtils.js';
+    import { parseSearchInput, getSearchPlaceholder, buildSearchUrl, SEARCH_TYPES, getSearchApiEndpoint, getSearchInputPaddingLeft } from '$lib/utils/searchUtils.js';
     import { getSessionHeaders } from '$lib/utils/authUtils';
     
     let searchQuery = '';
@@ -26,8 +26,9 @@
      */
     async function clientSearch(query, type) {
         try {
-            let searchUrl = `/api/search?q=${encodeURIComponent(query.trim())}`;
-            if (type) {
+            const endpoint = getSearchApiEndpoint(type);
+            let searchUrl = `${endpoint}?q=${encodeURIComponent(query.trim())}`;
+            if (type && !type.startsWith('request_')) {
                 searchUrl += `&type=${encodeURIComponent(type)}`;
             }
             
@@ -157,6 +158,8 @@
         if (searchInputRef) {
             searchInputRef.focus();
         }    }
+
+    $: activePrefixDisplay = activePrefix && SEARCH_TYPES[activePrefix]?.displayName ? SEARCH_TYPES[activePrefix].displayName : activePrefix;
 </script>
 
 <div class="relative w-full max-w-md" bind:this={searchContainerRef}>
@@ -166,7 +169,7 @@
             {#if activePrefix}
                 <div class="absolute left-2 flex items-center gap-1 z-10">
                     <div class="bg-base-200 px-2 py-1 rounded text-xs flex items-center gap-1">
-                        {activePrefix}
+                        {activePrefixDisplay}
                         <button
                             type="button"
                             class="text-gray-500 hover:text-gray-700 text-sm"
@@ -186,7 +189,7 @@
                     on:input={handleSearchChange}
                     on:keydown={handleKeyDown}
                     on:focus={handleInputFocus}
-                    class="h-10 w-full text-lg font-light {activePrefix ? 'pl-13' : 'pl-0'} pr-8 rounded-md"
+                    class={`h-10 w-full text-lg font-light ${getSearchInputPaddingLeft(activePrefix, 'compact')} pr-8 rounded-md`}
                     {placeholder}
                     autocomplete="off"
                 />
