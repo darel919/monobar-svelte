@@ -1,19 +1,19 @@
 <script lang="ts">
 import { authStore } from '$lib/stores/authStore';
 import { goto } from '$app/navigation';
+import { onMount } from 'svelte';
+import { BASE_API_PATH } from '$lib/config/api';
+import { getSessionHeaders } from '$lib/utils/authUtils';
+import { getBaseEnvironment } from '$lib/utils/environment';
+import { page } from '$app/stores';
 
-interface AssistData {
-    mostWatchedGenre: string;
-    averageRating: number;
-    explanation: string;
-}
+export let data;
 
-export let data: {
-    assistData: Promise<{
-        data: AssistData | null;
-        error: string | null;
-    }>;
-};
+let streamedText = '';
+let isStreaming = false;
+let streamError: string | null = null;
+let streamStarted = false;
+let watchedStatsPromise = data.watchedStats;
 
 function handleSignOut() {
     authStore.logout();
@@ -50,6 +50,63 @@ function getErrorMessage(error: string | null): string {
     
     return "I'm having some technical difficulties analyzing your data. Please try again later.";
 }
+
+async function startAssistStream() {
+    streamedText = '';
+    isStreaming = true;
+    streamError = null;
+    streamStarted = false;
+    try {
+        const headers = {
+            'Accept': 'text/event-stream',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment($page.url),
+            ...getSessionHeaders()
+        };
+        
+        const response = await fetch(`${BASE_API_PATH}/assist/watched/summary`, {
+            method: 'GET',
+            headers
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            try {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.error || errorMessage;
+            } catch {
+                errorMessage = errorText || errorMessage;
+            }
+            throw new Error(errorMessage);
+        }
+        
+        if (!response.body) {
+            throw new Error('No response body');
+        }
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            if (!streamStarted && chunk.trim().length > 0) streamStarted = true;
+            streamedText += chunk;
+        }
+    } catch (e: any) {
+        streamError = e?.message || 'Unknown error';
+    } finally {
+        isStreaming = false;
+    }
+}
+
+onMount(() => {
+    if (typeof window !== 'undefined') {
+        startAssistStream();
+    }
+});
 </script>
 <svelte:head>
     <title>your account - moNobar</title>
@@ -74,103 +131,112 @@ function getErrorMessage(error: string | null): string {
         </div>
 
         <!-- AI Assistant Card -->
-        {#await data.assistData}
-            <!-- Loading State -->
-            <div class="card bg-base-200 shadow-xl mb-8">
-                <div class="card-body">
-                    <div class="flex items-start gap-3 mb-4">
-                        <div class="text-sm font-bold text-info bg-info/20 px-3 py-1 rounded-full animate-pulse">Darmono is thinking...</div>
-                    </div>
-                    <!-- Skeleton for explanation text -->
-                    <div class="mb-4 space-y-3">
-                        <div class="skeleton h-6 w-full"></div>
-                        <div class="skeleton h-6 w-4/5"></div>
-                        <div class="skeleton h-6 w-3/5"></div>
-                    </div>
-                    <!-- Skeleton for stats -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="stat bg-base-100 rounded-lg shadow">
-                            <div class="skeleton h-4 w-32 mb-2"></div>
-                            <div class="skeleton h-8 w-24"></div>
-                        </div>
-                        <div class="stat bg-base-100 rounded-lg shadow">
-                            <div class="skeleton h-4 w-24 mb-2"></div>
-                            <div class="skeleton h-8 w-16"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {:then assistResult}
-            {#if assistResult.error === 'timeout'}
+        {#if isStreaming}
+            {#if !streamStarted}
                 <div class="card bg-base-200 shadow-xl mb-8">
                     <div class="card-body">
                         <div class="flex items-start gap-3 mb-4">
-                            <div class="text-sm font-bold text-warning bg-warning/20 px-3 py-1 rounded-full">Darmono says:</div>
+                            <div class="text-sm font-bold text-info bg-info/20 px-3 py-1 rounded-full animate-pulse">Darmono is thinking...</div>
                         </div>
-                        <p class="text-lg mb-4 leading-relaxed">Darmono is busy, maybe try again later 😊</p>
-                    </div>
-                </div>
-            {:else if assistResult.data}
-                <div class="card bg-base-200 shadow-xl mb-8">
-                    <div class="card-body">
-                        <div class="flex items-start gap-3 mb-4">
-                            <div class="text-sm font-bold text-primary bg-primary/20 px-3 py-1 rounded-full">Darmono says:</div>
+                        <div class="mb-4 space-y-3">
+                            <div class="skeleton h-6 w-full"></div>
+                            <div class="skeleton h-6 w-4/5"></div>
+                            <div class="skeleton h-6 w-3/5"></div>
                         </div>
-                        <p class="text-lg mb-4 leading-relaxed">{assistResult.data.explanation}</p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="stat bg-base-100 rounded-lg shadow">
-                                <div class="stat-title">Most Watched Genre</div>
-                                <div class="stat-value text-primary text-2xl">{assistResult.data.mostWatchedGenre}</div>
-                            </div>
-                            <div class="stat bg-base-100 rounded-lg shadow">
-                                <div class="stat-title">Average Rating</div>
-                                <div class="stat-value text-secondary text-2xl">{assistResult.data.averageRating}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {:else if assistResult.error}
-                <div class="card bg-base-200 shadow-xl mb-8">
-                    <div class="card-body">
-                        <div class="flex items-start gap-3 mb-4">
-                            <div class="text-sm font-bold text-warning bg-warning/20 px-3 py-1 rounded-full">Darmono says:</div>
-                        </div>
-                        <p class="text-lg mb-4 leading-relaxed">{getErrorMessage(assistResult.error)}</p>
-                        {#if assistResult.error.includes('No watched items found') || assistResult.error.includes('No AI help')}
-                            <div class="flex items-center gap-2 text-sm text-base-content/70">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m4.5 0a12.078 12.078 0 0 0 2.25-2.445M16.5 18a12.08 12.08 0 0 1-2.25 2.445M8.25 18a12.08 12.08 0 0 0 2.25 2.445m-2.25 0a12.06 12.06 0 0 0-4.5 0m4.5 0a12.078 12.078 0 0 1-2.25-2.445" />
-                                </svg>
-                                <span>Tip: Watch a few movies or shows to help me learn your preferences!</span>
-                            </div>
-                        {/if}
                     </div>
                 </div>
             {:else}
                 <div class="card bg-base-200 shadow-xl mb-8">
                     <div class="card-body">
                         <div class="flex items-start gap-3 mb-4">
-                            <div class="text-sm font-bold text-info bg-info/20 px-3 py-1 rounded-full">Darmono says:</div>
+                            <div class="text-sm font-bold text-info bg-info/20 px-3 py-1 rounded-full">Darmono is thinking...</div>
                         </div>
-                        <p class="text-lg mb-4 leading-relaxed">I'm ready to analyze your viewing habits! Once you start watching some content, I'll be able to provide personalized insights about your preferences.</p>
-                        <div class="flex items-center gap-2 text-sm text-base-content/70">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
-                            </svg>
-                            <span>Start exploring the library to get your personalized recommendations!</span>
-                        </div>
+                        <div class="mb-4 whitespace-pre-line text-lg leading-relaxed">{streamedText}</div>
                     </div>
                 </div>
             {/if}
-        {:catch error}
+        {:else if streamedText}
+            <div class="card bg-base-200 shadow-xl mb-8">
+                <div class="card-body">
+                    <div class="flex items-start gap-3 mb-4">
+                        <div class="text-sm font-bold text-primary bg-primary/20 px-3 py-1 rounded-full">Darmono says:</div>
+                    </div>
+                    <div class="mb-4 whitespace-pre-line text-lg leading-relaxed">{streamedText}</div>
+                </div>
+            </div>
+        {:else if streamError}
             <div class="card bg-base-200 shadow-xl mb-8">
                 <div class="card-body">
                     <div class="flex items-start gap-3 mb-4">
                         <div class="text-sm font-bold text-error bg-error/20 px-3 py-1 rounded-full">Darmono says:</div>
                     </div>
-                    <p class="text-error">Sorry, something went wrong while I was analyzing your data. Please try refreshing the page.</p>
+                    <p class="text-error">{getErrorMessage(streamError)}</p>
                 </div>
             </div>
+        {:else}
+            <div class="card bg-base-200 shadow-xl mb-8">
+                <div class="card-body">
+                    <div class="flex items-start gap-3 mb-4">
+                        <div class="text-sm font-bold text-info bg-info/20 px-3 py-1 rounded-full animate-pulse">Darmono is thinking...</div>
+                    </div>
+                    <div class="mb-4 space-y-3">
+                        <div class="skeleton h-6 w-full"></div>
+                        <div class="skeleton h-6 w-4/5"></div>
+                        <div class="skeleton h-6 w-3/5"></div>
+                    </div>
+                </div>
+            </div>
+        {/if}
+
+        <!-- Watch History Statistics Card -->
+        {#await watchedStatsPromise}
+            <div class="card bg-base-200 shadow-xl mb-8">
+                <div class="card-body">
+                    <div class="flex items-start gap-3 mb-4">
+                        <div class="text-sm font-bold text-info bg-info/20 px-3 py-1 rounded-full animate-pulse">Loading your watch history...</div>
+                    </div>
+                    <div class="mb-4 space-y-3">
+                        <div class="skeleton h-6 w-full"></div>
+                        <div class="skeleton h-6 w-4/5"></div>
+                        <div class="skeleton h-6 w-3/5"></div>
+                    </div>
+                </div>
+            </div>
+        {:then watchedStatsRaw}
+            {#if watchedStatsRaw && watchedStatsRaw.data}
+                {@const watchedStats = watchedStatsRaw.data}
+                <div class="card bg-base-200 shadow-xl mb-8">
+                    <div class="card-body">
+                        <div class="flex items-start gap-3 mb-4">
+                            <div class="text-sm font-bold text-secondary bg-secondary/20 px-3 py-1 rounded-full">Your Watch History Stats</div>
+                        </div>
+                        <div class="mb-4 text-lg leading-relaxed">
+                            <div><span class="font-semibold">Most Watched Genre:</span> {watchedStats.statistics?.mostWatchedGenre ?? 'N/A'}</div>
+                            <div><span class="font-semibold">Average Rating:</span> {watchedStats.statistics?.averageRating?.toFixed(2) ?? 'N/A'}</div>
+                            <div class="mt-4">
+                                <span class="font-semibold">Recently Watched:</span>
+                                <ul class="list list-disc list-inside daisy-list ml-0 mt-2">
+                                    {#each watchedStats.watched as item (item.Id)}
+                                        <li class="mb-1">
+                                            <span class="font-medium">{item.Name}</span>
+                                            <span class="text-base-content/60"> ({item.ProductionYear})</span>
+                                            <span class="italic"> - {item.Genre?.join(', ')}</span>
+                                        </li>
+                                    {/each}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {:else}
+                <div class="card bg-base-200 shadow-xl mb-8">
+                    <div class="card-body">
+                        <div class="flex items-start gap-3 mb-4">
+                            <div class="text-sm font-bold text-error bg-error/20 px-3 py-1 rounded-full">No watch history found.</div>
+                        </div>
+                    </div>
+                </div>
+            {/if}
         {/await}
 
     {:else}

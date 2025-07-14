@@ -18,7 +18,7 @@
 
     onMount(() => {
         if (!browser) return;
-        
+
         // Check if user just completed authentication and force refresh if needed
         const checkPostAuthRefresh = () => {
             const authSuccess = localStorage.getItem('authSuccess');
