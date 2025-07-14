@@ -662,6 +662,47 @@ export async function getShowsRequestWaitingListData(fetch, url, cookies) {
         };
     }
 }
+export async function getAssistData(fetch, url, cookies) {
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
+        };
+        // Timeout logic: abort fetch if it takes longer than 30 seconds
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000);
+        let response;
+        try {
+            response = await fetch(`${BASE_API_PATH}/assist/watched`, {
+                method: 'GET',
+                headers,
+                signal: controller.signal
+            });
+        } finally {
+            clearTimeout(timeout);
+        }
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+        }
+        const data = await response.json();
+        return {
+            data
+        };
+    } catch (error) {
+        let errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        if (error.name === 'AbortError') {
+            errorMessage = 'timeout';
+        }
+        console.error('Failed to fetch assist data:', error);
+        return {
+            data: null,
+            error: errorMessage
+        };
+    }
+}
 export async function searchShowsRequests(query, fetch, url, cookies) {
     if (!query || !query.trim()) {
         return { data: [], error: null };

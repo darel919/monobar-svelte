@@ -152,8 +152,14 @@ Props:
                     {/if}
                     
                     <!-- Episode title overlay -->
-                    <div class="absolute bottom-0 left-0 right-0 bg-black/40  backdrop-blur-3xl text-sm px-2 py-2">
-                        <p class="text-lg font-light text-white" >{formatEpisodeTitle(item)}</p>
+                    <div class="absolute bottom-0 left-0 right-0 bg-black/40 backdrop-blur-3xl text-sm px-2 py-2">
+                        <p class="text-lg font-light text-white line-clamp-1 max-w-full w-full"
+                           style="font-size:clamp(0.85rem,1.2vw,1.25rem);"
+                           >
+                            <span class="block w-full" style="display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                {formatEpisodeTitle(item)}
+                            </span>
+                        </p>
                     </div>
                     
                     <!-- Progress bar -->
