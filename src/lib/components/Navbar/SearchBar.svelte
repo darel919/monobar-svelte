@@ -2,8 +2,10 @@
     import { goto } from '$app/navigation';
     import { onMount } from 'svelte';
     import { browser } from '$app/environment';
-    import { parseSearchInput, getSearchPlaceholder, buildSearchUrl, SEARCH_TYPES, getSearchApiEndpoint, getSearchInputPaddingLeft } from '$lib/utils/searchUtils.js';
+    import { parseSearchInput, getSearchPlaceholder, buildSearchUrl, SEARCH_TYPES, getSearchInputPaddingLeft } from '$lib/utils/searchUtils.js';
+    import { BASE_API_PATH } from '$lib/config/api';
     import { getSessionHeaders } from '$lib/utils/authUtils';
+    import { getBaseEnvironment } from '$lib/utils/environment';
     
     let searchQuery = '';
     /** @type {string | null} */
@@ -26,22 +28,39 @@
      */
     async function clientSearch(query, type) {
         try {
-            const endpoint = getSearchApiEndpoint(type);
-            let searchUrl = `${endpoint}?q=${encodeURIComponent(query.trim())}`;
-            if (type && !type.startsWith('request_')) {
-                searchUrl += `&type=${encodeURIComponent(type)}`;
+            if (!query.trim()) return [];
+
+            const headers = {
+                'Content-Type': 'application/json',
+                'User-Agent': 'dp-Monobar',
+                'X-Environment': getBaseEnvironment(window.location),
+                ...getSessionHeaders()
+            };
+
+            let searchUrl;
+            
+            if (type === 'request_movies') {
+                searchUrl = `${BASE_API_PATH}/search?intent=request_movie&q=${encodeURIComponent(query.trim())}`;
+            } else if (type === 'request_shows') {
+                searchUrl = `${BASE_API_PATH}/search?intent=request_show&q=${encodeURIComponent(query.trim())}`;
+            } else {
+                searchUrl = `${BASE_API_PATH}/search?q=${encodeURIComponent(query.trim())}`;
+                if (type) {
+                    searchUrl += `&type=${encodeURIComponent(type)}`;
+                }
             }
             
-            const sessionHeaders = getSessionHeaders();
             const response = await fetch(searchUrl, {
-                headers: sessionHeaders
+                method: 'GET',
+                headers
             });
+            
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             const data = await response.json();
-            return data || [];
+            return Array.isArray(data) ? data : [];
         } catch (error) {
             console.error('Search error:', error);
             return [];

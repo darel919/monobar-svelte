@@ -114,26 +114,6 @@ export function buildSearchUrl(input, options = {}) {
 }
 
 /**
- * Get the API endpoint for a specific search type
- * @param {string | null} type
- * @returns {string}
- */
-export function getSearchApiEndpoint(type) {
-  switch (type) {
-    case 'request_movies':
-      return '/api/request/movies/search';
-    case 'request_shows':
-      return '/api/request/shows/search';
-    case 'genre':
-      return '/api/search';
-    case 'tag':
-      return '/api/search';
-    default:
-      return '/api/search';
-  }
-}
-
-/**
  * Get the search URL for a specific search type
  * @param {string} type
  * @returns {string}

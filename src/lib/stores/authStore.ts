@@ -71,6 +71,22 @@ const initialState: AuthState = {
 
 function createAuthStore() {
   const { subscribe, set, update } = writable<AuthState>(initialState);
+  
+  // Rate limiting for checkAuthStatus to prevent infinite loops
+  let lastAuthCheck = 0;
+  let authCheckInProgress = false;
+  const AUTH_CHECK_COOLDOWN = 1000; // 1 second minimum between auth checks
+  
+  // Rate limiting for Jellyfin login to prevent infinite attempts
+  let lastJellyfinLogin = 0;
+  const JELLYFIN_LOGIN_COOLDOWN = 2000; // 2 seconds minimum between Jellyfin login attempts
+  
+  // Circuit breaker pattern to prevent infinite authentication failures
+  let consecutiveAuthFailures = 0;
+  let authCircuitBreakerOpen = false;
+  let authCircuitBreakerOpenTime = 0;
+  const MAX_CONSECUTIVE_FAILURES = 5;
+  const CIRCUIT_BREAKER_TIMEOUT = 60000; // 1 minute timeout when circuit is open
 
   const store = {
     subscribe,
@@ -173,6 +189,34 @@ function createAuthStore() {
     
     checkAuthStatus: async () => {
       if (!browser) return;
+      
+      // Check circuit breaker
+      const now = Date.now();
+      if (authCircuitBreakerOpen) {
+        if (now - authCircuitBreakerOpenTime < CIRCUIT_BREAKER_TIMEOUT) {
+          console.log('🚫 Auth circuit breaker is open, skipping auth check');
+          return;
+        } else {
+          // Reset circuit breaker after timeout
+          console.log('🔄 Resetting auth circuit breaker');
+          authCircuitBreakerOpen = false;
+          consecutiveAuthFailures = 0;
+        }
+      }
+      
+      // Rate limiting: prevent too frequent auth checks
+      if (authCheckInProgress) {
+        console.log('🔒 Auth check already in progress, skipping duplicate request');
+        return;
+      }
+      
+      if (now - lastAuthCheck < AUTH_CHECK_COOLDOWN) {
+        console.log(`🔒 Auth check rate limited, last check was ${now - lastAuthCheck}ms ago`);
+        return;
+      }
+      
+      lastAuthCheck = now;
+      authCheckInProgress = true;
       
       update(state => ({ ...state, isLoading: true }));
       
@@ -296,6 +340,10 @@ function createAuthStore() {
           isLoading: false,
           jellyAutoLoginAttempted: state.jellyAutoLoginAttempted,
         }));
+        
+        // Reset circuit breaker on successful auth check
+        consecutiveAuthFailures = 0;
+        authCircuitBreakerOpen = false;
 
         if (isAuthenticated && parsedSession && (!jellyUserId || !jellyAccessToken)) {
           const userId = parsedSession.user?.id;
@@ -313,23 +361,22 @@ function createAuthStore() {
 
               update(state => ({ ...state, jellyAutoLoginAttempted: true }));
               
-              setTimeout(async () => {
-
-                let stillNotLoading = false;
-                const unsubscribeRecheck = subscribe(state => {
-                  stillNotLoading = !state.isJellyLoading;
-                });
-                unsubscribeRecheck();
-                
-                if (stillNotLoading) {
-                  await store.loginToJellyfin(userId);
-                }
-              }, 100);
+              // Attempt Jellyfin login immediately without delay
+              await store.loginToJellyfin(userId);
             }
           }
         }
       } catch (error) {
         console.error('Auth check failed:', error);
+        
+        // Track consecutive failures for circuit breaker
+        consecutiveAuthFailures++;
+        if (consecutiveAuthFailures >= MAX_CONSECUTIVE_FAILURES) {
+          console.warn(`🚫 Opening auth circuit breaker after ${consecutiveAuthFailures} consecutive failures`);
+          authCircuitBreakerOpen = true;
+          authCircuitBreakerOpenTime = Date.now();
+        }
+        
         // Clear Jellyfin cookies when auth check fails
         Cookies.remove('DeviceId', { path: '/' });
         Cookies.remove('jellyUserId');
@@ -342,24 +389,38 @@ function createAuthStore() {
           jellyAccessToken: null,
           isLoading: false,
         }));
+      } finally {
+        authCheckInProgress = false;
       }
     },
 
     loginToJellyfin: async (userId: string) => {
       if (!browser) return;
+      
+      // Rate limiting: prevent too frequent Jellyfin login attempts
+      const now = Date.now();
+      if (now - lastJellyfinLogin < JELLYFIN_LOGIN_COOLDOWN) {
+        console.log(`🔒 Jellyfin login rate limited, last attempt was ${now - lastJellyfinLogin}ms ago`);
+        return;
+      }
+      
       let currentState: AuthState | undefined;
       const unsubscribe = subscribe(state => {
         currentState = state;
       });
       unsubscribe();
+      
       if (currentState?.isJellyLoading) {
-        // console.log('Jellyfin login already in progress, skipping duplicate request');
+        console.log('🔒 Jellyfin login already in progress, skipping duplicate request');
         return;
       }
+      
       if (currentState?.retryCount !== undefined && currentState.retryCount >= 10) {
         update(state => ({ ...state, jellyAuthFailed: true, isJellyLoading: false, jellyAuthError: 'Maximum retry attempts reached.' }));
         return;
       }
+      
+      lastJellyfinLogin = now;
       update(state => ({ ...state, isJellyLoading: true, jellyAuthFailed: false, jellyAuthError: null, retryCount: (state.retryCount ?? 0) + 1 }));
 
       try {
@@ -431,6 +492,13 @@ function createAuthStore() {
         jellyAutoLoginAttempted: false,
         retryCount: 0,
       }));
+    },
+
+    resetAuthCircuitBreaker: () => {
+      console.log('🔧 Manually resetting auth circuit breaker');
+      authCircuitBreakerOpen = false;
+      consecutiveAuthFailures = 0;
+      authCircuitBreakerOpenTime = 0;
     },
 
     logout: async () => {

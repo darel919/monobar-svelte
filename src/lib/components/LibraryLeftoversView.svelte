@@ -10,6 +10,10 @@ Props:
     import ImageComponent from './ImageComponent.svelte';
     import { page } from '$app/stores';
     import { get } from 'svelte/store';
+    import { browser } from '$app/environment';
+    import { BASE_API_PATH } from '$lib/config/api';
+    import { getSessionHeaders } from '$lib/utils/authUtils';
+    import { getBaseEnvironment } from '$lib/utils/environment';
 
     interface LibraryItem {
         [x: string]: any;
@@ -65,28 +69,38 @@ Props:
         return item.Name;
     }
 
-    let marking = {};
-    let markError = {};
+    let marking: Record<string, boolean> = {};
+    let markError: Record<string, string | undefined> = {};
 
-    async function handleMarkPlayed(item) {
+    async function handleMarkPlayed(item: LibraryItem) {
         const id = item.Id || item.id;
         if (!id) return;
         marking = { ...marking, [id]: true };
         markError = { ...markError, [id]: undefined };
         try {
-            const res = await fetch('/api/markPlayed', {
+            const headers = {
+                'Content-Type': 'application/json',
+                'User-Agent': 'dp-Monobar',
+                'X-Environment': getBaseEnvironment(window.location),
+                ...getSessionHeaders()
+            };
+
+            const response = await fetch(`${BASE_API_PATH}/markPlayed?id=${encodeURIComponent(id)}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id })
+                headers
             });
-            const { success, error } = await res.json();
-            if (!success) {
-                markError = { ...markError, [id]: error || 'Failed' };
-            } else {
+            
+            if (response.status === 200) {
                 if (onDataRefresh) {
                     onDataRefresh();
                 }
+            } else {
+                const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                markError = { ...markError, [id]: errorData.message || 'Failed to mark as watched' };
             }
+        } catch (error) {
+            console.error('❌ Failed to mark as played:', error);
+            markError = { ...markError, [id]: error instanceof Error ? error.message : 'Unknown error' };
         } finally {
             marking = { ...marking, [id]: false };
         }
@@ -119,16 +133,16 @@ Props:
                     class="absolute top-2 right-2 z-20 bg-white/80 rounded-full p-1 transition hover:bg-green-200 group"
                     aria-label="Mark as Watched"
                     on:click|stopPropagation={() => handleMarkPlayed(item)}
-                    disabled={marking[item.Id || item.id]}
+                    disabled={marking[item.Id || item.id || '']}
                     style="--icon-color: black; --icon-hover-color: #16a34a;"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--icon-color)" class="w-6 h-6 transition-colors duration-200 group-hover:stroke-[var(--icon-hover-color)]">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
                 </button>
-                {#if markError[item.Id || item.id]}
+                {#if markError[item.Id || item.id || '']}
                     <div class="absolute top-10 right-2 bg-red-500 text-white text-xs rounded px-2 py-1 z-30">
-                        {markError[item.Id || item.id]}
+                        {markError[item.Id || item.id || '']}
                     </div>
                 {/if}
                 {#if (item.ImageTags?.Primary || item.ImageTags?.Thumb)}                        

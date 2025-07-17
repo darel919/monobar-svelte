@@ -9,6 +9,10 @@
     import { onMount } from 'svelte';
     import { invalidateAll } from '$app/navigation';
     import { browser } from '$app/environment';
+    import { BASE_API_PATH } from '$lib/config/api';
+    import { getAuthorizationHeader, getSessionHeaders } from '$lib/utils/authUtils';
+    import { getBaseEnvironment } from '$lib/utils/environment';
+    import Cookies from 'js-cookie';
     
     export let data;
 
@@ -17,6 +21,27 @@
     let recommendationsPromise = data.recommendationData;
     let isReauthLoading = false;
     let reauthInProgress = false;
+    let lastAuthState = false;
+    let lastCompleteAuthState = false;
+    let refreshInProgress = false;
+
+    // Reactive statement to refresh data when authentication becomes complete
+    $: {
+        const currentState = $authStore;
+        const isCompletelyAuthenticated = currentState.isAuthenticated && 
+                                        !currentState.isLoading && 
+                                        !currentState.isJellyLoading &&
+                                        !currentState.needsReauth;
+        
+        if (isCompletelyAuthenticated !== lastCompleteAuthState) {
+            if (isCompletelyAuthenticated) {
+                console.log('🔄 Complete authentication achieved, refreshing home data...');
+                // Small delay to ensure auth cookies are properly set
+                setTimeout(() => refreshHomeData(), 200);
+            }
+            lastCompleteAuthState = isCompletelyAuthenticated;
+        }
+    }
 
     onMount(() => {
         if (!browser) return;
@@ -41,6 +66,10 @@
         checkPostAuthRefresh();
         
         const unsubscribe = authStore.subscribe(state => {
+            // Track basic authentication state changes for legacy compatibility
+            const authStateChanged = lastAuthState !== state.isAuthenticated;
+            lastAuthState = state.isAuthenticated;
+            
             if (state.isAuthenticated) {
                 checkPostAuthRefresh();
             }
@@ -50,9 +79,107 @@
     });
 
     async function refreshLeftovers() {
-        const response = await fetch('/api/leftovers');
-        const newData = await response.json();
-        leftoversPromise = Promise.resolve(newData);
+        try {
+            const headers = {
+                'Content-Type': 'application/json',
+                'User-Agent': 'dp-Monobar',
+                'X-Environment': getBaseEnvironment(window.location),
+                ...getSessionHeaders()
+            };
+
+            const response = await fetch(`${BASE_API_PATH}/resumeWatching`, {
+                method: 'GET',
+                headers
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const newData = { data };
+                leftoversPromise = Promise.resolve(newData);
+                console.log('✅ Leftovers data refreshed');
+            } else {
+                console.error('❌ Failed to refresh leftovers:', response.status, response.statusText);
+            }
+        } catch (error) {
+            console.error('❌ Failed to refresh leftovers:', error);
+        }
+    }
+
+    async function refreshNextEpisodes() {
+        try {
+            const headers = {
+                'Content-Type': 'application/json',
+                'User-Agent': 'dp-Monobar',
+                'X-Environment': getBaseEnvironment(window.location),
+                ...getSessionHeaders()
+            };
+
+            const response = await fetch(`${BASE_API_PATH}/continueWatching`, {
+                method: 'GET',
+                headers
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const newData = { data };
+                nextEpisodesPromise = Promise.resolve(newData);
+                console.log('✅ Next episodes data refreshed');
+            } else {
+                console.error('❌ Failed to refresh next episodes:', response.status, response.statusText);
+            }
+        } catch (error) {
+            console.error('❌ Failed to refresh next episodes:', error);
+        }
+    }
+
+    async function refreshHomeData() {
+        if (refreshInProgress) {
+            console.log('🔄 Home data refresh already in progress, skipping...');
+            return;
+        }
+        
+        refreshInProgress = true;
+        
+        try {
+            console.log('🔄 Refreshing home data after authentication...');
+            
+            const headers = {
+                'Content-Type': 'application/json',
+                'User-Agent': 'dp-Monobar',
+                'X-Environment': getBaseEnvironment(window.location),
+                'X-Origin-Id': 'home',
+                ...getSessionHeaders()
+            };
+            
+            // Fetch fresh data with authenticated session - call backend directly
+            const [leftoversResponse, nextEpisodesResponse, recommendationsResponse] = await Promise.all([
+                fetch(`${BASE_API_PATH}/resumeWatching`, { method: 'GET', headers }),
+                fetch(`${BASE_API_PATH}/continueWatching`, { method: 'GET', headers }),
+                fetch(`${BASE_API_PATH}/recommendation`, { method: 'GET', headers })
+            ]);
+
+            const [leftoversData, nextEpisodesData, recommendationsData] = await Promise.all([
+                leftoversResponse.ok ? 
+                    leftoversResponse.json().then(data => ({ data })) : 
+                    Promise.resolve({ data: null, error: `Failed to fetch leftovers: ${leftoversResponse.status}` }),
+                nextEpisodesResponse.ok ? 
+                    nextEpisodesResponse.json().then(data => ({ data })) : 
+                    Promise.resolve({ data: null, error: `Failed to fetch next episodes: ${nextEpisodesResponse.status}` }),
+                recommendationsResponse.ok ? 
+                    recommendationsResponse.json().then(data => ({ data })) : 
+                    Promise.resolve({ data: null, error: `Failed to fetch recommendations: ${recommendationsResponse.status}` })
+            ]);
+
+            // Update the promises with fresh data
+            leftoversPromise = Promise.resolve(leftoversData);
+            nextEpisodesPromise = Promise.resolve(nextEpisodesData);
+            recommendationsPromise = Promise.resolve(recommendationsData);
+            
+        } catch (error) {
+            console.error('❌ Failed to refresh home data:', error);
+        } finally {
+            refreshInProgress = false;
+        }
     }
 
     // Automatically handle expired/invalid JWT: try reauth, then sign out if fails
@@ -66,28 +193,54 @@
             serverError.toLowerCase().includes('forbidden');
         
         if (isAuthError && !reauthInProgress) {
+            console.log('🔄 Starting reauthentication process due to auth error');
             isReauthLoading = true;
             reauthInProgress = true;
             let attempts = 0;
             const maxAttempts = 3;
+            const baseDelay = 1000; // Start with 1 second
+            
             const tryReauth = async () => {
                 if (attempts >= maxAttempts) {
+                    console.warn('🔄 Max reauth attempts reached, logging out');
                     isReauthLoading = false;
                     reauthInProgress = false;
                     await authStore.logout();
                     return;
                 }
+                
                 attempts++;
-                await authStore.checkAuthStatus();
-                const state = get(authStore);
-                if (state.isAuthenticated) {
-                    isReauthLoading = false;
-                    reauthInProgress = false;
-                    invalidateAll();
-                    return;
+                console.log(`🔄 Reauthentication attempt ${attempts}/${maxAttempts}`);
+                
+                try {
+                    await authStore.checkAuthStatus();
+                    const state = get(authStore);
+                    
+                    if (state.isAuthenticated && !state.needsReauth) {
+                        console.log('✅ Reauthentication successful');
+                        isReauthLoading = false;
+                        reauthInProgress = false;
+                        
+                        // Refresh home data immediately after successful reauthentication
+                        setTimeout(async () => {
+                            await refreshHomeData();
+                            invalidateAll();
+                        }, 100);
+                        return;
+                    }
+                    
+                    // If still not authenticated or needs reauth, wait with exponential backoff
+                    const delay = baseDelay * Math.pow(2, attempts - 1); // Exponential backoff: 1s, 2s, 4s
+                    console.log(`⏳ Reauthentication failed, retrying in ${delay}ms`);
+                    setTimeout(tryReauth, delay);
+                } catch (error) {
+                    console.error('❌ Reauthentication attempt failed:', error);
+                    // If checkAuthStatus throws an error, also apply exponential backoff
+                    const delay = baseDelay * Math.pow(2, attempts - 1);
+                    setTimeout(tryReauth, delay);
                 }
-                setTimeout(tryReauth, 500);
             };
+            
             tryReauth();
         }
     };
@@ -138,7 +291,7 @@
             {#if playNext.data && playNext.data.length > 0}
                 <section class="mb-8">
                     <h2 class="text-2xl mb-4" title="watch next episode?">next up</h2>
-                    <LibraryLeftoversView data={playNext.data} onDataRefresh={refreshLeftovers}></LibraryLeftoversView>
+                    <LibraryLeftoversView data={playNext.data} onDataRefresh={refreshNextEpisodes}></LibraryLeftoversView>
                 </section>
             {/if}
         {/await}

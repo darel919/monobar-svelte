@@ -27,7 +27,11 @@
       // Only auto-retry if not already at max attempts and not loading
       if (jellyAuthFailed && !isJellyLoading && userSession?.user?.id && !hasAutoRetried && retryCount < 10 && !showFinalError) {
         hasAutoRetried = true;
-        setTimeout(() => retryJellyfinAuth(), 1000);
+        // Exponential backoff: increase delay based on retry count
+        const baseDelay = 2000; // Start with 2 seconds
+        const delay = Math.min(baseDelay * Math.pow(1.5, retryCount), 30000); // Max 30 seconds
+        console.log(`🔄 Auto-retrying Jellyfin auth in ${delay}ms (attempt ${retryCount + 1}/10)`);
+        setTimeout(() => retryJellyfinAuth(), delay);
       }
 
       // Show success only if previously failed and now succeeded, and user is authenticated

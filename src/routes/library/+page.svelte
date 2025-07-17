@@ -45,8 +45,9 @@
   <main class="flex flex-col min-h-screen relative p-8 mt-16">
     <section class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
       <section class="mb-8">
-        <h1 class="text-4xl mb-4 font-extralight">movies</h1>
-        <p class="opacity-70">Loading items...</p>
+        <h1 class="text-3xl mb-4 font-extralight">loading library...</h1>
+        <!-- <p class="opacity-70">Loading items...</p> -->
+         <p class="loading loading-spinner loading-xl"></p>
       </section>
     </section>
     <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 mt-2">
