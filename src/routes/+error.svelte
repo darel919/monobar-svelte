@@ -4,7 +4,7 @@
   import StopState from '$lib/components/StopState.svelte';
 </script>
 
-<main class="flex flex-col min-h-screen px-8 pt-20 text-white">
+<main class="flex flex-col min-h-screen px-4 sm:px-8 pt-20 text-white">
   <!-- {console.log('Error:', error, 'Status:', status)} -->
   <StopState
     message={status === 404 ? 'Page not found.' : 'An error occurred.'}

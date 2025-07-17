@@ -112,7 +112,7 @@ onMount(() => {
     <title>your account - moNobar</title>
 </svelte:head>
 
-<section class=" max-w-5xl mx-auto px-8 my-24">
+<section class=" max-w-5xl mx-auto px-4 sm:px-8 my-24">
     <h1 class="text-4xl font-extralight mb-6">your account</h1>
     {#if $authStore.isAuthenticated && $authStore.userSession?.user}
         <div class="flex items-center gap-6 mb-8 justify-between">

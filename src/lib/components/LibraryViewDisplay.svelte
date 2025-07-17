@@ -99,6 +99,24 @@ Props:
         if (!item) return null;
         
         if (responsiveViewMode === "poster grid") {
+            // Handle request search mode on mobile
+            if (isRequestSearchMode) {
+                if (item.status === 'ready') {
+                    return item.thumbPath || item.posterPath || null;
+                } else {
+                    // Handle search result images
+                    if (Array.isArray(item.images) && item.images.length) {
+                        const posterImg = item.images.find(imgObj => imgObj.coverType === 'poster' && (imgObj.dwsUrl || imgObj.remoteUrl));
+                        if (posterImg) {
+                            return posterImg.dwsUrl || posterImg.remoteUrl;
+                        }
+                    } else if (item.images?.dwsUrl || item.images?.remoteUrl) {
+                        return item.images.dwsUrl || item.images.remoteUrl;
+                    }
+                    return null;
+                }
+            }
+            
             if (viewMode === "default_thumb_recommendation") {
                 return item.ImageTags?.Primary || null;
             }
@@ -289,7 +307,7 @@ Props:
     }
 
     let isRequestSearchMode = false;
-    $: isRequestSearchMode = responsiveViewMode === 'default_search_request';
+    $: isRequestSearchMode = viewMode === 'default_search_request';
 </script>
 
 {#if !data?.length}
@@ -303,10 +321,10 @@ Props:
             {@const posterImgSrc = getImageSource(item)}
             {@const uniqueKey = `${itemId}-${item.Type || ''}-${index}`}            
             <a
-                href={disableClick ? undefined : `/info?id=${itemId}&type=${item.type || item.Type}`}
+                href={disableClick ? undefined : (isRequestSearchMode ? getSearchItemUrl(item) : `/info?id=${itemId}&type=${item.type || item.Type}`)}
                 class={`flex flex-col items-center ${itemHoverClass}`}
                 title={item.Overview || item.overview}
-                style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
+                style={disableClick ? 'cursor: default; pointer-events: none;' : (isRequestSearchMode && !isItemClickable(item) ? 'cursor: default; pointer-events: none;' : '')}
             >
                 <div class="relative w-full mb-4 aspect-[2/3]">
                     {#if posterImgSrc && !imgError[itemId]}                        

@@ -19,7 +19,7 @@ onMount(async () => {
 });
 </script>
 
-<section class="max-w-5xl mx-auto pt-24 min-h-screen px-8 pb-8">
+<section class="max-w-5xl mx-auto pt-24 min-h-screen px-4 sm:px-8 pb-8">
   <h1 class="text-5xl font-light mb-6">changelog</h1>
   {#if error}
     <div class="text-red-500 mb-4">{error}</div>

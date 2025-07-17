@@ -48,7 +48,7 @@
 </svelte:head>
 
 {#await data.serverData}
-  <main class="flex flex-col min-h-screen px-8 pt-20 text-white">
+  <main class="flex flex-col min-h-screen px-4 sm:px-8 pt-20 text-white">
       <div class="flex items-center justify-center min-h-[60vh]">
           <div class="flex flex-col items-center gap-4">
               <div class="loading loading-spinner loading-lg"></div>
@@ -59,7 +59,7 @@
 {:then serverDataResult}
   {@const serverData = serverDataResult.data || null}
 
-  <main class="flex flex-col min-h-screen px-8 pt-20 text-white">
+  <main class="flex flex-col min-h-screen px-4 sm:px-8 pt-20 text-white">
       {#if type === "Movie" || type === "Series"}
           {#if serverData && !serverDataResult.error}    
         <!-- {console.log("Server Data:", serverData)}         -->
@@ -238,7 +238,7 @@
    
   </main>
 {:catch error}
-  <main class="flex flex-col min-h-screen px-8 pt-20 text-white">
+  <main class="flex flex-col min-h-screen px-4 sm:px-8 pt-20 text-white">
       <StopState
           action="back"
           message="Failed to load content"
