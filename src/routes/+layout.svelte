@@ -7,6 +7,7 @@
 	import ReauthNotification from '$lib/components/Auth/ReauthNotification.svelte';
 	import JellyfinReauthNotification from '$lib/components/Auth/JellyfinReauthNotification.svelte';
 	import SignOutNotification from '$lib/components/Auth/SignOutNotification.svelte';
+	import Toast from '$lib/components/Toast.svelte';
 	import { authStore } from '$lib/stores/authStore';
 	import { invalidateAll } from '$app/navigation';
 	import { onMount } from 'svelte';
@@ -83,3 +84,5 @@
 <ReauthNotification />
 <JellyfinReauthNotification />
 <SignOutNotification />
+<Toast />
+<Toast />

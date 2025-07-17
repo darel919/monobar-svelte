@@ -19,25 +19,32 @@ Props:
 
 
     interface LibraryItem {
-        type: string | undefined;
-        images: any;
+        type?: string;
+        Type?: string;
+        images?: any;
         Id?: string;
         id?: string;
-        Name: string;
+        Name?: string;
+        name?: string;
+        title?: string;
         OriginalTitle?: string;
         ProductionYear?: number;
         year?: number;
-        Type?: string;
         Overview?: string;
         overview?: string;
-        title?: string;
         thumbPath?: string;
         posterPath?: string;
         ImageTags?: {
-            Thumb: string | null | undefined;
+            Thumb?: string | null;
             Primary?: string;
             Logo?: string;
         };
+        // Search-specific properties
+        status?: string;
+        tmdbId?: number | string;
+        imdbId?: string;
+        seasons?: any[];
+        tvdbId?: number | string;
     }
 
     export let data: LibraryItem[] = [];
@@ -51,7 +58,7 @@ Props:
     let imgError: Record<string, boolean> = {};
     let hoverTimeout: number | null = null;
     let mousePosition = { x: 0, y: 0 };
-    let isScrolling: boolean = false;
+    let isScrolling = false;
     let scrollTimeout: number | null = null;    
     let settingsStore = useSettingsStore();
     onMount(() => {
@@ -94,6 +101,10 @@ Props:
         if (responsiveViewMode === "poster grid") {
             if (viewMode === "default_thumb_recommendation") {
                 return item.ImageTags?.Primary || null;
+            }
+            // For home/thumb modes on mobile, prefer Primary image if posterPath is not available
+            if (viewMode === "default_thumb_home" || viewMode === "default_thumb_library") {
+                return item.posterPath || item.ImageTags?.Primary || null;
             }
             return item.posterPath || null;
         } else if (responsiveViewMode === "posterView" || responsiveViewMode === "default_poster_home") {
@@ -161,6 +172,124 @@ Props:
     }
 
     const itemHoverClass = "transition-transform duration-200 ease-in-out hover:-translate-y-1 p-1";
+
+    // Function to determine if an item is a TV series
+    function isItemTVSeries(item: any): boolean {
+        return item.Type === 'Series' || 
+               item.type === 'tv' || 
+               item.type === 'show' || 
+               item.type === 'series' ||
+               item.Type === 'SeriesName' ||
+               (typeof item.tvdbId !== 'undefined') ||
+               (Array.isArray(item.seasons) && item.seasons.length > 0);
+    }
+
+    // Function to determine if an item is a movie
+    function isItemMovie(item: any): boolean {
+        return item.Type === 'Movie' || 
+               item.type === 'movie' ||
+               (!isItemTVSeries(item) && !item.seasons);
+    }
+
+    // Function to build the correct navigation URL for search results
+    function getSearchItemUrl(item: any): string | undefined {
+        const searchType = $page.url.searchParams.get('type');
+        
+        // For TV series in request_shows context, always go to wizard
+        if (searchType === 'request_shows' && isItemTVSeries(item)) {
+            const itemId = item.id || item.Id || item.itemId;
+            if (item.status === 'ready') {
+                // Existing content: go to wizard for season modification
+                return `/request/shows/wizard?intent=update&id=${itemId}`;
+            } else if (item.status === 'needRequest' || !item.status) {
+                // New content: go to wizard for season selection
+                return `/request/shows/wizard?intent=create&id=${itemId}`;
+            } else if (item.status === 'partiallyAvailable') {
+                // Partially available: go to wizard for additional seasons
+                return `/request/shows/wizard?intent=update&id=${itemId}`;
+            } else if (item.status === 'requested') {
+                // Already requested: go to shows request status page
+                return '/request/shows';
+            }
+        }
+        
+        // For ready content that's not in request context, go to info page
+        if (item.status === 'ready' && $page.url.searchParams.get('type') !== 'request_shows') {
+            let itemType = item.Type || item.type;
+            // Ensure we have the correct type for the info page
+            if (isItemTVSeries(item) && !itemType) {
+                itemType = 'Series';
+            } else if (isItemMovie(item) && !itemType) {
+                itemType = 'Movie';
+            }
+            const itemId = item.Id || item.id;
+            return `/info?id=${itemId}&type=${itemType}`;
+        }
+        
+        // For requested content, go to monitoring page
+        if (item.status === 'requested') {
+            return $page.url.searchParams.get('type') === 'request_movies' ? '/request/movies' : '/request/shows';
+        }
+        
+        // For content that needs to be requested
+        if (item.status === 'needRequest') {
+            if (isItemTVSeries(item)) {
+                return `/request/shows/wizard?intent=create&id=${item.id}`;
+            } else if (isItemMovie(item)) {
+                return `/request/movies/wizard?intent=create&id=${item.id}`;
+            }
+        }
+        
+        // For partially available content (needs update)
+        if (item.status === 'partiallyAvailable') {
+            if (isItemTVSeries(item)) {
+                return `/request/shows/wizard?intent=update&id=${item.id}`;
+            }
+        }
+        
+        // Fallback: if we're in a request_movies search context and it's a movie but no status
+        if ($page.url.searchParams.get('type') === 'request_movies' && isItemMovie(item) && !item.status) {
+            return `/request/movies/wizard?intent=create&id=${item.id}`;
+        }
+        
+        // Additional fallback: if it looks like a TV series but we can't determine the intent
+        // redirect to the wizard page directly
+        if (isItemTVSeries(item)) {
+            return `/request/shows/wizard?intent=create&id=${item.id}`;
+        }
+        
+        return undefined;
+    }
+
+    // Helper to get the correct info id for /info page
+    function getInfoId(item: any, mode: string): string | undefined {
+        if (mode === 'default_search_request') {
+            return item.itemId || item.Id || item.id;
+        }
+        return item.Id || item.id || item.itemId;
+    }
+
+    // Function to determine if an item should be clickable
+    function isItemClickable(item: any): boolean {
+        // If it has a specific status, use that
+        if (item.status) {
+            return ['ready', 'requested', 'needRequest', 'partiallyAvailable'].includes(item.status);
+        }
+        
+        // Fallback: if we're in request context, items should be clickable
+        const searchType = $page.url.searchParams.get('type');
+        if (searchType === 'request_shows' && isItemTVSeries(item)) {
+            return true;
+        }
+        if (searchType === 'request_movies' && isItemMovie(item)) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    let isRequestSearchMode = false;
+    $: isRequestSearchMode = responsiveViewMode === 'default_search_request';
 </script>
 
 {#if !data?.length}
@@ -363,10 +492,83 @@ Props:
         {#each data as item}
             {@const itemId = item.Id || item.id || item.Name || ''}
             <a
-                href={disableClick ? undefined : (item.status === 'ready' ? `/info?id=${item.id}&type=${item.type}` : (item.status === 'requested' ? ($page.url.searchParams.get('type') === 'request_movies' ? '/request/movies' : '/request/shows') : undefined))}
+                href={disableClick ? undefined : getSearchItemUrl(item)}
                 class={`flex flex-col items-center ${itemHoverClass}`}
                 title={item.Overview}
-                style={disableClick ? 'cursor: default; pointer-events: none;' : (item.status !== 'ready' && item.status !== 'requested' ? 'cursor: default; pointer-events: none;' : '')}
+                style={disableClick ? 'cursor: default; pointer-events: none;' : (!isItemClickable(item) ? 'cursor: default; pointer-events: none;' : '')}
+            >
+                <div class="relative w-full mb-2 aspect-[2/1]">
+                    {#if item.status === 'ready'}
+                        {#if item.thumbPath || item.posterPath}
+                            <ImageComponent 
+                                src={item.thumbPath || item.posterPath}
+                                alt={item.Name || 'Image'}
+                                aspectRatio="2/1"
+                                fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
+                            />
+                        {:else if Array.isArray(item.images) && item.images.length}
+                            {@const posterImg = item.images.find(imgObj => imgObj.coverType === 'poster' && (imgObj.dwsUrl || imgObj.remoteUrl))}
+                            {#if posterImg}
+                                <ImageComponent 
+                                    src={posterImg.dwsUrl || posterImg.remoteUrl}
+                                    alt={item.Name || 'Image'}
+                                    aspectRatio="2/1"
+                                    fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
+                                />
+                            {:else}
+                                <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
+                            {/if}
+                        {:else}
+                            <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
+                        {/if}
+                    {:else}
+                        {#if Array.isArray(item.images) && item.images.length}
+                            {@const posterImg = item.images.find(imgObj => imgObj.coverType === 'poster' && (imgObj.dwsUrl || imgObj.remoteUrl))}
+                            {#if posterImg}
+                                <ImageComponent 
+                                    src={posterImg.dwsUrl || posterImg.remoteUrl}
+                                    alt={item.Name || 'Image'}
+                                    aspectRatio="2/1"
+                                    fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
+                                />
+                            {:else}
+                                <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
+                            {/if}
+                        {:else if item.images?.dwsUrl || item.images?.remoteUrl}
+                            <ImageComponent 
+                                src={item.images.dwsUrl || item.images.remoteUrl}
+                                alt={item.Name || 'Image'}
+                                aspectRatio="2/1"
+                                fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
+                            />
+                        {:else}
+                            <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
+                        {/if}
+                    {/if}
+                </div>
+                <section class="flex flex-col text-center items-center w-full">
+                    {#if item.OriginalTitle}
+                        <h2 class="w-full text-lg font-bold truncate">{item.OriginalTitle}</h2>
+                    {:else}
+                        <h2 class="w-full text-lg font-bold truncate">{item.Name}</h2>
+                    {/if}
+                    {#if item.ProductionYear}
+                        <p class="text-xs opacity-50">{item.ProductionYear}</p>
+                    {/if}                
+                </section>
+            </a>
+        {/each}
+    </section>
+{:else if responsiveViewMode === 'default_search_request'}
+    <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
+        {#each data as item}
+        <!-- {console.log(item)} -->
+            {@const infoId = getInfoId(item, 'default_search_request')}
+            <a
+                href={disableClick ? undefined : getSearchItemUrl(item)}
+                class={`flex flex-col items-center ${itemHoverClass}`}
+                title={item.Overview}
+                style={disableClick ? 'cursor: default; pointer-events: none;' : (!isItemClickable(item) ? 'cursor: default; pointer-events: none;' : '')}
             >
                 <div class="relative w-full mb-2 aspect-[2/1]">
                     {#if item.status === 'ready'}
@@ -472,7 +674,7 @@ Props:
     <HoverModalView 
         isOpen={modalOpen} 
         on:close={() => modalOpen = false}
-        item={modalItem}
+        item={modalItem as any}
         modalMode="full"
         hoveredItemId={hoveredItemId}
         on:mouseenter={handleModalEnter}

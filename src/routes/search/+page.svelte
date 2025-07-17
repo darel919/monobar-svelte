@@ -243,7 +243,7 @@
                     />
                     {:else if type === 'request_movies' || type === 'request_shows'}
                     <LibraryViewDisplay 
-                        viewMode="default_search"
+                        viewMode="default_search_request"
                         data={results}
                     />
                     {:else}

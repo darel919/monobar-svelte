@@ -73,7 +73,9 @@ export async function load({ url, fetch, cookies }) {
                 error = searchResult.error;
             }
         } catch (err) {
-            error = err instanceof Error ? err.message : 'Unknown error occurred';
+            console.warn('Search error occurred:', err);
+            error = 'Search failed. Please try again.';
+            results = []; // Ensure results is always an array
         }
     }
 
@@ -83,7 +85,7 @@ export async function load({ url, fetch, cookies }) {
         query,
         type,
         includeExternal,
-        results,
+        results: Array.isArray(results) ? results : [], // Ensure results is always an array
         error,
         onlineLookupError,
         searchTypeDisplay

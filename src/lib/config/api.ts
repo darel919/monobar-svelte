@@ -28,6 +28,7 @@ export const BASE_API_PATH = (() => {
     
     return `${PUBLIC_PROD_API_BASE_URL}${PUBLIC_APP_PATH}`;
 })();
+
 export const BASE_API_AUTH_PATH = (() => {
     if (dev) {
         return `${PUBLIC_DEV_API_BASE_URL}${PUBLIC_APP_AUTH_PATH}`;

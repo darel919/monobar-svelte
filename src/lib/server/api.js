@@ -580,18 +580,20 @@ export async function searchMovieRequests(query, fetch, url, cookies) {
             'X-Environment': getBaseEnvironment(url),
             ...getSessionHeaders(cookies)
         };
-        const response = await fetch(`${BASE_API_PATH}/request/movies/search?q=${encodeURIComponent(query.trim())}`, {
+        const response = await fetch(`${BASE_API_PATH}/search?intent=request_movie&q=${encodeURIComponent(query.trim())}`, {
             method: 'GET',
             headers
         });
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+            console.warn('Search movie request API error:', { status: response.status, statusText: response.statusText, ...errorData });
+            return { data: [], error: null }; // Return empty data instead of throwing to prevent crashes
         }
         const data = await response.json();
-        return { data };
+        return { data: Array.isArray(data) ? data : [] };
     } catch (error) {
-        return { data: [], error: error instanceof Error ? error.message : 'Unknown error' };
+        console.warn('Search movie request network error:', error);
+        return { data: [], error: null }; // Return empty data instead of throwing to prevent crashes
     }
 }
 
@@ -673,18 +675,212 @@ export async function searchShowsRequests(query, fetch, url, cookies) {
             'X-Environment': getBaseEnvironment(url),
             ...getSessionHeaders(cookies)
         };
-        const response = await fetch(`${BASE_API_PATH}/request/shows/search?q=${encodeURIComponent(query.trim())}`, {
+        const response = await fetch(`${BASE_API_PATH}/search?intent=request_show&q=${encodeURIComponent(query.trim())}`, {
             method: 'GET',
             headers
         });
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+            console.warn('Search shows request API error:', { status: response.status, statusText: response.statusText, ...errorData });
+            return { data: [], error: null }; // Return empty data instead of throwing to prevent crashes
         }
         const data = await response.json();
-        return { data };
+        return { data: Array.isArray(data) ? data : [] };
     } catch (error) {
-        return { data: [], error: error instanceof Error ? error.message : 'Unknown error' };
+        console.warn('Search shows request network error:', error);
+        return { data: [], error: null }; // Return empty data instead of throwing to prevent crashes
+    }
+}
+export async function getShowsRequestLibraryData(fetch, url, cookies) {
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
+        };
+        
+        const response = await fetch(`${BASE_API_PATH}/request/shows/library`, {
+            method: 'GET',
+            headers
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+        }
+        
+        const data = await response.json();
+        
+        return {
+            data
+        };
+    } catch (error) {
+        console.error('Failed to fetch shows request library data:', error);
+        return {
+            data: null,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+export async function getShowsRequestDetailsData(seriesId, fetch, url, cookies) {
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
+        };
+        
+        const response = await fetch(`${BASE_API_PATH}/request/shows/details?id=${encodeURIComponent(seriesId)}`, {
+            method: 'GET',
+            headers
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+        }
+        
+        const data = await response.json();
+        
+        return {
+            data
+        };
+    } catch (error) {
+        console.error('Failed to fetch shows request details data:', error);
+        return {
+            data: null,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+export async function requestShowSeries(requestData, fetch, url, cookies) {
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
+        };
+        
+        const response = await fetch(`${BASE_API_PATH}/request/shows`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(requestData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+        }
+        
+        const data = await response.json();
+        
+        return {
+            success: true,
+            data
+        };
+    } catch (error) {
+        console.error('Failed to request show series:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+export async function requestShowSeasons(requestData, fetch, url, cookies) {
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
+        };
+        
+        const response = await fetch(`${BASE_API_PATH}/request/shows/seasons`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(requestData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+        }
+        
+        const data = await response.json();
+        
+        return {
+            success: true,
+            data
+        };
+    } catch (error) {
+        console.error('Failed to request show seasons:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+export async function deleteShowSeries(seriesId, deleteFiles, fetch, url, cookies) {
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
+        };
+        
+        const response = await fetch(`${BASE_API_PATH}/request/shows?id=${encodeURIComponent(seriesId)}&deleteFiles=${deleteFiles}`, {
+            method: 'DELETE',
+            headers
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+        }
+        
+        return {
+            success: true
+        };
+    } catch (error) {
+        console.error('Failed to delete show series:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+export async function deleteMovie(movieId, deleteFiles, fetch, url, cookies) {
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'dp-Monobar',
+            'X-Environment': getBaseEnvironment(url),
+            ...getSessionHeaders(cookies)
+        };
+        
+        const response = await fetch(`${BASE_API_PATH}/request/movies?id=${encodeURIComponent(movieId)}&deleteFiles=${deleteFiles}`, {
+            method: 'DELETE',
+            headers
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            throw new Error(JSON.stringify({ status: response.status, statusText: response.statusText, ...errorData }));
+        }
+        
+        return {
+            success: true
+        };
+    } catch (error) {
+        console.error('Failed to delete movie:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
     }
 }
 export async function getWatchedStatsData(fetch, url, cookies) {

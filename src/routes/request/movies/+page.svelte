@@ -18,7 +18,7 @@
         <!-- Display nothing -->
     {:then movieRequestWaitingListData}
         <section class="my-4">
-            <RequestViewDisplay data={movieRequestWaitingListData} title="in waiting list"/>
+            <RequestViewDisplay data={movieRequestWaitingListData} title="in waiting list" allowDelete={true}/>
         </section>
 
     {/await}
