@@ -37,7 +37,7 @@ export async function getHomeData(fetch, url, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to fetch data:', error);
+        // console.error('Failed to fetch data:', error);
         return {
             data: null,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -72,7 +72,7 @@ export async function getHomeRecommendationData(fetch, url, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to fetch data:', error);
+        // console.error('Failed to fetch data:', error);
         return {
             data: null,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -106,7 +106,7 @@ export async function getLeftoversData(fetch, url, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to fetch data:', error);
+        // console.error('Failed to fetch data:', error);
         return {
             data: null,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -140,7 +140,7 @@ export async function getHomeNextEpisodeData(fetch, url, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to fetch data:', error);
+        // console.error('Failed to fetch data:', error);
         return {
             data: null,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -179,7 +179,7 @@ export async function getItemInfoData(id, fetch, url, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to fetch data:', error);
+        // console.error('Failed to fetch data:', error);
         
         let errorMessage = 'Unknown error';
         if (error instanceof Error) {
@@ -230,7 +230,7 @@ export async function getItemWatchData(id, fetch, url, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to fetch data:', error);
+        // console.error('Failed to fetch data:', error);
         return {
             data: null,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -274,7 +274,7 @@ export async function getLibraryData(id, fetch, url, options = {}, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to fetch data:', error);
+        // console.error('Failed to fetch data:', error);
         return {
             data: null,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -311,7 +311,7 @@ export async function getLibraryTypeData(options = {}, fetch, url, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to fetch data:', error);
+        // console.error('Failed to fetch data:', error);
         return {
             data: null,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -348,7 +348,7 @@ export async function getGenreData(options = {}, fetch, url, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to fetch data:', error);
+        // console.error('Failed to fetch data:', error);
         return {
             data: null,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -395,7 +395,7 @@ export async function searchData(query, type, includeExternal, fetch, url, cooki
             data
         };
     } catch (error) {
-        console.error('Failed to search data:', error);
+        // console.error('Failed to search data:', error);
         return {
             data: [],
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -434,7 +434,7 @@ export async function getRecommendationData(id, fetch, url, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to fetch recommendation data:', error);
+        // console.error('Failed to fetch recommendation data:', error);
         
         let errorMessage = 'Unknown error';
         if (error instanceof Error) {
@@ -469,7 +469,7 @@ export async function getChangelog(fetch) {
             };
         }
     } catch (error) {
-        console.error('Failed to fetch changelog:', error);
+        // console.error('Failed to fetch changelog:', error);
         return {
             data: [],
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -530,7 +530,7 @@ export async function getMovieRequestData(fetch, url, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to fetch movie request data:', error);
+        // console.error('Failed to fetch movie request data:', error);
         return {
             data: null,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -562,7 +562,7 @@ export async function getMovieRequestWaitingListData(fetch, url, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to fetch movie request data:', error);
+        // console.error('Failed to fetch movie request data:', error);
         return {
             data: null,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -586,13 +586,13 @@ export async function searchMovieRequests(query, fetch, url, cookies) {
         });
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-            console.warn('Search movie request API error:', { status: response.status, statusText: response.statusText, ...errorData });
+            // console.warn('Search movie request API error:', { status: response.status, statusText: response.statusText, ...errorData });
             return { data: [], error: null }; // Return empty data instead of throwing to prevent crashes
         }
         const data = await response.json();
         return { data: Array.isArray(data) ? data : [] };
     } catch (error) {
-        console.warn('Search movie request network error:', error);
+        // console.warn('Search movie request network error:', error);
         return { data: [], error: null }; // Return empty data instead of throwing to prevent crashes
     }
 }
@@ -625,7 +625,7 @@ export async function getShowsRequestData(fetch, url, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to fetch shows request data:', error);
+        // console.error('Failed to fetch shows request data:', error);
         return {
             data: null,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -657,7 +657,7 @@ export async function getShowsRequestWaitingListData(fetch, url, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to fetch shows request data:', error);
+        // console.error('Failed to fetch shows request data:', error);
         return {
             data: null,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -681,13 +681,13 @@ export async function searchShowsRequests(query, fetch, url, cookies) {
         });
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-            console.warn('Search shows request API error:', { status: response.status, statusText: response.statusText, ...errorData });
+            // console.warn('Search shows request API error:', { status: response.status, statusText: response.statusText, ...errorData });
             return { data: [], error: null }; // Return empty data instead of throwing to prevent crashes
         }
         const data = await response.json();
         return { data: Array.isArray(data) ? data : [] };
     } catch (error) {
-        console.warn('Search shows request network error:', error);
+        // console.warn('Search shows request network error:', error);
         return { data: [], error: null }; // Return empty data instead of throwing to prevent crashes
     }
 }
@@ -716,7 +716,7 @@ export async function getShowsRequestLibraryData(fetch, url, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to fetch shows request library data:', error);
+        // console.error('Failed to fetch shows request library data:', error);
         return {
             data: null,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -748,7 +748,7 @@ export async function getShowsRequestDetailsData(seriesId, fetch, url, cookies) 
             data
         };
     } catch (error) {
-        console.error('Failed to fetch shows request details data:', error);
+        // console.error('Failed to fetch shows request details data:', error);
         return {
             data: null,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -782,7 +782,7 @@ export async function requestShowSeries(requestData, fetch, url, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to request show series:', error);
+        // console.error('Failed to request show series:', error);
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -816,7 +816,7 @@ export async function requestShowSeasons(requestData, fetch, url, cookies) {
             data
         };
     } catch (error) {
-        console.error('Failed to request show seasons:', error);
+        // console.error('Failed to request show seasons:', error);
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -846,7 +846,7 @@ export async function deleteShowSeries(seriesId, deleteFiles, fetch, url, cookie
             success: true
         };
     } catch (error) {
-        console.error('Failed to delete show series:', error);
+        // console.error('Failed to delete show series:', error);
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -876,7 +876,7 @@ export async function deleteMovie(movieId, deleteFiles, fetch, url, cookies) {
             success: true
         };
     } catch (error) {
-        console.error('Failed to delete movie:', error);
+        // console.error('Failed to delete movie:', error);
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error'

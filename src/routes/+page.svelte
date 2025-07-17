@@ -15,6 +15,8 @@
     let leftoversPromise = data.leftoversData;
     let nextEpisodesPromise = data.nextEpisodesData;
     let recommendationsPromise = data.recommendationData;
+    let isReauthLoading = false;
+    let reauthInProgress = false;
 
     onMount(() => {
         if (!browser) return;
@@ -63,19 +65,28 @@
             serverError.toLowerCase().includes('unauthorized') ||
             serverError.toLowerCase().includes('forbidden');
         
-        if (isAuthError) {
-            // Try reauth up to 3 times, then sign out
+        if (isAuthError && !reauthInProgress) {
+            isReauthLoading = true;
+            reauthInProgress = true;
             let attempts = 0;
+            const maxAttempts = 3;
             const tryReauth = async () => {
+                if (attempts >= maxAttempts) {
+                    isReauthLoading = false;
+                    reauthInProgress = false;
+                    await authStore.logout();
+                    return;
+                }
                 attempts++;
                 await authStore.checkAuthStatus();
                 const state = get(authStore);
-                if (state.isAuthenticated) return;
-                if (attempts < 3) {
-                    setTimeout(tryReauth, 500);
-                } else {
-                    await authStore.logout();
+                if (state.isAuthenticated) {
+                    isReauthLoading = false;
+                    reauthInProgress = false;
+                    invalidateAll();
+                    return;
                 }
+                setTimeout(tryReauth, 500);
             };
             tryReauth();
         }
@@ -102,84 +113,100 @@
         </section>
     </section>
 
-
-    {#await leftoversPromise}
-        <!-- Display nothing -->
-    {:then leftovers}
-        {#if leftovers.data && leftovers.data.length > 0}
-            <section class="mb-8">
-                <h2 class="text-2xl mb-4" title="you've left these before. resume watching?">leftovers</h2>
-                <LibraryLeftoversView data={leftovers.data} onDataRefresh={refreshLeftovers}></LibraryLeftoversView>
-            </section>
-        {/if}
-    {/await}
-
-    {#await nextEpisodesPromise}
-        <!-- Display nothing -->
-    {:then playNext}
-        {#if playNext.data && playNext.data.length > 0}
-            <section class="mb-8">
-                <h2 class="text-2xl mb-4" title="watch next episode?">next up</h2>
-                <LibraryLeftoversView data={playNext.data} onDataRefresh={refreshLeftovers}></LibraryLeftoversView>
-            </section>
-        {/if}
-    {/await}
-
-    {#await recommendationsPromise}
-        <!-- Display nothing -->
-    {:then recommendations}
-        {#if recommendations.data && recommendations.data.length > 0}
-            <section class="mb-8">
-                <h2 class="text-2xl mb-4" title="maybe these ones?">something to watch</h2>
-                <LibraryViewDisplay data={recommendations.data} viewMode="default_thumb_home"></LibraryViewDisplay>
-            </section>
-        {/if}
-    {/await}
-
-    {#await data.serverData}
+    {#if isReauthLoading}
         <div class="flex items-center justify-center min-h-[60vh]">
             <div class="flex flex-col items-center gap-4">
                 <div class="loading loading-spinner loading-lg"></div>
-                <p class="text-lg opacity-70">Loading home content...</p>
+                <p class="text-lg opacity-70">Loading home screen...</p>
             </div>
         </div>
-    {:then serverData}
-        {@const libraryCategories = serverData?.data || []}
-        {@const libraryComingSoon = serverData?.data?.comingSoon || []}
-        {@const serverError = serverData?.error}
+    {:else}
+        {#await leftoversPromise}
+            <!-- Display nothing -->
+        {:then leftovers}
+            {#if leftovers.data && leftovers.data.length > 0}
+                <section class="mb-8">
+                    <h2 class="text-2xl mb-4" title="you've left these before. resume watching?">leftovers</h2>
+                    <LibraryLeftoversView data={leftovers.data} onDataRefresh={refreshLeftovers}></LibraryLeftoversView>
+                </section>
+            {/if}
+        {/await}
 
-        {#if serverError && typeof serverError === 'string'}
-            {handleAuthError(serverError)}
-        {/if}
+        {#await nextEpisodesPromise}
+            <!-- Display nothing -->
+        {:then playNext}
+            {#if playNext.data && playNext.data.length > 0}
+                <section class="mb-8">
+                    <h2 class="text-2xl mb-4" title="watch next episode?">next up</h2>
+                    <LibraryLeftoversView data={playNext.data} onDataRefresh={refreshLeftovers}></LibraryLeftoversView>
+                </section>
+            {/if}
+        {/await}
 
-        {#if libraryCategories.length === 0}
+        {#await recommendationsPromise}
+            <!-- Display nothing -->
+        {:then recommendations}
+            {#if recommendations.data && recommendations.data.length > 0}
+                <section class="mb-8">
+                    <h2 class="text-2xl mb-4" title="maybe these ones?">something to watch</h2>
+                    <LibraryViewDisplay data={recommendations.data} viewMode="default_thumb_home"></LibraryViewDisplay>
+                </section>
+            {/if}
+        {/await}
+
+        {#await data.serverData}
+            <div class="flex items-center justify-center min-h-[60vh]">
+                <div class="flex flex-col items-center gap-4">
+                    <div class="loading loading-spinner loading-lg"></div>
+                    <p class="text-lg opacity-70">Loading home content...</p>
+                </div>
+            </div>
+        {:then serverData}
+            {@const libraryCategories = serverData?.data || []}
+            {@const libraryComingSoon = serverData?.data?.comingSoon || []}
+            {@const serverError = serverData?.error}
+
+            {#if serverError && typeof serverError === 'string'}
+                {handleAuthError(serverError)}
+            {/if}
+
+            {#if libraryCategories.length === 0}
+                <StopState
+                    action="reload"
+                    message="moNobar is not available."
+                    actionDesc="Backend returns no data. Please try again in a little while."
+                    actionText="Reload">
+                </StopState>
+            {:else}
+                {#each libraryCategories as category}
+                    {#if category.latest && category.latest.length > 0}
+                        <section class="mb-8">
+                            <div class="flex items-center mb-4">
+                                <a href={`/library?id=${category.Id}`} class="hover:underline">
+                                    <h2 class="text-2xl">latest <b>{category.Name.toLowerCase()}</b></h2>
+                                </a>
+                            </div>
+                            <LibraryViewDisplay data={category.latest} viewMode="default_thumb_home" />
+                        </section>
+                    {:else}
+                        <section class="mb-8">
+                            <div class="flex items-center mb-4">
+                                <a href={`/library?id=${category.Id}`} class="hover:underline">
+                                    <h2 class="text-2xl">latest <b>{category.Name.toLowerCase()}</b></h2>
+                                </a>
+                            </div>
+                            <div class="text-center text-gray-400 py-8">Nothing here yet</div>
+                        </section>
+                    {/if}
+                {/each}
+            {/if}
+        {:catch error}
             <StopState
                 action="reload"
-                message="moNobar is not available."
-                actionDesc="Backend returns no data. Please try again in a little while."
+                message="Failed to load home content"
+                actionDesc="There was an error loading the home page. Please try again."
                 actionText="Reload">
             </StopState>
-        {:else}
-            {#each libraryCategories as category}
-                {#if category.latest && category.latest.length > 0}
-                    <section class="mb-8">
-                        <div class="flex items-center mb-4">
-                            <a href={`/library?id=${category.Id}`} class="hover:underline">
-                                <h2 class="text-2xl">latest <b>{category.Name.toLowerCase()}</b></h2>
-                            </a>
-                        </div>
-                        <LibraryViewDisplay data={category.latest} viewMode="default_thumb_home" />
-                    </section>
-                {/if}
-            {/each}
-
-        {/if}
-    {:catch error}
-        <StopState
-            action="reload"
-            message="Failed to load home content"
-            actionDesc="There was an error loading the home page. Please try again."
-            actionText="Reload">
-        </StopState>
-    {/await}
+        {/await}
+    {/if}
 </main>

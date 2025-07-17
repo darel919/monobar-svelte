@@ -43,12 +43,19 @@
 
 {#await data.serverData}
   <main class="flex flex-col min-h-screen relative p-8 mt-16">
-      <div class="flex items-center justify-center min-h-[60vh]">
-          <div class="flex flex-col items-center gap-4">
-              <div class="loading loading-spinner loading-lg"></div>
-              <p class="text-lg opacity-70">Loading library...</p>
-          </div>
-      </div>
+    <section class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+      <section class="mb-8">
+        <h1 class="text-4xl mb-4 font-extralight">movies</h1>
+        <p class="opacity-70">Loading items...</p>
+      </section>
+    </section>
+    <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 mt-2">
+      {#each Array(18) as _, i}
+        <div class="animate-pulse flex flex-col items-center">
+          <div class="relative w-full aspect-[16/9] bg-base-300 rounded-sm"></div>
+        </div>
+      {/each}
+    </section>
   </main>
 {:then serverDataResult}
   {@const serverData = serverDataResult.data || null}
