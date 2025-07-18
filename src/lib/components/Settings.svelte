@@ -62,6 +62,24 @@
         }
     }
 
+    function handleDisplaySkipIntroToggle() {
+        if (settingsStore) {
+            let currentValue = true;
+            const unsubscribe = settingsStore.subscribe(s => currentValue = s.displaySkipIntro);
+            unsubscribe();
+            settingsStore.setDisplaySkipIntro(!currentValue);
+        }
+    }
+
+    function handleAutoSkipIntroOutroToggle() {
+        if (settingsStore) {
+            let currentValue = false;
+            const unsubscribe = settingsStore.subscribe(s => currentValue = s.autoSkipIntroOutro);
+            unsubscribe();
+            settingsStore.setAutoSkipIntroOutro(!currentValue);
+        }
+    }
+
     function handleResetSettings() {
         if (!browser || !settingsStore) return;
         
@@ -222,6 +240,44 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                {/if}
+
+                <!-- Skip Intro Settings -->
+                <div class="form-control w-full my-2">
+                    <label class="label cursor-pointer justify-start gap-4 flex flex-row flex-wrap items-start px-1">
+                        <input 
+                            type="checkbox" 
+                            class="toggle toggle-primary mt-1" 
+                            checked={settingsStore ? $settingsStore!.displaySkipIntro : true}
+                            onclick={handleDisplaySkipIntroToggle}
+                        />
+                        <div class="flex flex-col flex-1">
+                            <span class="label-text text-lg font-medium break-normal">Display Skip Intro</span>
+                            <p class="text-sm text-base-content/60 mt-1 whitespace-normal leading-snug">
+                                When enabled, shows "Skip Intro" and "Skip Outro" prompts when intro/outro segments are detected.
+                            </p>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Auto Skip Intro and Outro -->
+                {#if settingsStore && $settingsStore!.displaySkipIntro}
+                    <div class="form-control w-full my-2">
+                        <label class="label cursor-pointer justify-start gap-4 flex flex-row flex-wrap items-start px-1">
+                            <input 
+                                type="checkbox" 
+                                class="toggle toggle-primary mt-1" 
+                                checked={settingsStore ? $settingsStore!.autoSkipIntroOutro : false}
+                                onclick={handleAutoSkipIntroOutroToggle}
+                            />
+                            <div class="flex flex-col flex-1">
+                                <span class="label-text text-lg font-medium break-normal">Auto Skip Intro and Outro</span>
+                                <p class="text-sm text-base-content/60 mt-1 whitespace-normal leading-snug">
+                                    When enabled, automatically skips intro and outro segments after a 3-second countdown.
+                                </p>
+                            </div>
+                        </label>
                     </div>
                 {/if}
 

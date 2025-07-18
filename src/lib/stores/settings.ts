@@ -6,6 +6,8 @@ interface SettingsState {
   playNextEnabled: boolean;
   playNextShowThreshold: number;
   playNextAutoProgressThreshold: number;
+  displaySkipIntro: boolean;
+  autoSkipIntroOutro: boolean;
   theme: string;
   subtitleSize: string;
   homeViewMode: string;
@@ -20,6 +22,8 @@ const defaultSettings: SettingsState = {
   playNextEnabled: true,
   playNextShowThreshold: 40,
   playNextAutoProgressThreshold: 12,
+  displaySkipIntro: true,
+  autoSkipIntroOutro: false,
   theme: 'system',
   subtitleSize: 'medium',
   homeViewMode: 'posterView',
@@ -170,6 +174,22 @@ function createSettingsStore() {
     setPlayNextAutoProgressThreshold: (value: number) => {
       update(state => {
         const newState = { ...state, playNextAutoProgressThreshold: value };
+        saveToStorage(newState);
+        return newState;
+      });
+    },
+    
+    setDisplaySkipIntro: (value: boolean) => {
+      update(state => {
+        const newState = { ...state, displaySkipIntro: value };
+        saveToStorage(newState);
+        return newState;
+      });
+    },
+    
+    setAutoSkipIntroOutro: (value: boolean) => {
+      update(state => {
+        const newState = { ...state, autoSkipIntroOutro: value };
         saveToStorage(newState);
         return newState;
       });

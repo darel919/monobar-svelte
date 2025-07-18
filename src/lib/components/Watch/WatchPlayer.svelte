@@ -35,6 +35,7 @@ import { BASE_API_PATH } from '$lib/config/api';
 import WatchPlayerStats from './WatchPlayerStats.svelte';
 import Settings from '../Settings.svelte';
 import PlayNext from './WatchPlayNext.svelte';
+import PlaySegment from './WatchPlaySegment.svelte';
 import { browser } from '$app/environment';
 import { useSettingsStore } from '$lib/stores/settings';
 import { findNextEpisode, getNextEpisodeInfo, type SeriesData, isAtAbsoluteEnd } from '$lib/utils/episodeUtils';
@@ -74,6 +75,12 @@ let wasFullscreenBeforePlayNext = false;
 let playNextDismissedForEpisode = false;
 let mediaEndHandled = false;
 
+// Skip Segment functionality
+let showPlaySegment = false;
+let currentSegment: any = null;
+let currentSegmentType: 'Intro' | 'Outro' = 'Intro';
+let segmentDismissedForEpisode: Record<string, boolean> = {};
+
 function startPlaybackReporting() {
     if (playbackReportInterval) clearInterval(playbackReportInterval);
     playbackReportInterval = setInterval(() => reportPlaybackStatus('timeupdate'), 4000);
@@ -89,6 +96,7 @@ function stopPlaybackReporting() {
 function startTimeTracking() {
     if (timeUpdateInterval) clearInterval(timeUpdateInterval);
     timeUpdateInterval = setInterval(() => {
+        checkSegmentTiming();
         checkPlayNextTiming();
         checkMediaEndTiming();
     }, 500);
@@ -101,9 +109,54 @@ function stopTimeTracking() {
     }
 }
 
+function checkSegmentTiming() {
+    // Skip segment detection takes priority over Play Next
+    if (!art || !art.video || !fullData?.creditsSegment) return;
+    
+    const settings = settingsStore.get();
+    if (!settings.displaySkipIntro) return;
+
+    const currentTime = art.currentTime;
+    const segments = fullData.creditsSegment;
+    
+    if (!Array.isArray(segments) || segments.length === 0) return;
+    
+    // Check if we're currently in any segment
+    for (const segment of segments) {
+        // Check if segment has required fields - but allow StartSeconds to be 0!
+        if (segment.StartSeconds === undefined || segment.StartSeconds === null || 
+            segment.EndSeconds === undefined || segment.EndSeconds === null || 
+            !segment.Type) {
+            continue;
+        }
+        
+        const segmentId = segment.Id || `${segment.Type}-${segment.StartSeconds}-${segment.EndSeconds}`;
+        
+        // Skip if this segment was already dismissed for this episode
+        if (segmentDismissedForEpisode[segmentId]) continue;
+        
+        // Check if current time is within segment bounds
+        if (currentTime >= segment.StartSeconds && currentTime <= segment.EndSeconds) {
+            // Don't show if we're already showing a segment or if PlayNext is shown
+            if (!showPlaySegment && !showPlayNext) {
+                currentSegment = segment;
+                currentSegmentType = segment.Type === 'Intro' ? 'Intro' : 'Outro';
+                showPlaySegment = true;
+                
+                // Exit fullscreen to show segment prompt
+                if (art && art.fullscreen) {
+                    art.fullscreen = false;
+                }
+            }
+            return; // Found active segment, no need to check others
+        }
+    }
+}
+
 function checkPlayNextTiming() {
     // Only handle Play Next functionality for Episodes with series data
-    if (!art || !art.video || !seriesData || type !== 'Episode') return;
+    // Skip if segment prompts are active
+    if (!art || !art.video || !seriesData || type !== 'Episode' || showPlaySegment) return;
     
     const settings = settingsStore.get();
     if (!settings.playNextEnabled) return;
@@ -164,6 +217,37 @@ function handleCancelPlayNext() {
         art.fullscreen = true;
         wasFullscreenBeforePlayNext = false;
     }
+}
+
+function handleSkipSegment() {
+    if (!art || !currentSegment) return;
+    
+    const skipToTime = currentSegment.EndSeconds;
+    
+    // Seek to end of segment
+    art.seek = skipToTime;
+    
+    // Hide segment prompt
+    showPlaySegment = false;
+    
+    // Mark this segment as handled for this episode
+    if (currentSegment.Id) {
+        segmentDismissedForEpisode[currentSegment.Id] = true;
+    }
+    
+    currentSegment = null;
+}
+
+function handleCancelSegment() {
+    if (!currentSegment) return;
+    
+    // Mark this segment as dismissed for this episode
+    if (currentSegment.Id) {
+        segmentDismissedForEpisode[currentSegment.Id] = true;
+    }
+    
+    showPlaySegment = false;
+    currentSegment = null;
 }
 
 function handleArtEvents() {
@@ -546,6 +630,12 @@ $: if (browser && typeof id !== 'undefined' && id && id !== lastPlayerId && isMo
     nextEpisodeInfo = null;
     playNextDismissedForEpisode = false;
     mediaEndHandled = false;
+    
+    // Reset segment state when changing episodes
+    showPlaySegment = false;
+    currentSegment = null;
+    segmentDismissedForEpisode = {};
+    
     lastPlayerId = id;
     initializePlayer();
 }
@@ -780,6 +870,16 @@ function checkMediaEndTiming() {
         {nextEpisodeInfo}
         on:playNext={handlePlayNext}
         on:cancel={handleCancelPlayNext}
+    />
+{/if}
+
+{#if showPlaySegment && currentSegment}
+    <PlaySegment 
+        visible={showPlaySegment}
+        segmentType={currentSegmentType}
+        segmentData={currentSegment}
+        onSkip={handleSkipSegment}
+        onCancel={handleCancelSegment}
     />
 {/if}
 
