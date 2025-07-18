@@ -17,8 +17,9 @@
     export let data;
 
     let leftoversPromise = data.leftoversData;
-    let nextEpisodesPromise = data.nextEpisodesData;
-    let recommendationsPromise = data.recommendationData;
+    // Initialize client-side promises for next episodes and recommendations
+    let nextEpisodesPromise: Promise<any> | null = null;
+    let recommendationsPromise: Promise<any> | null = null;
     let isReauthLoading = false;
     let reauthInProgress = false;
     let lastAuthState = false;
@@ -75,8 +76,76 @@
             }
         });
         
+        // Initialize client-side data fetching for next episodes and recommendations
+        initializeClientSideData();
+        
         return unsubscribe;
     });
+
+    // Initialize client-side data fetching
+    function initializeClientSideData() {
+        nextEpisodesPromise = fetchNextEpisodesData();
+        recommendationsPromise = fetchRecommendationsData();
+    }
+
+    // Create safe promises that handle null states
+    $: safeNextEpisodesPromise = nextEpisodesPromise || Promise.resolve({ data: null });
+    $: safeRecommendationsPromise = recommendationsPromise || Promise.resolve({ data: null });
+
+    // Client-side fetch for next episodes data
+    async function fetchNextEpisodesData() {
+        try {
+            const headers = {
+                'Content-Type': 'application/json',
+                'User-Agent': 'dp-Monobar',
+                'X-Environment': getBaseEnvironment(window.location),
+                ...getSessionHeaders()
+            };
+
+            const response = await fetch(`${BASE_API_PATH}/continueWatching`, {
+                method: 'GET',
+                headers
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                return { data };
+            } else {
+                return { data: null, error: `Failed to fetch next episodes: ${response.status}` };
+            }
+        } catch (error) {
+            console.error('❌ Failed to fetch next episodes:', error);
+            return { data: null, error: error instanceof Error ? error.message : 'Unknown error' };
+        }
+    }
+
+    // Client-side fetch for recommendations data
+    async function fetchRecommendationsData() {
+        try {
+            const headers = {
+                'Content-Type': 'application/json',
+                'User-Agent': 'dp-Monobar',
+                'X-Environment': getBaseEnvironment(window.location),
+                'X-Origin-Id': 'home',
+                ...getSessionHeaders()
+            };
+
+            const response = await fetch(`${BASE_API_PATH}/recommendation`, {
+                method: 'GET',
+                headers
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                return { data };
+            } else {
+                return { data: null, error: `Failed to fetch recommendations: ${response.status}` };
+            }
+        } catch (error) {
+            console.error('❌ Failed to fetch recommendations:', error);
+            return { data: null, error: error instanceof Error ? error.message : 'Unknown error' };
+        }
+    }
 
     async function refreshLeftovers() {
         try {
@@ -107,26 +176,9 @@
 
     async function refreshNextEpisodes() {
         try {
-            const headers = {
-                'Content-Type': 'application/json',
-                'User-Agent': 'dp-Monobar',
-                'X-Environment': getBaseEnvironment(window.location),
-                ...getSessionHeaders()
-            };
-
-            const response = await fetch(`${BASE_API_PATH}/continueWatching`, {
-                method: 'GET',
-                headers
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                const newData = { data };
-                nextEpisodesPromise = Promise.resolve(newData);
-                console.log('✅ Next episodes data refreshed');
-            } else {
-                console.error('❌ Failed to refresh next episodes:', response.status, response.statusText);
-            }
+            const result = await fetchNextEpisodesData();
+            nextEpisodesPromise = Promise.resolve(result);
+            console.log('✅ Next episodes data refreshed');
         } catch (error) {
             console.error('❌ Failed to refresh next episodes:', error);
         }
@@ -152,26 +204,18 @@
             };
             
             // Fetch fresh data with authenticated session - call backend directly
-            const [leftoversResponse, nextEpisodesResponse, recommendationsResponse] = await Promise.all([
+            const [leftoversResponse, nextEpisodesData, recommendationsData] = await Promise.all([
                 fetch(`${BASE_API_PATH}/resumeWatching`, { method: 'GET', headers }),
-                fetch(`${BASE_API_PATH}/continueWatching`, { method: 'GET', headers }),
-                fetch(`${BASE_API_PATH}/recommendation`, { method: 'GET', headers })
+                fetchNextEpisodesData(),
+                fetchRecommendationsData()
             ]);
 
-            const [leftoversData, nextEpisodesData, recommendationsData] = await Promise.all([
-                leftoversResponse.ok ? 
-                    leftoversResponse.json().then(data => ({ data })) : 
-                    Promise.resolve({ data: null, error: `Failed to fetch leftovers: ${leftoversResponse.status}` }),
-                nextEpisodesResponse.ok ? 
-                    nextEpisodesResponse.json().then(data => ({ data })) : 
-                    Promise.resolve({ data: null, error: `Failed to fetch next episodes: ${nextEpisodesResponse.status}` }),
-                recommendationsResponse.ok ? 
-                    recommendationsResponse.json().then(data => ({ data })) : 
-                    Promise.resolve({ data: null, error: `Failed to fetch recommendations: ${recommendationsResponse.status}` })
-            ]);
+            const leftoversData = leftoversResponse.ok ? 
+                leftoversResponse.json().then(data => ({ data })) : 
+                Promise.resolve({ data: null, error: `Failed to fetch leftovers: ${leftoversResponse.status}` });
 
             // Update the promises with fresh data
-            leftoversPromise = Promise.resolve(leftoversData);
+            leftoversPromise = leftoversData;
             nextEpisodesPromise = Promise.resolve(nextEpisodesData);
             recommendationsPromise = Promise.resolve(recommendationsData);
             
@@ -254,8 +298,8 @@
 <!-- Hero Carousel -->
 <HomeHeroCarousel 
     leftoversData={leftoversPromise} 
-    recommendationsData={recommendationsPromise} 
-    nextUpData={nextEpisodesPromise}
+    recommendationsData={safeRecommendationsPromise} 
+    nextUpData={safeNextEpisodesPromise}
 />
 
 <main class="flex flex-col min-h-screen p-8 pt-20">
@@ -285,7 +329,7 @@
             {/if}
         {/await}
 
-        {#await nextEpisodesPromise}
+        {#await safeNextEpisodesPromise}
             <!-- Display nothing -->
         {:then playNext}
             {#if playNext.data && playNext.data.length > 0}
@@ -296,7 +340,7 @@
             {/if}
         {/await}
 
-        {#await recommendationsPromise}
+        {#await safeRecommendationsPromise}
             <!-- Display nothing -->
         {:then recommendations}
             {#if recommendations.data && recommendations.data.length > 0}

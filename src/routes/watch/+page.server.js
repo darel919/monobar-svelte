@@ -33,36 +33,20 @@ export async function load({ url, fetch, cookies }) {
         };
     }
 
-    const serverData = await getItemWatchData(id, fetch, url, cookies);
+    // Return promises instead of awaited data for faster page load
+    const serverDataPromise = getItemWatchData(id, fetch, url, cookies);
     
-    // If authentication failed on the API side, return auth error
-    if (serverData.error && (
-        serverData.error.includes('401') || 
-        serverData.error.includes('unauthorized') || 
-        serverData.error.includes('forbidden')
-    )) {
-        return {
-            serverData: {
-                data: null,
-                error: 'Authentication required to access this content.'
-            },
-            id,
-            type,
-            seriesData: null,
-            requiresAuth: true
-        };
-    }
-    
-    // Optionally, fetch seriesData for Series/Episode types
-    let seriesData = null;
+    // Handle series data as promise too
+    let seriesDataPromise = null;
     if ((type === 'Series' || type === 'Episode') && seriesId && isAuthenticated) {
-        seriesData = await getItemInfoData(seriesId, fetch, url, cookies);
+        seriesDataPromise = getItemInfoData(seriesId, fetch, url, cookies);
     }
     
     return {
-        serverData,
+        serverData: serverDataPromise,
+        seriesData: seriesDataPromise,
         id,
         type,
-        seriesData: seriesData ? seriesData.data : null
+        requiresAuth: !isAuthenticated && type !== 'Movie'
     };
 }
