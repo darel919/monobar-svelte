@@ -178,6 +178,47 @@
             searchInputRef.focus();
         }    }
 
+    // Helper function to determine if an item is a TV series
+    /**
+     * @param {any} item
+     */
+    function isItemTVSeries(item) {
+        return item.Type === 'Series' || 
+               item.type === 'series' ||
+               item.Type === 'SeriesName' ||
+               (typeof item.tvdbId !== 'undefined') ||
+               (Array.isArray(item.seasons) && item.seasons.length > 0);
+    }
+
+    // Helper function to determine if an item is a movie
+    /**
+     * @param {any} item
+     */
+    function isItemMovie(item) {
+        return item.Type === 'Movie' || 
+               item.type === 'movie' ||
+               (!isItemTVSeries(item) && !item.seasons);
+    }
+
+    // Function to get the correct navigation URL for search results
+    /**
+     * @param {any} item
+     */
+    function getSearchItemUrl(item) {
+        // For requested content, go to monitoring page
+        if (item.status === 'requested') {
+            return isItemMovie(item) ? '/request/movies' : '/request/shows';
+        }
+
+        // For genre searches, go to library
+        if (activePrefix === 'genre') {
+            return `/library?genreId=${item.id}`;
+        }
+
+        // For all other cases, go to info page (default behavior)
+        return `/info?id=${item.id}&type=${item.type || "Movie"}`;
+    }
+
     $: activePrefixDisplay = activePrefix && SEARCH_TYPES[activePrefix]?.displayName ? SEARCH_TYPES[activePrefix].displayName : activePrefix;
 </script>
 
@@ -241,7 +282,7 @@
                         <div>
                             {#each results as item, index}
                                 <a
-                                    href={activePrefix === 'genre' ? `/library?genreId=${item.id}` : `/info?id=${item.id}&type=${item.type || "Movie"}`}
+                                    href={getSearchItemUrl(item)}
                                     class="block px-4 py-2 hover:bg-base-300 transition-colors"
                                     on:click={handleResultClick}
                                 >

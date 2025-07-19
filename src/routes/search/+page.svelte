@@ -142,7 +142,7 @@
                 ...getSessionHeaders()
             };
 
-            const response = await fetch(`${BASE_API_PATH}/request/movie/search?q=${encodeURIComponent(searchQuery.trim())}`, {
+            const response = await fetch(`${BASE_API_PATH}/search?intent=request_movie&q=${encodeURIComponent(searchQuery.trim())}`, {
                 method: 'GET',
                 headers
             });
@@ -179,7 +179,7 @@
                 ...getSessionHeaders()
             };
 
-            const response = await fetch(`${BASE_API_PATH}/request/tv/search?q=${encodeURIComponent(searchQuery.trim())}`, {
+            const response = await fetch(`${BASE_API_PATH}/search?intent=request_show&q=${encodeURIComponent(searchQuery.trim())}`, {
                 method: 'GET',
                 headers
             });
