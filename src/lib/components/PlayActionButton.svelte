@@ -85,7 +85,7 @@ Props:
       const headers: { [key: string]: string } = {
         // "X-Device-Profile": await getDeviceProfileHeader(),
         "X-Session-Id": deviceId,
-        "X-Environment": getBaseEnvironment(new URL(url)),
+        "X-Environment": getBaseEnvironment(window.location),
         'Origin': window.location.origin
       };
 

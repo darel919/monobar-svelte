@@ -568,7 +568,7 @@ async function initializePlayer() {
                         maxBufferLength: 120,
                         maxMaxBufferLength: 180,
                         xhrSetup: (xhr) => {
-                            const environment = getBaseEnvironment(new URL(url, window.location.origin));
+                            const environment = getBaseEnvironment(window.location);
                             xhr.setRequestHeader('X-Environment', environment);
                             try {
                                 const jellyAccessToken = getCookie('jellyAccessToken');

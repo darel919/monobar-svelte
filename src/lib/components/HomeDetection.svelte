@@ -14,10 +14,15 @@ onMount(() => {
             const res = await fetch(PUBLIC_DARELISME_PING_URL, {
                 cache: 'no-store',
             });
-            if (res.ok) return;
+            if (res.ok) {
+                // If ping succeeds, user is NOT at home - stay on current site
+                return;
+            }
+            // If ping fails, user is at home - redirect to local server if on external domain
             localStorage.setItem('redirectAfterSwitch', window.location.pathname + window.location.search);
             window.location.href = APP_LOCAL_BASE_URL + window.location.pathname + window.location.search;
         } catch {
+            // If ping fails, user is at home - redirect to local server if on external domain
             localStorage.setItem('redirectAfterSwitch', window.location.pathname + window.location.search);
             window.location.href = APP_LOCAL_BASE_URL + window.location.pathname + window.location.search;
         }
