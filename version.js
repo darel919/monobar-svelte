@@ -40,7 +40,7 @@ function getLatestGitCommit() {
 }
 
 async function fetchLatestChange() {
-  const res = await fetch('http://api.server.drl/monobar/v2/changes/latest');
+  const res = await fetch('http://api.server.drl/monobar/changes/latest');
   if (!res.ok) return null;
   let text;
   try {
@@ -66,7 +66,7 @@ async function fetchLatestChange() {
 }
 
 async function postChange(change) {
-  await fetch('http://api.server.drl/monobar/v2/changes', {
+  await fetch('http://api.server.drl/monobar/changes', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(change)

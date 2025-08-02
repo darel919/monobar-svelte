@@ -6,7 +6,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	server: {
 		proxy: {
-			'/monobar/v2/watch/subtitle': {
+			'/monobar/watch/subtitle': {
 				target: 'http://api.server.drl',
 				changeOrigin: true,
 				secure: false,

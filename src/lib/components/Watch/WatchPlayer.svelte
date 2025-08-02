@@ -439,10 +439,35 @@ async function initializePlayer() {
     Artplayer.AUTO_PLAYBACK_TIMEOUT = 15000;
     Artplayer.RECONNECT_SLEEP_TIME  = 3000;
     Artplayer.RECONNECT_TIME_MAX  = 7;
+    // Ensure poster is always a string and never an array or object
+    let posterString = '';
+    if (typeof poster === 'string') {
+        posterString = poster;
+    } else if (Array.isArray(poster)) {
+        if (poster.length > 0 && typeof poster[0] === 'string') {
+            posterString = poster[0];
+        } else {
+            posterString = '';
+        }
+    } else if (poster && typeof poster === 'object' && 'toString' in poster) {
+        posterString = String(poster);
+    } else {
+        posterString = '';
+    }
+    if (import.meta.env && import.meta.env.DEV) {
+        console.log('Artplayer poster value:', poster, 'posterString:', posterString);
+    }
+    if (typeof posterString !== 'string') {
+        posterString = '';
+    }
+    // Ensure artRef is a valid Element
+    if (!artRef || !(artRef instanceof Element)) {
+        throw new Error("Artplayer container (artRef) is not a valid Element");
+    }
     art = new Artplayer({
         container: artRef,
         url: fullData.playbackUrl,
-        poster: poster || '',
+        poster: posterString,
         setting: true,
         autoplay: true,
         fullscreen: true,

@@ -360,7 +360,6 @@
             </div>
         {:then serverData}
             {@const libraryCategories = serverData?.data || []}
-            {@const libraryComingSoon = serverData?.data?.comingSoon || []}
             {@const serverError = serverData?.error}
 
             {#if serverError && typeof serverError === 'string'}
@@ -380,7 +379,7 @@
                         <section class="mb-8">
                             <div class="flex items-center mb-4">
                                 <a href={`/library?id=${category.Id}`} class="hover:underline">
-                                    <h2 class="text-2xl">latest <b>{category.Name.toLowerCase()}</b></h2>
+                                    <h2 class="text-2xl">latest <b>{ category.Name}</b></h2>
                                 </a>
                             </div>
                             <LibraryViewDisplay data={category.latest} viewMode="default_thumb_home" />
@@ -389,7 +388,7 @@
                         <section class="mb-8">
                             <div class="flex items-center mb-4">
                                 <a href={`/library?id=${category.Id}`} class="hover:underline">
-                                    <h2 class="text-2xl">latest <b>{category.Name.toLowerCase()}</b></h2>
+                                    <h2 class="text-2xl">latest <b>{category.Name}</b></h2>
                                 </a>
                             </div>
                             <div class="text-center text-gray-400 py-8">Nothing here yet</div>
