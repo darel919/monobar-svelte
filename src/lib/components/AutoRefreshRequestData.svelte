@@ -118,7 +118,6 @@
   {/if}
 {:else if data}
  {#if data.data && data.data.length > 0}
-    <h2 class="text-2xl font-light mb-8"> {title}</h2>
     <section class="my-4">
       <RequestViewDisplay {data} {title} />
     </section>

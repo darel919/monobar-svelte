@@ -33,6 +33,7 @@ Props:
         ImageTags?: {
             Logo?: string;
             Backdrop?: string;
+            Primary?: string;
         };
         RemoteTrailers?: Array<{
             Name: string;
@@ -249,6 +250,25 @@ Props:
         return '';
     }
 
+    // Determine the backdrop image for a carousel item.
+    // For 'nextup' items prefer ImageTags.Primary when available (some APIs provide a dedicated primary image).
+    function determineBackdrop(item: CarouselItem): string {
+        if (!item) return '';
+        // If next up, prefer Primary then Backdrop
+        if (item.category === 'nextup' || item.category === 'leftovers') {
+            return (
+                item.ImageTags?.Primary ||
+                item.ImageTags?.Backdrop ||
+                item.thumbPath ||
+                item.posterPath ||
+                ''
+            );
+        }
+
+        // Default behavior for other categories: Backdrop -> thumb -> poster
+        return item.ImageTags?.Backdrop || item.thumbPath || item.posterPath || '';
+    }
+
     onMount(() => {
         settingsStore = useSettingsStore();
         isMounted = true; // Mount immediately
@@ -304,7 +324,7 @@ Props:
                     mute={true}
                     enabled={true}
                     loop={false}
-                    backdrop={currentItem.ImageTags?.Backdrop || currentItem.thumbPath || currentItem.posterPath || ''}
+                    backdrop={determineBackdrop(currentItem)}
                 />
             </div>
             

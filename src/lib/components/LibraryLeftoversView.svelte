@@ -145,9 +145,9 @@ Props:
                         {markError[item.Id || item.id || '']}
                     </div>
                 {/if}
-                {#if (item.ImageTags?.Primary || item.ImageTags?.Thumb)}                        
+                {#if (item.ImageTags?.Thumb || item.ImageTags?.Primary)}                        
                     <ImageComponent 
-                        src={item.ImageTags?.Primary || item.ImageTags?.Thumb}
+                        src={item.ImageTags?.Thumb || item.ImageTags?.Primary}
                         alt={item.Name || 'Image'}
                         aspectRatio="16/9"
                         borderRadius="rounded-none"

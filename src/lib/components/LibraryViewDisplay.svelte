@@ -83,7 +83,7 @@ Props:
         checkWidth();
         window.addEventListener('resize', checkWidth);
         window.addEventListener('scroll', handleScroll, { passive: true });
-        
+        // console.log(data)
         return () => {
             window.removeEventListener('resize', checkWidth);
             window.removeEventListener('scroll', handleScroll);
@@ -120,15 +120,16 @@ Props:
             if (viewMode === "default_thumb_recommendation") {
                 return item.ImageTags?.Primary || null;
             }
-            // For home/thumb modes on mobile, prefer Primary image if posterPath is not available
+            // For home/thumb modes on mobile, prefer Thumb image (then Primary) if posterPath is not available
             if (viewMode === "default_thumb_home" || viewMode === "default_thumb_library") {
-                return item.posterPath || item.ImageTags?.Primary || null;
+                return item.posterPath || item.ImageTags?.Thumb || item.ImageTags?.Primary || null;
             }
             return item.posterPath || null;
         } else if (responsiveViewMode === "posterView" || responsiveViewMode === "default_poster_home") {
             return item.posterPath || null;
         } else if (responsiveViewMode === "default_thumb_home" || responsiveViewMode === "default_thumb_library") {
-            return item.thumbPath || item.ImageTags?.Primary || null;
+            // Prefer explicit thumbPath, then ImageTags.Thumb, then Primary
+            return item.thumbPath || item.ImageTags?.Thumb || item.ImageTags?.Primary || null;
         } else if (responsiveViewMode === "default_search" || responsiveViewMode === "default_search_genre") {
             return item.thumbPath || null;
         } else if (responsiveViewMode === "default_thumb_recommendation") {
@@ -366,7 +367,7 @@ Props:
                 <div class="relative w-full aspect-[16/9]">                    
                     {#if (item.thumbPath || item.ImageTags?.Primary)}                        
                         <ImageComponent 
-                            src={item.thumbPath || item.ImageTags?.Primary || ''}
+                            src={item.ImageTags?.Thumb || item.thumbPath || item.ImageTags?.Primary || ''}
                             alt={item.Name || 'Image'}
                             aspectRatio="16/9"
                             borderRadius="rounded-sm"
