@@ -65,7 +65,12 @@
     }
     
     if (data?.data && data.data.length > 0) {
-      refreshInterval = setInterval(fetchRequestData, 7000);
+      refreshInterval = setInterval(() => {
+        // Only fetch if page is visible and document is not hidden
+        if (!document.hidden && document.visibilityState === 'visible') {
+          fetchRequestData();
+        }
+      }, 15000); // Increased from 7000ms to 15000ms (15 seconds)
     }
   }
 
@@ -112,10 +117,10 @@
     </div>
   {/if}
 {:else if data}
- {#if data.data.length > 0}
+ {#if data.data && data.data.length > 0}
     <h2 class="text-2xl font-light mb-8"> {title}</h2>
     <section class="my-4">
-      <RequestViewDisplay {data} />
+      <RequestViewDisplay {data} {title} />
     </section>
   {:else}
     <p class="text-center text-gray-500">No {title} request data.</p>

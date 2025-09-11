@@ -45,13 +45,112 @@ Props:
     let isLoaded = false;
     let hasError = false;
     let imageUrl: string | null = null;
-      $: {
-        if (browser && src) {
+    let containerElement: HTMLElement | null = null;
+    let intersectionObserver: IntersectionObserver | null = null;
+    let hasAttemptedLoad = false;
+    let fallbackTimeout: number | null = null;
+    
+    function setupIntersectionObserver() {
+        if (!browser || !containerElement || intersectionObserver) return;
+        
+        intersectionObserver = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting && src && !imageUrl && !hasError && !hasAttemptedLoad) {
+                        hasAttemptedLoad = true;
+                        loadImageWithCredentials();
+                        // Clear fallback timeout
+                        if (fallbackTimeout) {
+                            clearTimeout(fallbackTimeout);
+                            fallbackTimeout = null;
+                        }
+                        // Once loaded, disconnect the observer
+                        if (intersectionObserver) {
+                            intersectionObserver.disconnect();
+                            intersectionObserver = null;
+                        }
+                    }
+                });
+            },
+            {
+                rootMargin: '50px', // Start loading 50px before the image comes into view
+                threshold: 0.1
+            }
+        );
+        
+        intersectionObserver.observe(containerElement);
+        
+        // Check if element is already visible and load immediately
+        const rect = containerElement.getBoundingClientRect();
+        const isVisible = rect.top < window.innerHeight && rect.bottom > 0 && rect.left < window.innerWidth && rect.right > 0;
+        if (isVisible && src && !imageUrl && !hasError && !hasAttemptedLoad) {
+            hasAttemptedLoad = true;
+            loadImageWithCredentials();
+            if (intersectionObserver) {
+                intersectionObserver.disconnect();
+                intersectionObserver = null;
+            }
+            if (fallbackTimeout) {
+                clearTimeout(fallbackTimeout);
+                fallbackTimeout = null;
+            }
+        } else if (!hasAttemptedLoad) {
+            // Fallback: load after 2 seconds if intersection observer doesn't trigger
+            fallbackTimeout = setTimeout(() => {
+                if (src && !imageUrl && !hasError && !hasAttemptedLoad) {
+                    hasAttemptedLoad = true;
+                    loadImageWithCredentials();
+                    if (intersectionObserver) {
+                        intersectionObserver.disconnect();
+                        intersectionObserver = null;
+                    }
+                }
+            }, 2000);
+        }
+    }
+    
+    function cleanupIntersectionObserver() {
+        if (intersectionObserver) {
+            intersectionObserver.disconnect();
+            intersectionObserver = null;
+        }
+        if (fallbackTimeout) {
+            clearTimeout(fallbackTimeout);
+            fallbackTimeout = null;
+        }
+    }
+    
+    // Reactive statement to handle src changes
+    $: if (browser && src && containerElement) {
+        hasAttemptedLoad = false; // Reset flag when src changes
+        if (loading === 'eager') {
+            hasAttemptedLoad = true;
             loadImageWithCredentials();
         } else {
-            imageUrl = null;
+            // Setup intersection observer for lazy loading
+            setupIntersectionObserver();
+        }
+    }
+    
+    // Handle container element mounting
+    $: if (containerElement && browser && src && !hasAttemptedLoad) {
+        if (loading === 'eager') {
+            hasAttemptedLoad = true;
+            loadImageWithCredentials();
+        } else {
+            setupIntersectionObserver();
+        }
+    }
+    
+    // Handle src changes - reset states
+    $: if (src !== undefined) {
+        if (!src) {
+            // Clear states when src becomes null/undefined
             isLoaded = false;
-            hasError = false;        
+            hasError = false;
+            imageUrl = null;
+            hasAttemptedLoad = false;
+            cleanupIntersectionObserver();
         }
     }
     
@@ -78,6 +177,7 @@ Props:
                 
                 const blob = await response.blob();
                 imageUrl = URL.createObjectURL(blob);
+                // Don't set isLoaded here - let the img onload handler do it
             } else {
                 const response = await fetch(src);
                 
@@ -87,11 +187,12 @@ Props:
                 
                 const blob = await response.blob();
                 imageUrl = URL.createObjectURL(blob);
+                // Don't set isLoaded here - let the img onload handler do it
             }
         } catch (error) {
             console.error('Failed to load image:', error);            
             hasError = true;
-            isLoaded = true;
+            isLoaded = true; // Set loaded to true on error to hide skeleton
             onerror?.();
         }
     }
@@ -114,12 +215,19 @@ Props:
     }
     
     onDestroy(() => {
+        cleanupIntersectionObserver();
         cleanup();
     });
+    
+    // Clear fallback timeout when image starts loading
+    $: if (hasAttemptedLoad && fallbackTimeout) {
+        clearTimeout(fallbackTimeout);
+        fallbackTimeout = null;
+    }
 </script>
 
 <!-- JavaScript-enabled content -->
-<div class="js-content relative w-full h-full" style="aspect-ratio: {aspectRatio};">
+<div class="js-content relative w-full h-full" style="aspect-ratio: {aspectRatio};" bind:this={containerElement}>
     {#if showSkeleton && !isLoaded}
         <div class="skeleton absolute inset-0 w-full h-full {borderRadius} opacity-100 transition-opacity"></div>
     {/if}

@@ -75,7 +75,7 @@ function createAuthStore() {
   // Rate limiting for checkAuthStatus to prevent infinite loops
   let lastAuthCheck = 0;
   let authCheckInProgress = false;
-  const AUTH_CHECK_COOLDOWN = 1000; // 1 second minimum between auth checks
+  const AUTH_CHECK_COOLDOWN = 5000; // 5 seconds minimum between auth checks (increased from 1s)
   
   // Rate limiting for Jellyfin login to prevent infinite attempts
   let lastJellyfinLogin = 0;

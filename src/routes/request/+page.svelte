@@ -19,7 +19,7 @@
     </section>
    
     <section class="my-8">
-        <AutoRefreshRequestData type="movies"/>
+        <AutoRefreshRequestData type="movies" title="Movies"/>
     </section>
     <section class="mb-8 flex flex-row items-center justify-between">
         <p class="text-2xl font-light">coming soon tv shows</p>
@@ -33,6 +33,6 @@
     </section>
 
     <section class="my-8">
-        <AutoRefreshRequestData type="shows"/>
+        <AutoRefreshRequestData type="shows" title="TV Shows"/>
     </section>
 </main>
