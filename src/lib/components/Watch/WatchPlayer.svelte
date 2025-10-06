@@ -43,7 +43,8 @@ import Hls from 'hls.js';
 
 const isDev = import.meta.env && import.meta.env.DEV;
 
-export let poster: string | null = null;
+// poster can come as a string URL, an array of image tags/URLs, or an object — normalize it
+export let poster: string | string[] | Record<string, any> | null = null;
 export let fullData: any = null;
 export let type: string;
 export let id: string | null = null;
@@ -439,10 +440,37 @@ async function initializePlayer() {
     Artplayer.AUTO_PLAYBACK_TIMEOUT = 15000;
     Artplayer.RECONNECT_SLEEP_TIME  = 3000;
     Artplayer.RECONNECT_TIME_MAX  = 7;
+    // Resolve container element safely. artRef should be a DOM element bound via bind:this,
+    // but protect against unexpected values (null, array, Svelte component instance, etc.).
+    const resolvedContainer = (artRef && (artRef instanceof Element || artRef.nodeType === 1)) ? artRef : null;
+    if (!resolvedContainer) {
+        console.warn('WatchPlayer: failed to initialize Artplayer - container element not found or invalid', artRef);
+        return;
+    }
+
+    // Normalize poster to a string URL (handle arrays or objects returned by the API)
+    const resolvePoster = (p: any) => {
+        if (!p) return '';
+        if (typeof p === 'string') return p;
+        if (Array.isArray(p)) {
+            if (p.length === 0) return '';
+            const first = p[0];
+            if (typeof first === 'string') return first;
+            if (first && (first.Url || first.url)) return first.Url || first.url;
+            return '';
+        }
+        if (typeof p === 'object') {
+            return p.Url || p.url || '';
+        }
+        return '';
+    };
+
+    const posterUrl = resolvePoster(poster);
+
     art = new Artplayer({
-        container: artRef,
+        container: resolvedContainer,
         url: fullData.playbackUrl,
-        poster: poster || '',
+        poster: posterUrl || '',
         setting: true,
         autoplay: true,
         fullscreen: true,

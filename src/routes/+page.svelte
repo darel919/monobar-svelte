@@ -14,12 +14,13 @@
     import { getBaseEnvironment } from '$lib/utils/environment';
     import Cookies from 'js-cookie';
     
-    export let data;
-
-    let leftoversPromise = data.leftoversData;
+    // Leftovers are fetched client-side — initialize with empty resolved value.
+    let leftoversPromise: Promise<any> = Promise.resolve({ data: null });
     // Initialize client-side promises for next episodes and recommendations
     let nextEpisodesPromise: Promise<any> | null = null;
     let recommendationsPromise: Promise<any> | null = null;
+    // Main home data should be fetched client-side (no SSR)
+    let homeDataPromise: Promise<any> = Promise.resolve({ data: null });
     let isReauthLoading = false;
     let reauthInProgress = false;
     let lastAuthState = false;
@@ -86,6 +87,34 @@
     function initializeClientSideData() {
         nextEpisodesPromise = fetchNextEpisodesData();
         recommendationsPromise = fetchRecommendationsData();
+        homeDataPromise = fetchHomeData();
+    }
+
+    // Client-side fetch for main home data (library categories etc.)
+    async function fetchHomeData() {
+        try {
+            const headers = {
+                'Content-Type': 'application/json',
+                'User-Agent': 'dp-Monobar',
+                'X-Environment': getBaseEnvironment(window.location),
+                ...getSessionHeaders()
+            };
+
+            const response = await fetch(`${BASE_API_PATH}`, {
+                method: 'GET',
+                headers
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return { data };
+            } else {
+                return { data: null, error: `Failed to fetch home data: ${response.status}` };
+            }
+        } catch (error) {
+            console.error('❌ Failed to fetch home data:', error);
+            return { data: null, error: error instanceof Error ? error.message : 'Unknown error' };
+        }
     }
 
     // Create safe promises that handle null states
@@ -289,6 +318,23 @@
         }
     };
 
+    // No server-side data; all home-related requests are done client-side.
+
+    // Reactive: when the main home data promise resolves, handle auth-related errors without rendering Promises.
+    $: (async () => {
+        try {
+            const resolved = await homeDataPromise;
+            const serverError = resolved?.error;
+            if (serverError && typeof serverError === 'string') {
+                // Fire-and-forget the async handler; UI will show reauth spinner via isReauthLoading
+                void handleAuthError(serverError);
+            }
+        } catch (e) {
+            // If awaiting the promise fails, log and continue—no UI render of the error object
+            console.error('Error resolving homeDataPromise in reactive handler:', e);
+        }
+    })();
+
 </script>
 
 <svelte:head>
@@ -351,7 +397,7 @@
             {/if}
         {/await}
 
-        {#await data.serverData}
+        {#await homeDataPromise}
             <div class="flex items-center justify-center min-h-[60vh]">
                 <div class="flex flex-col items-center gap-4">
                     <div class="loading loading-spinner loading-lg"></div>
@@ -364,7 +410,7 @@
             {@const serverError = serverData?.error}
 
             {#if serverError && typeof serverError === 'string'}
-                {handleAuthError(serverError)}
+                {(() => { void handleAuthError(serverError); return ''; })()}
             {/if}
 
             {#if libraryCategories.length === 0}
