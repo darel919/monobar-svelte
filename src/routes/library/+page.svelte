@@ -21,6 +21,7 @@
   $: data.serverData.then(serverDataResult => {
     const serverData = serverDataResult.data || null;
     if (serverData) {
+      // console.log('Server Data:', serverData);
       if (type === 'genre' && serverData.Name) {
         documentTitle = `Genre: ${serverData.Name} - moNobar`;
       } else if (serverData.library?.Name) {
