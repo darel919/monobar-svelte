@@ -57,10 +57,61 @@
 
         mediaQuery.addEventListener('change', handleSystemThemeChange);
 
+        // --- auth subscription and message handling (moved here from layout) ---
+        let previousAuthState: boolean | null = null;
+        let lastInvalidation = 0;
+        let isHandlingAuthSuccess = false;
+
+        const unsubscribeAuth = authStore.subscribe(state => {
+            const currentTime = Date.now();
+            const hasAuthStateChanged = previousAuthState !== null && previousAuthState !== state.isAuthenticated;
+            const timeSinceLastInvalidation = currentTime - lastInvalidation;
+
+            if (hasAuthStateChanged && timeSinceLastInvalidation > 500 && !isHandlingAuthSuccess) {
+                console.log('🔄 Auth state changed (AppInitializer), refreshing data...', {
+                    from: previousAuthState,
+                    to: state.isAuthenticated
+                });
+
+                lastInvalidation = currentTime;
+
+                setTimeout(() => {
+                    import('$app/navigation').then(({ invalidateAll }) => invalidateAll());
+                }, 150);
+            }
+
+            previousAuthState = state.isAuthenticated;
+        });
+
+        const handleAuthMessage = async (event: MessageEvent) => {
+            if (event.origin !== window.location.origin) return;
+
+            if (event.data?.type === 'AUTH_SUCCESS') {
+                console.log('🎯 AppInitializer received AUTH_SUCCESS message, refreshing auth status...');
+                isHandlingAuthSuccess = true;
+
+                await authStore.checkAuthStatus();
+
+                setTimeout(() => {
+                    import('$app/navigation').then(({ invalidateAll }) => invalidateAll());
+
+                    setTimeout(() => {
+                        isHandlingAuthSuccess = false;
+                    }, 1000);
+                }, 300);
+            }
+        };
+
+        window.addEventListener('message', handleAuthMessage);
+
         return () => {
             mediaQuery.removeEventListener('change', handleSystemThemeChange);
+            unsubscribeAuth();
+            window.removeEventListener('message', handleAuthMessage);
         };
     });
+
+    
 
     async function initializeAuthentication() {
         try {

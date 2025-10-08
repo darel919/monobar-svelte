@@ -276,6 +276,13 @@ Props:
             return `/request/shows/wizard?intent=create&id=${item.id}`;
         }
         
+        // Final fallback: if we have an id, send to info page
+        if (item.Id || item.id) {
+            const itemType = item.Type || item.type || (isItemTVSeries(item) ? 'Series' : (isItemMovie(item) ? 'Movie' : undefined));
+            const itemId = item.Id || item.id;
+            return `/info?id=${itemId}${itemType ? `&type=${itemType}` : ''}`;
+        }
+
         return undefined;
     }
 
@@ -289,6 +296,11 @@ Props:
 
     // Function to determine if an item should be clickable
     function isItemClickable(item: any): boolean {
+        // If the item has a concrete id, allow clicking (e.g. tag/genre search results)
+        if (item.Id || item.id || item.itemId) {
+            return true;
+        }
+
         // If it has a specific status, use that
         if (item.status) {
             return ['ready', 'requested', 'needRequest', 'partiallyAvailable'].includes(item.status);
@@ -364,23 +376,49 @@ Props:
                 on:mouseleave={handleItemLeave}
             >
                 <div class="relative w-full aspect-[16/9]">                    
-                    {#if (item.thumbPath || item.ImageTags?.Primary)}                        
+                    {#if (item.thumbPath || item.ImageTags?.Thumb)}                        
+                        <!-- Landscape thumb exists: show it -->
                         <ImageComponent 
-                            src={item.thumbPath || item.ImageTags?.Thumb || item.ImageTags?.Primary || ''}
+                            src={item.thumbPath || item.ImageTags?.Thumb || ''}
                             alt={item.Name || 'Image'}
                             aspectRatio="16/9"
                             borderRadius="rounded-sm"
                             fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
                         />
+                    {:else if item.ImageTags?.Primary}
+                        <!-- No landscape thumb: treat Primary (portrait) as zoomed background like default_thumb_home -->
+                        <div class="relative w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center overflow-hidden">
+                            <!-- Primary poster as background, cover to fill (portrait will be centered and cropped) -->
+                            <img src={item.ImageTags.Primary} alt={item.Name} class="absolute inset-0 w-full h-full object-cover transform scale-110" />
+                            <div class="absolute inset-0 bg-black/60"></div>
+
+                            <!-- Overlay: Logo if available, otherwise title -->
+                            <div class="relative z-10 flex flex-col items-center justify-center w-full h-full">
+                                {#if item.ImageTags?.Logo}
+                                    <div class="px-4 py-3 flex items-center justify-center w-full">
+                                        <img src={item.ImageTags.Logo} alt={item.Name} class="max-h-16 w-auto object-contain" />
+                                    </div>
+                                {:else}
+                                    <div class="font-bold text-2xl text-white drop-shadow-md px-2 text-center">{item.OriginalTitle || item.Name}</div>
+                                {/if}
+
+                                {#if item.ProductionYear}
+                                    <div class="text-sm text-white/80 mt-2">{item.ProductionYear}</div>
+                                {/if}
+                            </div>
+                        </div>
                     {:else}
+                        <!-- Fallback when no images present at all -->
                         <div class="flex flex-col items-center justify-center w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center">
                             {#if item.ImageTags?.Logo}
-                                <img src={item.ImageTags.Logo} alt={item.Name} class="w-fit max-h-16 object-contain mb-2" />
+                                <div class="px-3 py-2 flex items-center justify-center w-full mb-2">
+                                    <img src={item.ImageTags.Logo} alt={item.Name} class="max-h-14 w-auto object-contain" />
+                                </div>
                             {:else}
-                                <div class="font-bold text-2xl my-2">{item.OriginalTitle || item.Name}</div>
+                                <div class="font-bold text-2xl">{item.OriginalTitle || item.Name}</div>
                             {/if}
                             {#if item.ProductionYear}
-                                <div>{item.ProductionYear}</div>
+                                <div class="text-sm mt-1">{item.ProductionYear}</div>
                             {/if}
                         </div>
                     {/if}                
@@ -402,26 +440,52 @@ Props:
                 on:mouseleave={handleItemLeave}
             >
                 <div class="relative w-full aspect-[16/9]">                    
-                    {#if (item.thumbPath || item.ImageTags?.Thumb || item.ImageTags?.Primary)}                        
-                        <ImageComponent 
-                            src={item.thumbPath || item.ImageTags?.Thumb || item.ImageTags?.Primary || ''}
-                            alt={item.Name || 'Image'}
-                            aspectRatio="16/9"
-                            borderRadius="rounded-none"
-                            fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
-                        />
-                    {:else}
-                        <div class="flex flex-col items-center justify-center w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center">
-                            {#if item.ImageTags?.Logo}
-                                <img src={item.ImageTags.Logo} alt={item.Name} class="w-fit max-h-16 object-contain mb-2" />
-                            {:else}
-                                <div class="font-bold text-2xl my-2">{item.OriginalTitle || item.Name}</div>
-                            {/if}
-                            {#if item.ProductionYear}
-                                <div>{item.ProductionYear}</div>
-                            {/if}
-                        </div>
-                    {/if}
+                        {#if (item.thumbPath || item.ImageTags?.Thumb)}                        
+                            <!-- Show actual landscape thumb if available -->
+                            <ImageComponent 
+                                src={item.thumbPath || item.ImageTags?.Thumb || ''}
+                                alt={item.Name || 'Image'}
+                                aspectRatio="16/9"
+                                borderRadius="rounded-none"
+                                fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
+                            />
+                        {:else if item.ImageTags?.Primary}
+                            <!-- No thumb/landscape available: use Primary as zoomed background and overlay Logo or title -->
+                            <div class="relative w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center overflow-hidden">
+                                <!-- Primary poster as background, cover to fill (portrait will be centered and cropped) -->
+                                <img src={item.ImageTags.Primary} alt={item.Name} class="absolute inset-0 w-full h-full object-cover transform scale-110" />
+                                <div class="absolute inset-0 bg-black/60"></div>
+
+                                <!-- Overlay: Logo if available, otherwise title -->
+                                <div class="relative z-10 flex flex-col items-center justify-center w-full h-full">
+                                    {#if item.ImageTags?.Logo}
+                                        <div class="px-4 py-3 flex items-center justify-center w-full">
+                                            <img src={item.ImageTags.Logo} alt={item.Name} class="max-h-16 w-auto object-contain" />
+                                        </div>
+                                    {:else}
+                                        <div class="font-bold text-2xl text-white drop-shadow-md px-2 text-center">{item.OriginalTitle || item.Name}</div>
+                                    {/if}
+
+                                    {#if item.ProductionYear}
+                                        <div class="text-sm text-white/80 mt-2">{item.ProductionYear}</div>
+                                    {/if}
+                                </div>
+                            </div>
+                        {:else}
+                            <!-- Fallback when no images present at all -->
+                            <div class="flex flex-col items-center justify-center w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center">
+                                {#if item.ImageTags?.Logo}
+                                    <div class="px-3 py-2 flex items-center justify-center w-full mb-2">
+                                        <img src={item.ImageTags.Logo} alt={item.Name} class="max-h-14 w-auto object-contain" />
+                                    </div>
+                                {:else}
+                                    <div class="font-bold text-2xl my-2">{item.OriginalTitle || item.Name}</div>
+                                {/if}
+                                {#if item.ProductionYear}
+                                    <div>{item.ProductionYear}</div>
+                                {/if}
+                            </div>
+                        {/if}
                 </div>
             </a>
         {/each}
@@ -468,7 +532,9 @@ Props:
                         {:else}
                             <div class="flex flex-col items-center justify-center w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center">
                                 {#if item.ImageTags?.Logo}
-                                    <img src={item.ImageTags.Logo} alt={item.Name} class="w-fit max-h-16 object-contain mb-2" />
+                                    <div class="px-3 py-2 flex items-center justify-center w-full mb-2">
+                                        <img src={item.ImageTags.Logo} alt={item.Name} class="max-h-14 w-auto object-contain" />
+                                    </div>
                                 {:else}
                                     <div class="font-bold text-2xl my-2">{item.OriginalTitle || item.Name}</div>
                                 {/if}
@@ -492,6 +558,20 @@ Props:
                 title={item.Overview}
                 style={disableClick ? 'cursor: default; pointer-events: none;' : ''}
             >
+                <div class="relative w-full mb-4 aspect-[2/3]">
+                    {#if item.posterPath || item.thumbPath || item.ImageTags?.Primary}
+                        <!-- Prefer posterPath, then thumbPath, then Primary -->
+                        <ImageComponent
+                            src={item.posterPath || item.thumbPath || item.ImageTags?.Primary}
+                            alt={item.Name || item.OriginalTitle || 'Image'}
+                            aspectRatio="2/3"
+                            borderRadius="rounded-lg"
+                            fallbackName={item.OriginalTitle || item.Name}
+                        />
+                    {:else}
+                        <div class="flex items-center justify-center w-full h-full bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
+                    {/if}
+                </div>
                 <section class="flex flex-col text-center items-center w-full">
                     {#if item.OriginalTitle}
                         <h2 class="w-full text-lg font-bold truncate">{item.OriginalTitle}</h2>
@@ -540,7 +620,14 @@ Props:
                             <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
                         {/if}
                     {:else}
-                        {#if Array.isArray(item.images) && item.images.length}
+                        {#if item.thumbPath || item.posterPath}
+                            <ImageComponent 
+                                src={item.thumbPath || item.posterPath}
+                                alt={item.Name || 'Image'}
+                                aspectRatio="2/1"
+                                fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
+                            />
+                        {:else if Array.isArray(item.images) && item.images.length}
                             {@const posterImg = item.images.find(imgObj => imgObj.coverType === 'poster' && (imgObj.dwsUrl || imgObj.remoteUrl))}
                             {#if posterImg}
                                 <ImageComponent 
@@ -612,8 +699,15 @@ Props:
                         {:else}
                             <div class="flex items-center justify-center w-full aspect-[2/1] bg-gray-200 rounded-lg text-xs text-gray-500">No Image</div>
                         {/if}
-                    {:else}
-                        {#if Array.isArray(item.images) && item.images.length}
+                        {:else}
+                            {#if item.thumbPath || item.posterPath}
+                                <ImageComponent 
+                                    src={item.thumbPath || item.posterPath}
+                                    alt={item.Name || 'Image'}
+                                    aspectRatio="2/1"
+                                    fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
+                                />
+                            {:else if Array.isArray(item.images) && item.images.length}
                             {@const posterImg = item.images.find(imgObj => imgObj.coverType === 'poster' && (imgObj.dwsUrl || imgObj.remoteUrl))}
                             {#if posterImg}
                                 <ImageComponent 

@@ -318,8 +318,6 @@
         }
     };
 
-    // No server-side data; all home-related requests are done client-side.
-
     // Reactive: when the main home data promise resolves, handle auth-related errors without rendering Promises.
     $: (async () => {
         try {

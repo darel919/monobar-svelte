@@ -14,11 +14,11 @@
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^6.1.1",
 		"@sveltejs/adapter-node": "^5.3.3",
-		"@sveltejs/kit": "^2.44.0",
+		"@sveltejs/kit": "^2.46.2",
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
 		"@tailwindcss/typography": "^0.5.19",
 		"@tailwindcss/vite": "^4.1.14",
-		"svelte": "^5.39.9",
+		"svelte": "^5.39.10",
 		"svelte-adapter-bun": "^1.0.0",
 		"svelte-check": "^4.3.2",
 		"tailwindcss": "^4.1.14",
@@ -32,7 +32,7 @@
 		"artplayer-plugin-chapter": "^1.0.1",
 		"artplayer-plugin-danmuku": "^5.2.0",
 		"artplayer-plugin-hls-control": "^1.0.1",
-		"daisyui": "^5.1.27",
+		"daisyui": "^5.1.29",
 		"dotenv": "^17.2.3",
 		"hls.js": "^1.6.13",
 		"js-cookie": "^3.0.5"

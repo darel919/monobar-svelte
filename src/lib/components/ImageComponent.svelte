@@ -45,51 +45,46 @@ Props:
     let isLoaded = false;
     let hasError = false;
     let imageUrl: string | null = null;
-      $: {
-        if (browser && src) {
-            loadImageWithCredentials();
-        } else {
+    $: {
+        // If there's no src, clear state
+        if (!src) {
             imageUrl = null;
             isLoaded = false;
-            hasError = false;        
+            hasError = false;
+        } else if (browser && (withCredentials || Object.keys(headers).length > 0)) {
+            // If we need credentials or custom headers, fetch and create blob URL
+            // kick off async fetch but don't block the reactive update
+            loadImageWithCredentials();
+        } else {
+            // For normal images (common case), set the src directly to allow browser optimizations
+            imageUrl = src;
+            // preserve previous loaded/error state until natural events fire
         }
     }
-    
+
     async function loadImageWithCredentials() {
         if (!src) return;
-        
         try {
-            if (withCredentials || Object.keys(headers).length > 0) {
-                const fetchOptions: RequestInit = {
-                    headers: {
-                        ...headers
-                    }
-                };
-                
-                if (withCredentials) {
-                    fetchOptions.credentials = 'include';
+            const fetchOptions: RequestInit = {
+                headers: {
+                    ...headers
                 }
-                
-                const response = await fetch(src, fetchOptions);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const blob = await response.blob();
-                imageUrl = URL.createObjectURL(blob);
-            } else {
-                const response = await fetch(src);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const blob = await response.blob();
-                imageUrl = URL.createObjectURL(blob);
+            };
+
+            if (withCredentials) {
+                fetchOptions.credentials = 'include';
             }
+
+            const response = await fetch(src, fetchOptions);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            // if component still references same src, replace imageUrl with blob URL
+            imageUrl = blobUrl;
         } catch (error) {
-            console.error('Failed to load image:', error);            
+            console.error('Failed to load image with credentials:', error);
             hasError = true;
             isLoaded = true;
             onerror?.();
