@@ -194,7 +194,7 @@
                     <label for="navbar-menu-pc" 
                         class="btn custom-navbar-logo border-none hover:opacity-90 transition-colors duration-200"
                     >
-                        <img src="/assets/TRANSPARENT_FAVICON.png" alt="Logo" class="h-12 w-full object-contain" />
+                                    <img src="/assets/TRANSPARENT_FAVICON.png" alt="Logo" loading="eager" width="48" height="48" class="h-12 w-full object-contain" />
                     </label>
                 </div>
                 <!-- Navigation Drawer (desktop, no homeData) -->

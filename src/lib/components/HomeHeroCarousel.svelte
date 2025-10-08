@@ -33,6 +33,7 @@ Props:
         ImageTags?: {
             Logo?: string;
             Backdrop?: string;
+            Primary?: string;
         };
         RemoteTrailers?: Array<{
             Name: string;
@@ -59,12 +60,14 @@ Props:
     let fadeClass = 'opacity-100';
     let intervalId: ReturnType<typeof setInterval> | null = null;
     let resumeTimeoutId: ReturnType<typeof setTimeout> | null = null;
-    let settingsStore: ReturnType<typeof useSettingsStore> | null = null;
     let isTransitioning = false;
+
+    // Local boolean for whether to show the carousel (avoid $store usage during SSR)
+    let showCarouselLocal = true;
+    let settingsUnsubscribe: (() => void) | null = null;
 
     $: totalItems = carouselItems.length;
     $: currentItem = carouselItems[currentIndex] || null;
-    $: showCarousel = settingsStore ? $settingsStore.showHomeHeroCarousel : true;
 
     let prevLeftoversData: Promise<any> | null = null;
     let prevRecommendationsData: Promise<any> | null = null;
@@ -240,7 +243,14 @@ Props:
     }
 
     onMount(() => {
-        settingsStore = useSettingsStore();
+        // Subscribe to settings store client-side to read showHomeHeroCarousel
+        if (browser) {
+            const settings = useSettingsStore();
+            settingsUnsubscribe = settings.subscribe((s: any) => {
+                showCarouselLocal = typeof s?.showHomeHeroCarousel === 'boolean' ? s.showHomeHeroCarousel : true;
+            });
+        }
+
         loadCarouselData().then(() => {
             if (carouselItems.length > 1) {
                 startCarousel();
@@ -251,6 +261,10 @@ Props:
     onDestroy(() => {
         stopCarousel();
         resetResumeTimeout();
+        if (settingsUnsubscribe) {
+            settingsUnsubscribe();
+            settingsUnsubscribe = null;
+        }
     });
 
     afterUpdate(() => {
@@ -272,7 +286,9 @@ Props:
     });
 </script>
 
-{#if showCarousel && carouselItems.length > 0 && currentItem}
+{#if showCarouselLocal && carouselItems.length > 0 && currentItem}
+    <!-- Preload backdrop for current hero to improve LCP -->
+    {@html (currentItem.ImageTags?.Primary || currentItem.ImageTags?.Backdrop || currentItem.thumbPath || currentItem.posterPath) ? `<link rel="preload" as="image" href="${currentItem.ImageTags?.Primary || currentItem.ImageTags?.Backdrop || currentItem.thumbPath || currentItem.posterPath}"/>` : ''}
     <section 
         class="relative w-full h-[70vh] min-h-[550px] overflow-hidden cursor-pointer group -mb-20"
         on:click={handleItemClick}
@@ -291,7 +307,7 @@ Props:
                 mute={true}
                 enabled={true}
                 loop={false}
-                backdrop={currentItem.ImageTags?.Backdrop || currentItem.thumbPath || currentItem.posterPath || ''}
+                backdrop={currentItem.ImageTags?.Backdrop || currentItem.thumbPath || currentItem.posterPath || currentItem.ImageTags?.Primary || ''}
             />
         </div>
         
@@ -351,6 +367,9 @@ Props:
                             <img 
                                 src={currentItem.ImageTags.Logo} 
                                 alt={currentItem.Name}
+                                loading="eager"
+                                width="384"
+                                height="96"
                                 class="h-24 w-auto max-w-full object-contain"
                             />
                         </div>
