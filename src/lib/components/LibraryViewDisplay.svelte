@@ -364,29 +364,28 @@ Props:
                 on:mouseleave={handleItemLeave}
             >
                 <div class="relative w-full aspect-[16/9]">                    
-                    {#if (item.thumbPath || item.ImageTags?.Primary)}                        
+                    {#if (item.thumbPath || item.ImageTags?.Thumb)}                        
+                        <!-- Landscape thumb exists: show it -->
                         <ImageComponent 
-                            src={item.thumbPath || item.ImageTags?.Thumb || item.ImageTags?.Primary || ''}
+                            src={item.thumbPath || item.ImageTags?.Thumb || ''}
                             alt={item.Name || 'Image'}
                             aspectRatio="16/9"
                             borderRadius="rounded-sm"
                             fallbackName={item.OriginalTitle || item.Name || 'Unknown'}
                         />
-                    {:else}
-                        <!-- Layered fallback: Primary as background, then Logo or title as overlay -->
+                    {:else if item.ImageTags?.Primary}
+                        <!-- No landscape thumb: treat Primary (portrait) as zoomed background like default_thumb_home -->
                         <div class="relative w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center overflow-hidden">
-                            {#if item.ImageTags?.Primary}
-                                <!-- Primary poster as background, cover to fill (portrait will be centered and cropped) -->
-                                <img src={item.ImageTags.Primary} alt={item.Name} class="absolute inset-0 w-full h-full object-cover transform scale-110" />
-                                <div class="absolute inset-0 bg-black/60"></div>
-                            {:else}
-                                <div class="absolute inset-0 bg-base-200" />
-                            {/if}
+                            <!-- Primary poster as background, cover to fill (portrait will be centered and cropped) -->
+                            <img src={item.ImageTags.Primary} alt={item.Name} class="absolute inset-0 w-full h-full object-cover transform scale-110" />
+                            <div class="absolute inset-0 bg-black/60"></div>
 
                             <!-- Overlay: Logo if available, otherwise title -->
                             <div class="relative z-10 flex flex-col items-center justify-center w-full h-full">
                                 {#if item.ImageTags?.Logo}
-                                    <img src={item.ImageTags.Logo} alt={item.Name} class="w-fit max-h-20 object-contain" />
+                                    <div class="px-4 py-3 flex items-center justify-center w-full">
+                                        <img src={item.ImageTags.Logo} alt={item.Name} class="max-h-16 w-auto object-contain" />
+                                    </div>
                                 {:else}
                                     <div class="font-bold text-2xl text-white drop-shadow-md px-2 text-center">{item.OriginalTitle || item.Name}</div>
                                 {/if}
@@ -395,6 +394,20 @@ Props:
                                     <div class="text-sm text-white/80 mt-2">{item.ProductionYear}</div>
                                 {/if}
                             </div>
+                        </div>
+                    {:else}
+                        <!-- Fallback when no images present at all -->
+                        <div class="flex flex-col items-center justify-center w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center">
+                            {#if item.ImageTags?.Logo}
+                                <div class="px-3 py-2 flex items-center justify-center w-full mb-2">
+                                    <img src={item.ImageTags.Logo} alt={item.Name} class="max-h-14 w-auto object-contain" />
+                                </div>
+                            {:else}
+                                <div class="font-bold text-2xl">{item.OriginalTitle || item.Name}</div>
+                            {/if}
+                            {#if item.ProductionYear}
+                                <div class="text-sm mt-1">{item.ProductionYear}</div>
+                            {/if}
                         </div>
                     {/if}                
                 </div>
@@ -434,7 +447,9 @@ Props:
                                 <!-- Overlay: Logo if available, otherwise title -->
                                 <div class="relative z-10 flex flex-col items-center justify-center w-full h-full">
                                     {#if item.ImageTags?.Logo}
-                                        <img src={item.ImageTags.Logo} alt={item.Name} class="w-fit max-h-20 object-contain" />
+                                        <div class="px-4 py-3 flex items-center justify-center w-full">
+                                            <img src={item.ImageTags.Logo} alt={item.Name} class="max-h-16 w-auto object-contain" />
+                                        </div>
                                     {:else}
                                         <div class="font-bold text-2xl text-white drop-shadow-md px-2 text-center">{item.OriginalTitle || item.Name}</div>
                                     {/if}
@@ -448,7 +463,9 @@ Props:
                             <!-- Fallback when no images present at all -->
                             <div class="flex flex-col items-center justify-center w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center">
                                 {#if item.ImageTags?.Logo}
-                                    <img src={item.ImageTags.Logo} alt={item.Name} class="w-fit max-h-16 object-contain mb-2" />
+                                    <div class="px-3 py-2 flex items-center justify-center w-full mb-2">
+                                        <img src={item.ImageTags.Logo} alt={item.Name} class="max-h-14 w-auto object-contain" />
+                                    </div>
                                 {:else}
                                     <div class="font-bold text-2xl my-2">{item.OriginalTitle || item.Name}</div>
                                 {/if}
@@ -503,7 +520,9 @@ Props:
                         {:else}
                             <div class="flex flex-col items-center justify-center w-full h-full bg-base-200 rounded-lg text-xs text-base-content p-2 text-center">
                                 {#if item.ImageTags?.Logo}
-                                    <img src={item.ImageTags.Logo} alt={item.Name} class="w-fit max-h-16 object-contain mb-2" />
+                                    <div class="px-3 py-2 flex items-center justify-center w-full mb-2">
+                                        <img src={item.ImageTags.Logo} alt={item.Name} class="max-h-14 w-auto object-contain" />
+                                    </div>
                                 {:else}
                                     <div class="font-bold text-2xl my-2">{item.OriginalTitle || item.Name}</div>
                                 {/if}
