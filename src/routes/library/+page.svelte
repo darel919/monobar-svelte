@@ -17,6 +17,10 @@
   // We'll fetch serverData on the client since SSR is disabled.
   /** @type {Promise<any> | null} */
   let clientServerDataPromise = null;
+  // Abort controller for in-flight client fetches so we can cancel duplicates
+  let clientFetchController = null;
+  // Remember last endpoint we fetched to avoid refetching the same resource repeatedly
+  let lastFetchedEndpoint = null;
 
   // Build a client-side fetch wrapper to call the same backend endpoints
   // used by server/api.js but from the browser. We rely on the same
@@ -135,14 +139,35 @@
         ...getSessionHeaders()
       };
 
-      const resp = await fetch(endpoint, { method: 'GET', headers });
+      // If we've already fetched this exact endpoint and have a promise, reuse it
+      if (lastFetchedEndpoint === endpoint && clientServerDataPromise) {
+        return clientServerDataPromise;
+      }
+
+      // Abort any previous in-flight request
+      try {
+        if (clientFetchController) clientFetchController.abort();
+      } catch (e) {
+        // ignore
+      }
+      clientFetchController = new AbortController();
+
+      const resp = await fetch(endpoint, { method: 'GET', headers, signal: clientFetchController.signal });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ message: 'Unknown error' }));
         throw new Error(JSON.stringify({ status: resp.status, ...err }));
       }
       const json = await resp.json();
+      // remember endpoint for deduping
+      lastFetchedEndpoint = endpoint;
+      // clear controller on success
+      clientFetchController = null;
       return { data: json };
     } catch (error) {
+      // If the fetch was aborted, return a neutral value instead of an error
+      if (error && error.name === 'AbortError') {
+        return { data: null, error: null };
+      }
       return { data: null, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
